@@ -22,7 +22,27 @@
     return '';
   };
 
+  const buildChatLinesFromMessages = (messages) => {
+    const list = Array.isArray(messages) ? messages : [];
+    const lines = [];
+    list.forEach((message) => {
+      const role = normalize(message && message.role).toLowerCase();
+      const content = normalize(message && message.content);
+      if (!content) return;
+      if (role === 'thinking') return;
+      if (role === 'user') {
+        lines.push(`👤 User: ${content}`);
+        return;
+      }
+      if (role === 'ai' || role === 'assistant') {
+        lines.push(`🤖 AI: ${content}`);
+      }
+    });
+    return lines;
+  };
+
   return {
     inferSpeaker,
+    buildChatLinesFromMessages,
   };
 });

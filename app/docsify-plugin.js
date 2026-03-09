@@ -389,7 +389,7 @@ window.$docsify = {
       };
 
       // Zotero 元数据更新函数：可被 Docsify 生命周期和聊天模块重复调用
-      const updateZoteroMetaFromPage = (
+      const updateZoteroMetaFromPage = async (
         paperId,
         vmRouteFile,
         rawPaperContent = '',
@@ -510,44 +510,56 @@ window.$docsify = {
             aiSummaryText = cleanSectionText(aiSummaryText);
             origAbstractText = cleanSectionText(origAbstractText);
 
-            // 3) 解析聊天历史，按「User / AI」打标签
+            // 3) 解析聊天历史，优先读取本地原始聊天记录，避免从 DOM innerText 读公式时被拆碎
             let chatSection = '';
-            const chatRoot = document.getElementById('chat-history');
-            if (chatRoot) {
-              const items = chatRoot.querySelectorAll('.msg-item');
-              const lines = [];
-              const inferSpeaker =
-                window.DPRZoteroChatUtils &&
-                typeof window.DPRZoteroChatUtils.inferSpeaker === 'function'
-                  ? window.DPRZoteroChatUtils.inferSpeaker
-                  : ({ roleText = '', className = '' } = {}) => {
-                      const role = String(roleText || '').trim();
-                      const cls = String(className || '').trim();
-                      if (role.includes('思考过程')) return '';
-                      if (role.includes('你')) return 'User';
-                      if (role.includes('助手')) return 'AI';
-                      if (/\bmsg-content-user\b/.test(cls)) return 'User';
-                      if (/\bmsg-content-ai\b/.test(cls)) return 'AI';
-                      return '';
-                    };
-              items.forEach((item) => {
-                const roleEl = item.querySelector('.msg-role');
-                const contentEl = item.querySelector('.msg-content');
-                if (!contentEl) return;
-                const roleText = roleEl ? (roleEl.textContent || '') : '';
-                const speaker = inferSpeaker({
-                  roleText,
-                  className: contentEl.className || '',
+            const buildChatLinesFromMessages =
+              window.DPRZoteroChatUtils &&
+              typeof window.DPRZoteroChatUtils.buildChatLinesFromMessages === 'function'
+                ? window.DPRZoteroChatUtils.buildChatLinesFromMessages
+                : null;
+            const storedChat = await loadChatHistoryForPaper(paperId);
+            const storedLines = buildChatLinesFromMessages
+              ? buildChatLinesFromMessages(storedChat)
+              : [];
+            if (storedLines.length) {
+              chatSection = storedLines.join('\n\n');
+            } else {
+              const chatRoot = document.getElementById('chat-history');
+              if (chatRoot) {
+                const items = chatRoot.querySelectorAll('.msg-item');
+                const lines = [];
+                const inferSpeaker =
+                  window.DPRZoteroChatUtils &&
+                  typeof window.DPRZoteroChatUtils.inferSpeaker === 'function'
+                    ? window.DPRZoteroChatUtils.inferSpeaker
+                    : ({ roleText = '', className = '' } = {}) => {
+                        const role = String(roleText || '').trim();
+                        const cls = String(className || '').trim();
+                        if (role.includes('思考过程')) return '';
+                        if (role.includes('你')) return 'User';
+                        if (role.includes('助手')) return 'AI';
+                        if (/\bmsg-content-user\b/.test(cls)) return 'User';
+                        if (/\bmsg-content-ai\b/.test(cls)) return 'AI';
+                        return '';
+                      };
+                items.forEach((item) => {
+                  const roleEl = item.querySelector('.msg-role');
+                  const contentEl = item.querySelector('.msg-content');
+                  if (!contentEl) return;
+                  const roleText = roleEl ? (roleEl.textContent || '') : '';
+                  const speaker = inferSpeaker({
+                    roleText,
+                    className: contentEl.className || '',
+                  });
+                  if (!speaker) return;
+                  const contentText = (contentEl.innerText || '').trim();
+                  if (!contentText) return;
+                  const icon = speaker === 'User' ? '👤' : '🤖';
+                  lines.push(`${icon} ${speaker}: ${contentText}`);
                 });
-                if (!speaker) return;
-                const contentText = (contentEl.innerText || '').trim();
-                if (!contentText) return;
-                const icon = speaker === 'User' ? '👤' : '🤖';
-                lines.push(`${icon} ${speaker}: ${contentText}`);
-              });
-              if (lines.length) {
-                // 不再截断，对话区所有内容全部写入摘要
-                chatSection = lines.join('\n\n');
+                if (lines.length) {
+                  chatSection = lines.join('\n\n');
+                }
               }
             }
 
@@ -868,7 +880,11 @@ window.$docsify = {
       // 导出给其它前端模块（例如聊天模块）主动刷新 Zotero 元数据
       window.DPRZoteroMeta = window.DPRZoteroMeta || {};
       window.DPRZoteroMeta.updateFromPage = (paperId, vmRouteFile) =>
-        updateZoteroMetaFromPage(paperId, vmRouteFile, latestPaperRawMarkdown);
+        Promise.resolve(
+          updateZoteroMetaFromPage(paperId, vmRouteFile, latestPaperRawMarkdown),
+        ).catch((e) => {
+          console.error('Zotero meta update failed:', e);
+        });
 
       // 公共工具：在指定元素上渲染公式
       const renderMathInEl = (el) => {
