@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.25444v1/fig-001.webp",
+      "caption": "Figure 1: Newtonian gravitation maximizes the reward function in Eq. 9. (a) Trajectories of five particles following Newtonian gravitation. (b) Reward contributions from Terms I and II in Eq. 9 as a function of time. Since reward Term II is non-positive, its absolute value is shown. (c) The minimum cost-to-go in Eq. 10 for each state along the trajectory, plotted as a function of time (black line). This coincides with the actual cost incurrent by the trajectory numerically computed via Eq. 1 (red line; not visible). (d) With an increasing number of particles, N = 10, the cost-to-go fluctuates more widely but spends more time at relatively small values. (e) A small perturbation of the Newtonian force from 1/r2 to 1/r2+ϵ with ϵ = 0.05 produces a higher cost-to-go (green line) than the optimal one (black). The cost-to-go is computed at each state along the trajectories generated with the perturbed force. (f) Cost-to-go (black line) incurred by a perturbed Newtonian force 1/r2+ϵ as a function of ϵ, calculated using the same initial condition as in panel (b). The cost-to-go attains a minimum at ϵ = 0. Cost-to-go (blue line) incurred by a perturbed Coulomb force 1/r2+2ϵ as a function of ϵ. Parameters are specified in Appendix 3.",
+      "page": 6,
+      "index": 1,
+      "width": 844,
+      "height": 590
+    }
+  ]
+}

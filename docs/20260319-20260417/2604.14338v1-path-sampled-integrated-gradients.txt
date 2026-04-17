@@ -1,0 +1,599 @@
+Title: Path-Sampled Integrated Gradients
+
+URL Source: https://arxiv.org/pdf/2604.14338v1
+
+Published Time: Fri, 17 Apr 2026 00:08:20 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Path-Sampled Integrated Gradients 
+
+Firuz Kamalov 
+
+Department of Computational Sciences, Canadian University Dubai, UAE 
+
+Fadi Thabtah 
+
+Abu Dhabi School of Management, Abu Dhabi, UAE 
+
+R. Sivaraj 
+
+Department of Mathematics, Dr. B.R. Ambedkar National Institute of Technology, India 
+
+Neda Abdelhamid 
+
+Abu Dhabi School of Management, Abu Dhabi, UAE 
+
+April 17, 2026 
+
+Abstract 
+
+We introduce path-sampled integrated gradients (PS-IG), a framework that generalizes fea-ture attribution by computing the expected value over baselines sampled along the linear inter-polation path. We prove that PS-IG is mathematically equivalent to path-weighted integrated gradients, provided the weighting function matches the cumulative distribution function of the sampling density. This equivalence allows the stochastic expectation to be evaluated via a de-terministic Riemann sum, improving the error convergence rate from O(m−1/2) to O(m−1) for smooth models. Furthermore, we demonstrate analytically that PS-IG functions as a variance-reducing filter against gradient noise—strictly lowering attribution variance by a factor of 1 /3under uniform sampling—while preserving key axiomatic properties such as linearity and im-plementation invariance. 
+
+# 1 Introduction 
+
+The remarkable performance of deep neural networks in domains ranging from medical diagnosis to autonomous driving has been accompanied by an increasing demand for transparency. To bridge the gap between model accuracy and interpretability, a variety of feature attribution methods have been developed to quantify the contribution of individual input features to a model’s prediction [9, 11]. This objective shares a strong theoretical foundation with mathematical feature selection methods [6], which similarly aim to isolate significant variables within complex systems. Among these, integrated gradients (IG) [14] has emerged as a gold standard due to its solid theoretical foundation. In particular, IG satisfies desirable axiomatic properties such as sensitivity and completeness, which many heuristic methods fail to uphold. Despite its theoretical elegance, standard IG suffers from significant practical limitations, most notably its dependence on the choice of the baseline [13]. The standard practice of using a zero-vector – such as a a black image in computer vision tasks – often introduces artifacts or fails to capture feature relevance when the baseline is far from the data manifold [7]. Furthermore, gradients in deep networks can be highly volatile; integrating along a single fixed path can aggregate noise, resulting in unstable or “speckled” attribution maps that degrade user trust [12]. 1
+
+> arXiv:2604.14338v1 [cs.LG] 15 Apr 2026
+
+To address these shortcomings, the research community has proposed several extensions. Ex-pected gradients (EG) [2] generalizes IG by averaging attributions over a distribution of baselines sampled from the training set, rather than relying on a single reference point. While effective at reducing baseline bias, EG is computationally expensive, requiring many forward and backward passes. Concurrently, methods like weighted integrated gradients [8] and path-weighted integrated gradients (PWIG) [3] have introduced mechanisms to modulate the integration path. Kien et al. propose weighting baselines based on a fitness function, while Kamalov et al. introduce a scalar weighting function g(α) into the path integral to emphasize specific segments of the interpolation. While these methods offer improvements in flexibility and stability, a unified framework that recon-ciles the stochastic nature of baseline sampling with the efficiency of deterministic path integration is still missing. In this paper, we introduce path-sampled integrated gradients (PS-IG), a novel formulation that addresses the fragility of single-baseline attribution while maintaining high computational efficiency. Instead of relying on a single starting point or sampling globally from a dataset, PS-IG computes the expected attribution over a distribution of baselines sampled strictly along the interpolation path between an initial reference and the input. The geometric and statistical properties of sampling along such linear segments have been previously analyzed in the context of synthetic data generation [4, 5], suggesting that constrained linear sampling effectively captures the local manifold structure required for robust estimation.” We provide a theoretical analysis showing that PS-IG unifies two seemingly distinct approaches. First, we demonstrate that PS-IG can be viewed as a specific instance of EG, where the prior distribution is constrained to the linear path. Second, and more importantly, we prove that PS-IG is mathematically equivalent to PWIG, where the weighting function g(α) is the CDF of the sampling density. This equivalence yields a “free lunch” in terms of computational efficiency: we can achieve the robustness benefits of stochastic sampling using a deterministic, weighted integral that costs no more to compute than standard IG. By formally linking sampling strategies to path weighting, PS-IG offers a robust, efficient, and theoretically grounded solution to the baseline selection problem in feature attribution. 
+
+# 2 Background 
+
+Let F : Rn → R be a differentiable model. Fix an input x ∈ Rn and a baseline x′ ∈ Rn. Denote the straight-line path from x′ to x by 
+
+γ(α) = x′ + α(x − x′), α ∈ [0 , 1] .
+
+We write the path derivative 
+
+F ′(α) := ddα F (γ(α)) = 
+
+> n
+
+X
+
+> i=1
+
+(xi − x′
+
+> i
+
+) ∂F (γ(α)) 
+
+∂x i
+
+,
+
+where xi is an individual component of x.
+
+Definition 2.1. [14] The integrated gradients attribution for feature i at input x with baseline x′
+
+is 
+
+IG i(x; x′) := ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+2IG has several desirable properties when F is smooth along the path: implementation invariance, sensitivity, symmetry preservation, and completeness. 
+
+Definition 2.2. [3] Let g : [0 , 1] → R+ be an integrable weight function. The path-weighted integrated gradients attribution for feature i is 
+
+P W IG i(x; x′; g) := ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+g(α) ∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+Remark 2.3 . When g(α) ≡ 1 we recover standard IG. The factor g(α) allows emphasizing or de-emphasizing contributions from different segments of the path. Not that summing over i gives 
+
+> n
+
+X
+
+> i=1
+
+P W IG i(x; x′; g) = 
+
+Z 10
+
+g(α)F ′(α) dα. 
+
+Define the completeness residual 
+
+R(g) := ∆ F −
+
+> n
+
+X
+
+> i=1
+
+P W IG i(x; x′; g), ∆F := F (x) − F (x′).
+
+Then, PWIG is complete iff R(g) = 0. Note that 
+
+R(g) = 
+
+Z 10
+
+(1 − g(α)) F ′(α) dα. 
+
+Therefore, PWIG is complete iff g(α) ≡ 1 or F ′(α) is supported only where g(α) = 1; in general completeness fails. Assume g is continuously differentiable and F (γ(α)) is continuous. Integration by parts yields 
+
+Z 10
+
+g(α)F ′(α) dα = g(1) F (1) − g(0) F (0) −
+
+Z 10
+
+g′(α)F (γ(α)) dα, 
+
+so the residual can be written 
+
+R(g) = ∆ F −
+
+
+
+g(1) F (1) − g(0) F (0) 
+
+
+
++
+
+Z 10
+
+g′(α)F (γ(α)) dα, (1) where F (s) = F (γ(s)) in the boundary terms. 
+
+# 3 Path-Sampled Integrated Gradients 
+
+Let p be a probability density on [0 , 1]. Fix an input x ∈ Rn and an initial baseline x′ ∈ Rn. For each s ∈ [0 , 1], we define an intermediate baseline bs located on the straight-line path between the initial baseline and the input: 
+
+bs := x′ + s(x − x′).
+
+We compute the standard IG attribution for x using the intermediate baseline bs:
+
+IG i(x; bs) = ( xi − bs,i )
+
+Z 10
+
+∂F (bs + u(x − bs)) 
+
+∂x i
+
+du. 
+
+3Definition 3.1. The path-sampled integrated gradients attribution for feature i, given input x,initial baseline x′, and sampling density p, is defined as: 
+
+P SIG i(x; x′; p) := Es∼p
+
+IG i(x; bs) =
+
+Z 10
+
+IG i(x; x′ + s(x − x′)) p(s) ds. 
+
+In the following result, we show that PS-IG can be simplified to a single path integral using the cumulative distribution function of the sampling density. In other words, PS-IG is equivalent to 
+
+P W IG (·, ·; G) with weight function g = G.
+
+Theorem 3.2. Let p be an integrable density on [0 , 1] and let G be its CDF. Then for each feature 
+
+i,
+
+P SIG i(x; x′; p) = ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+G(α) ∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+Proof. Fix s ∈ [0 , 1]. First, we derive two basic identities using the definition of bs:
+
+xi − bs,i = xi − (x′ 
+
+> i
+
++ s(xi − x′
+
+> i
+
+)) = (1 − s)( xi − x′
+
+> i
+
+). (2) Then, for the path integration variable u:
+
+bs + u(x − bs) = x′ + s(x − x′) + u(1 − s)( x − x′)= x′ + ( s + u(1 − s))( x − x′)= γ(s + u(1 − s)) .
+
+(3) Thus, 
+
+IG i(x; bs) = (1 − s)( xi − x′
+
+> i
+
+)
+
+Z 10
+
+∂F (γ(s + u(1 − s))) 
+
+∂x i
+
+du. 
+
+Change variables α = s + u(1 − s); then du = dα/ (1 − s) and α runs from s to 1. Therefore, 
+
+IG i(x; bs) = ( xi − x′
+
+> i
+
+)
+
+Z 1
+
+> s
+
+∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+Taking the expectation over s and exchanging integrals (Fubini/Tonelli), we obtain 
+
+Z 10
+
+p(s)
+
+Z 1
+
+> s
+
+∂F (γ(α)) 
+
+∂x i
+
+dα 
+
+
+
+ds =
+
+Z 10
+
+Z α
+
+> 0
+
+p(s) ds 
+
+ ∂F (γ(α)) 
+
+∂x i
+
+dα 
+
+=
+
+Z 10
+
+G(α) ∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+(4) Multiplying by ( xi − x′
+
+> i
+
+) concludes the proof. 
+
+Corollary 3.3 (Uniform sampling) . If p ≡ 1, then G(α) = α and 
+
+P SIG i(x; x′; Unif ) = ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+α ∂F (γ(α)) 
+
+∂x i
+
+dα. 
+
+Remark 3.4 . The family of PS-IGs obtained by sampling baselines on the straight-line path cor-responds exactly to the family of PWIG weights g that are nondecreasing CDFs with g(0) = 0 and g(1) = 1. Conversely, any PWIG whose weight g is a CDF arises as a PS-IG under sampling density p = g′.4Remark 3.5 . Discrete sampling: if s1, . . . , s m are sampled i.i.d. from p, the empirical average 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+IG i(x; bsj ) = ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+bGm(α) hi(α) dα, 
+
+where bGm is the empirical CDF of the sj ; as m → ∞ , bGm → G a.s. For PS-IG, substituting into Equation 1 we obtain the completeness residual: 
+
+R(g) = ∆ F − F (1) + 
+
+Z 10
+
+g′(α)F (γ(α)) dα. 
+
+Since ∆ F = F (1) − F (0), this simplifies to 
+
+R(g) = −F (0) + 
+
+Z 10
+
+g′(α)F (γ(α)) dα. 
+
+Equivalently, writing p(α) = g′(α), 
+
+R(g) = Es∼p[F (γ(s))] − F (x′),
+
+which shows that the residual is exactly the difference between the average prediction of F along the path and the initial baseline prediction F (x′). 
+
+3.1 Axiomatic Characterization 
+
+All the axioms—implementation invariance, sensitivity (dummy), linearity, symmetry—that apply to PWIG are preserved for PS-IG. On the other hand, it does not satisfy the standard completeness axiom. However, it satisfies a natural variation suited for stochastic baselines. 
+
+Proposition 3.6 (Completeness) . Let F : Rn → R be differentiable. The sum of PS-IG attributions equals the difference between the model output at x and the expected model output along the baseline path. nX
+
+> i=1
+
+P SIG i(x; x′; p) = F (x) − Es∼p
+
+F (x′ + s(x − x′))  .
+
+Proof. By Definition 2.1 and the linearity of the expectation and summation: 
+
+> n
+
+X
+
+> i=1
+
+P SIG i(x; x′; p) = 
+
+> n
+
+X
+
+> i=1
+
+Es∼p [IG i(x; bs)] = Es∼p
+
+" nX
+
+> i=1
+
+IG i(x; bs)
+
+#
+
+.
+
+Applying the completeness axiom of standard IG with respect to the baseline bs, we have Pni=1 IG i(x; bs) = 
+
+F (x) − F (bs). Substituting this into the expectation: 
+
+Es∼p [F (x) − F (bs)] = F (x) − Es∼p [F (bs)] = F (x) − Es∼p
+
+F (x′ + s(x − x′))  .
+
+Remark 3.7 . The term Es∼p[F (bs)] can be interpreted as a ”smoothed baseline” prediction. Unlike standard completeness, which is sensitive to the exact value of F (x′), expected baseline completeness is robust to local fluctuations of the model at the initial baseline x′.53.2 Computational Complexity and Efficiency 
+
+A significant advantage of PS-IG is that it admits a deterministic approximation with a convergence rate superior to standard Monte Carlo sampling. If PS-IG is computed as an expectation, it would require a Monte Carlo estimator which involves sampling m random baselines s1, . . . , s m from the distribution p and averaging the standard IG computed for each baseline. By the Central Limit Theorem, the root mean square error of this Monte Carlo estimator converges at a rate of O(m−1/2). This method is computationally expensive, as it requires computing a full path integral for every sampled baseline. However, by leveraging the theoretical equivalence between PS-IG and PWIG (Proposition 2.2), we can avoid stochastic sampling entirely. Instead, we can approximate the single weighted path integral using a deterministic Riemann sum: ˆICDF = ( xi − x′
+
+> i
+
+) 1
+
+m
+
+> m
+
+X
+
+> k=1
+
+G
+
+ km
+
+ ∂F (γ(k/m )) 
+
+∂x i
+
+.
+
+For continuously differentiable functions, this deterministic estimator achieves an error convergence rate of O(m−1), which is significantly faster than the Monte Carlo rate. The computational cost of this deterministic approximation is identical to that of standard IG. Thus PS-IG achieves the robustness benefits of an expectation-based method without incurring the multiplicative computa-tional overhead typically associated with such methods. 
+
+3.3 Stability and Variance Reduction 
+
+A well-documented challenge in attributing deep neural networks is the phenomenon of shattered gradients [1], where the gradient ∇F fluctuates rapidly and noisily as a function of the input. Stan-dard IG integrates these fluctuations directly with uniform weight, making the resulting attribution sensitive to high-frequency noise along the path. In this section, we prove that PS-IG is inherently more stable than standard IG. By modeling the gradient fluctuations as a stochastic noise process, we show that the weighting function G(α)inherent to PS-IG acts as a variance-reducing filter. Let us model the gradient along the path γ(α) as the sum of a smooth signal component μ(α)and a zero-mean, uncorrelated noise component ξ(α) representing the local volatility of the decision boundary. In particular, we make the following assumption. For a feature i, the path gradient is given by: 
+
+∂F (γ(α)) 
+
+∂x i
+
+= μi(α) + ξi(α),
+
+where μi(α) is a deterministic signal and ξi(α) is a stochastic process satisfying: 
+
+E[ξi(α)] = 0 , E[ξi(α)ξi(β)] = σ2δ(α − β),
+
+where σ2 represents the noise magnitude and δ is the Dirac delta function. We define the attribution variance as the variance of the attribution score induced by the gradient noise ξ. Lower variance implies an explanation that is more robust to the local volatility of the model. 
+
+Theorem 3.8. Let V ar IG be the attribution variance of standard IG, and V ar P S be the attribution variance of PS-IG. If p is a continuous density supported on (0 , 1) , then: 
+
+V ar P S = V ar IG 
+
+Z 10
+
+G(α)2 dα. 
+
+6It follows that 
+
+V ar P S < V ar IG .
+
+Proof. The attribution Ai for a general weight w is: 
+
+Ai = ( xi − x′
+
+> i
+
+)
+
+Z 10
+
+w(α)( μi(α) + ξi(α)) dα. 
+
+The variance of this estimator is determined solely by the noise term: Var( Ai) = ( xi − x′
+
+> i
+
+)2Var 
+
+Z 10
+
+w(α)ξi(α) dα 
+
+
+
+.
+
+Using the isometry property of the stochastic integral for white noise (Itˆ o isometry), the variance is proportional to the squared L2 norm of the weighting function: Var 
+
+Z 10
+
+w(α)ξi(α) dα 
+
+
+
+= σ2
+
+Z 10
+
+w(α)2 dα. 
+
+For standard IG, w(α) = 1: 
+
+V ar IG = C
+
+Z 10
+
+12 dα = C, where C = σ2(xi − x′
+
+> i
+
+)2.
+
+For PS-IG, w(α) = G(α): 
+
+V ar P S = C
+
+Z 10
+
+G(α)2 dα. 
+
+Since G is a CDF on [0 , 1]: Z 10
+
+G(α)2 dα < 1.
+
+Thus, V ar P S < V ar IG .The reduction in variance depends on the choice of the sampling strategy. We can quantify this gain for the most common sampling distribution. 
+
+Corollary 3.9. If baselines are sampled uniformly along the path, then: 
+
+V ar P S (Unif ) = 13 V ar IG .
+
+This result lends support to the smoothness in PS-IG attributions. Standard IG gives full weight to gradients along the entire path, including regions where the model might be uncertain or noisy. PS-IG dampens the contribution of gradients, particularly those near the baseline, effectively filtering out noise that accumulates early in the integration path. 
+
+# 4 Numerical Experiments 
+
+In this section, we demonstrate numerically the variance reduction and convergence rate advantages of the proposed PS-IG method. To empirically validate the stability of PS-IG, we examined the attribution variance under a shattered gradient noise model. We utilized three 3-variable functions representing distinct gradient 7landscapes: linear, quadratic, and sigmoidal. For each function, we injected Gaussian white noise 
+
+N (0 , 1) into the gradients computed along the integration path and performed 1,000 Monte Carlo trials. The results, presented in Table 1, demonstrate that PS-IG significantly outperforms standard IG in terms of stability. Across all function types, PS-IG consistently reduces the empirical variance by a factor of approximately 3. This finding aligns strictly with the theoretical prediction of Corollary 2.3, confirming that PS-IG effectively filters high-frequency gradient noise regardless of the underlying model architecture. Table 1: Empirical variance of attribution scores under stochastic gradient noise. PS-IG consistently reduces variance by a factor of ≈ 1/3 compared to standard IG. Function Var(IG) Var(PS-IG) Ratio Linear ( x1 + x2 + x3) 0.00992 0.00333 0.3356 Quadratic ( x21 + x1x2 + x23) 0.01003 0.00335 0.3337 Sigmoidal ( σ(10(¯ x − 0.5))) 0.00982 0.00333 0.3394 To test the computational advantage of the deterministic formulation, we analyzed the con-vergence rate of the PS-IG estimator. Using the 3-variable sigmoidal function from the previous experiment as the target, we computed the mean squared error (MSE) of the attribution against a high-precision ground truth ( N = 10 5) across varying computational budgets. Figure 1 compares the deterministic approach against a Monte Carlo baseline. The results show that the deterministic estimator exhibits a significantly steeper convergence slope, achieving orders of magnitude lower error for the same number of gradient evaluations. 10 1 10 2 10 3        
+
+> Number of Gradient Calls
+> 10 10
+> 10 9
+> 10 8
+> 10 7
+> 10 6
+> 10 5
+> 10 4
+> 10 3
+> MSE vs Ground Truth
+> Convergence Rate: Deterministic vs Monte Carlo Estimation
+> Method
+> Deterministic (Ours)
+> Monte Carlo
+
+Figure 1: Convergence rate comparison between the deterministic PS-IG estimator and Monte Carlo sampling on a log-log scale. 85 Conclusion 
+
+In this paper, we introduced PS-IG to address the baseline sensitivity and gradient volatility in-herent in standard feature attribution methods. We established a formal equivalence between stochastic baseline sampling along a linear path and deterministic path weighting, proving that PS-IG is a specific instance of PWIG. This theoretical link allows for a deterministic implemen-tation that improves the error convergence rate from O(m−1/2) to O(m−1) compared to Monte Carlo estimation. Furthermore, our variance analysis demonstrates that PS-IG inherently acts as a noise filter, strictly reducing attribution variance—specifically by a factor of 1 /3 under uni-form sampling—without incurring additional computational costs. By reconciling the robustness of expectation-based methods with the efficiency of deterministic integration, PS-IG offers a rigorously grounded framework for reliable model interpretability. 
+
+# References 
+
+[1] Balduzzi, D., Frean, M., Leary, L., Lewis, J. P., Ma, K. W. D., & McWilliams, B. (2017, July). The shattered gradients problem: If resnets are the answer, then what is the question?. In International conference on machine learning (pp. 342-350). PMLR. [2] Erion, G., Janizek, J. D., Sturmfels, P., Lundberg, S. M., & Lee, S. I. (2021). Improving performance of deep learning models with axiomatic attribution priors and expected gradients. Nature machine intelligence, 3(7), 620-631. https://doi.org/10.1038/s42256-021-00343-w 
+
+[3] Kamalov, F., Falasi, M. A., & Thabtah, F. (2025). Path-Weighted Integrated Gradients for Interpretable Dementia Classification. arXiv preprint. https://doi.org/10.48550/arXiv. 2509.17491 
+
+[4] Kamalov, F., Choutri, S. E., & Atiya, A. F. (2025). Analytical formulation of synthetic minor-ity oversampling technique (SMOTE) for imbalanced learning. Gulf Journal of Mathematics, 19(1), 400-415. https://doi.org/10.56947/gjom.v19i1.2639 
+
+[5] Kamalov, F. (2024). Asymptotic behavior of SMOTE-generated samples using order statistics. Gulf Journal of Mathematics, 17(2), 327-336. https://doi.org/10.56947/gjom.v17i2.2343 
+
+[6] Kamalov, F., Sulieman, H., Alzaatreh, A., Emarly, M., Chamlal, H., & Safaraliev, M. (2025). Mathematical Methods in Feature Selection: A Review. Mathematics, 13(6), 996. https: //doi.org/10.3390/math13060996 
+
+[7] Kapishnikov, A., Venugopalan, S., Avci, B., Wedin, B., Terry, M., & Bolukbasi, T. (2021). Guided integrated gradients: An adaptive path method for removing noise. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition (pp. 5050-5058). 
+
+https://doi.org/10.1109/CVPR46437.2021.00501 
+
+[8] Tuan, K. T. D., Trong, T. N., Hoang, S. N., Than, K., & Duc, A. N. (2025). Weighted Integrated Gradients for Feature Attribution. arXiv preprint. https://doi.org/10.48550/ arXiv.2505.03201 
+
+[9] Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. Advances in neural information processing systems, 30. 9[10] Shrikumar, A., Greenside, P., & Kundaje, A. (2017, July). Learning important features through propagating activation differences. In International conference on machine learning (pp. 3145-3153). PMlR. [11] Simonyan, K., Vedaldi, A., & Zisserman, A. (2013). Deep inside convolutional networks: Visu-alising image classification models and saliency maps. arXiv preprint https://doi.org/10. 48550/arXiv.1312.6034 
+
+[12] Smilkov, D., Thorat, N., Kim, B., Vi´ egas, F., & Wattenberg, M. (2017). Smoothgrad: removing noise by adding noise. arXiv preprint. https://doi.org/10.48550/arXiv.1706.03825 
+
+[13] Sturmfels, P., Lundberg, S., & Lee, S. I. (2020). Visualizing the impact of feature attribution baselines. Distill, 5(1), e22. https://doi.org/10.23915/distill.00022 .[14] Sundararajan, M., Taly, A., & Yan, Q. (2017, July). Axiomatic attribution for deep networks. In International conference on machine learning (pp. 3319-3328). PMLR. 10

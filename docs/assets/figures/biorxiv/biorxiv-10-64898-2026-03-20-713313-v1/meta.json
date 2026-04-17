@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-001.webp",
+      "caption": "Table 3: Reranking performance at k = 200.",
+      "page": 25,
+      "index": 1,
+      "width": 779,
+      "height": 278
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-002.webp",
+      "caption": "Table 1: ANN-only retrieval performance at best search parameter per index.",
+      "page": 25,
+      "index": 2,
+      "width": 631,
+      "height": 278
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-003.webp",
+      "caption": "Table 2: Reranking gains at k = 10 with shortlist k = 1,000. Here R@10 denotes exact-top10 recall, i.e. the fraction of the ground-truth top-10 neighbors recovered in the returned top-10.",
+      "page": 25,
+      "index": 3,
+      "width": 756,
+      "height": 277
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-004.webp",
+      "caption": "Table 5: Multi-method retrieval accuracy evaluated against exact ground truth under three distance metrics (10,000 queries, top-10 retrieval from 100,000 sequences). TCRseek uses alignment reranking, while tcrdist3, TCRMatch, and GIANA provide sequence-distance or clustering baselines for comparison.",
+      "page": 26,
+      "index": 4,
+      "width": 761,
+      "height": 373
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-005.webp",
+      "caption": "Table 6: Precision@k across methods for alignment and Hamming ground truth at selected k values. GIANA is omitted because its precision remained near zero across all k values.",
+      "page": 26,
+      "index": 5,
+      "width": 719,
+      "height": 214
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-006.webp",
+      "caption": "Figure 5: Precision@k curves across methods and ground truth metrics. (A) Alignment, (B) Levenshtein, and (C) Hamming ground truth. TCRseek (blue) remains strongest under alignment and Hamming ground truth, while TCRseek and tcrdist3 are closely matched under Levenshtein ground truth. GIANA is omitted because its precision remained near zero across all k values (see Section 2.10).",
+      "page": 21,
+      "index": 6,
+      "width": 917,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-007.webp",
+      "caption": "Figure 6: TCRseek speedup over exact search by index type and distance metric. Speedup increases with the computational cost of the target metric, reaching up to 40× for alignment distance with IVF-PQ.",
+      "page": 22,
+      "index": 7,
+      "width": 628,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-008.webp",
+      "caption": "Figure 2: ANN-only retrieval recall@200 across index types and ground truth metrics.",
+      "page": 18,
+      "index": 8,
+      "width": 535,
+      "height": 368
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-009.webp",
+      "caption": "Figure 7: Combined results overview. (A) Multi-method NDCG@10 heatmap across three ground truth metrics. (B) Precision@k curves under alignment ground truth. (C) Accuracy-efficiency comparison on the shared stage-A benchmark. (D) TCRseek speedup over exact search by index type and distance metric.",
+      "page": 23,
+      "index": 9,
+      "width": 915,
+      "height": 936
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-010.webp",
+      "caption": "Figure 3: Reranking dramatically improves retrieval quality. Paired comparison of ANN-only exact-top10 recall (grey) versus reranked exact-top10 recall (blue) across all index–metric combinations. Exact-top10 recall is the fraction of the ground-truth top-10 neighbors recovered in the returned top-10. Reranking provides +0.31 to +0.63 absolute recall improvement, with the largest gains for IVF-PQ where product quantization introduces the most ranking error.",
+      "page": 19,
+      "index": 10,
+      "width": 773,
+      "height": 378
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-011.webp",
+      "caption": "Figure 1: TCRseek two-stage retrieval pipeline. CDR3 amino acid sequences are first encoded into 4,104-dimensional numerical vectors through BLOSUM62 eigendecomposition and multi-scale windowed k-mer embedding (Stage 1), then indexed using FAISS approximate nearest neighbor structures. Retrieved candidates are reranked using exact sequence-level scoring—Needleman–Wunsch alignment, Levenshtein distance, or Hamming distance—to produce a final ranked neighbor list (Stage 2).",
+      "page": 17,
+      "index": 11,
+      "width": 854,
+      "height": 181
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-012.webp",
+      "caption": "Figure 8: Sensitivity of retrieval accuracy to shortlist size. Top row: binary top-200 recall@10, defined as the number of ground-truth top-200 neighbors recovered in the returned top-10 divided by 200; its theoretical maximum is 0.05. Bottom row: exact-top10 recall, defined as the fraction of true top-10 neighbors recovered in the reranked output. Columns correspond to Hamming, Levenshtein, and alignment ground truth metrics. Binary top-200 recall@10 approaches its 0.05 ceiling rapidly, whereas exact-top10 recall continues to improve with larger shortlists and more clearly separates index types.",
+      "page": 24,
+      "index": 12,
+      "width": 931,
+      "height": 466
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713313-v1/fig-013.webp",
+      "caption": "Figure 4: Multi-method retrieval accuracy heatmap. NDCG@10 for TCRseek, tcrdist3, TCRMatch, and GIANA (rows) evaluated against three ground truth distance metrics (columns). TCRseek is strongest under alignment and Hamming ground truth, while TCRseek and tcrdist3 are nearly tied under Levenshtein ground truth.",
+      "page": 20,
+      "index": 13,
+      "width": 536,
+      "height": 506
+    }
+  ]
+}

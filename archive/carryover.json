@@ -1,6 +1,12 @@
 {
-  "generated_at": "2026-04-17T08:00:35.056718+00:00",
-  "updated_date": "20260408-20260417",
+  "generated_at": "2026-04-17T08:29:55.209117+00:00",
+  "updated_date": "20260319-20260417",
   "carryover_days": 9,
-  "tag_states": {}
+  "tag_states": {
+    "GenTCR": {
+      "updated_date": "20260319-20260417",
+      "carryover_days": 9,
+      "items": []
+    }
+  }
 }

@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-07-717034-v1/fig-001.webp",
+      "caption": "Figure 1: Schematic workflow of the MHCXGraph package. (A) Schematic workflow illustrating the main steps and algorithms of the method. (B) Detailed view of the triad representation, highlighting its features and attributes. (C) Detailed view of the coherent frame graph generation step, illustrating the operation of the depth-first search (DFS) algorithm on the association graph. Local clique searches supporting the DFS in identifying coherent nodes are also shown. Green and red lines connecting nodes indicate whether pairs of association nodes satisfy the coherence condition, i.e., whether all corresponding nodes respect the global distance threshold across input structures. (D) Schematic overview of the package execution modes.",
+      "page": 3,
+      "index": 1,
+      "width": 979,
+      "height": 696
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-07-717034-v1/fig-002.webp",
+      "caption": "Figure 2: Illustrative example of the MHCXGraph dashboard. This example represents an output dashboard from an MHCXGraph run in screening mode. In this case, the MAGE-A3 melanoma-related peptide presented by HLA-A*01 is compared to a self-peptide derived from the titin protein and to a peptide derived from an influenza protein, both bound to the same HLA. The dashboard highlights, in the upper panel, the graph frames of the first component for each comparison, and in the bottom panel, the projection of the graphs onto the corresponding oriented 3D structures. On the left, a set of metadata and parameters can be accessed and visualized.",
+      "page": 5,
+      "index": 2,
+      "width": 979,
+      "height": 495
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-07-717034-v1/fig-003.webp",
+      "caption": "Figure 3: MHCXGraph analysis of different experimentally validated cross-reactivity case studies. (A) MHCXGraph analysis of 11 different HLAs without peptides, using a node granularity of Cα, an edge threshold of 10 Å, and local and global distance difference thresholds of 1.0 and 2.0, respectively. The heatmap on the left presents the pairwise comparison between each HLA based on the coverage-based similarity index. The values within each heatmap cell correspond to the number of unique nodes found across all frames of all components of the association graph. The diagonal represents twice the number of nodes in each input graph, corresponding to the maximum number of nodes that could be identified in a theoretical association graph of the same input protein. Dendrograms were built using the UPGMA hierarchical clustering method. In the center, the frames from the first two components of the association graph are shown. These originate from the multiple-analysis run mode applied to HLA-A only. The graph projection onto the superposed 3D structures is shown on the right, where nodes are depicted by residue side chains. (B) The same MHCXGraph analysis as in (A), but applied to a set of peptides presented by HLA-A*02. Asterisks on the heatmap labels (MELANA, BST2, and IMP2) indicate peptides that were determined to be recognized by the same Mel5 TCR. (C) MHCXGraph analysis in multiple-analysis run mode of cross-reactive HIV-1 peptides bound to different MHC-II alleles. Only the association graph and its projection onto the superposed 3D structures are shown. The node granularity used was the centroid of all residue atoms, with an edge threshold of 8.5 Å and with the use of the RSA feature in the triad. Local and global distance difference thresholds were set to 2. All analyses presented here were performed using an RSA threshold of 0.1 to define exposed nodes.",
+      "page": 6,
+      "index": 3,
+      "width": 783,
+      "height": 995
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-07-717034-v1/fig-004.webp",
+      "caption": "Figure 4: MHCXGraph runtime and memory usage analysis. (A) Runtime analysis of MHCXGraph in multiple mode using two datasets: the Diverse HLA dataset, comprising structures with different MHC-I alleles and peptides, and the Single HLA dataset, comprising structures from the same HLA-A*02:01 allele bound to different peptides. (B) Peak memory usage analysis of MHCXGraph in multiple mode. (C) Runtime analysis of MHCXGraph in screening mode. A linear trend line is presented in all analyses. For all analyses, MHCXGraph was executed using Cα node granularity and an edge threshold of 8.5 Å, without incorporating RSA into triad features. Local and global distance difference thresholds were set to 1 Å and 2 Å, respectively.",
+      "page": 7,
+      "index": 4,
+      "width": 979,
+      "height": 297
+    }
+  ]
+}

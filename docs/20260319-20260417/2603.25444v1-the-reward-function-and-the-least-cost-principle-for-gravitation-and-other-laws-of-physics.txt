@@ -1,0 +1,756 @@
+Title: The Reward Function and the Least Cost Principle for Gravitation and other Laws of Physics
+
+URL Source: https://arxiv.org/pdf/2603.25444v1
+
+Published Time: Fri, 27 Mar 2026 01:04:58 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+The Reward Function and the Least Cost Principle for Gravitation and other Laws of Physics 
+
+Rubén Moreno-Bote 1-3,* 1Department of Engineering, Universitat Pompeu Fabra, 08002, Barcelona, Spain 
+
+> 2
+
+Center for Brain and Cognition, Universitat Pompeu Fabra, 08002, Barcelona, Spain 
+
+> 3
+
+Serra Húnter Fellow Programme, Universitat Pompeu Fabra, Barcelona, 08002, Spain 
+
+> *
+
+Correspondence: ruben.moreno@upf.edu 
+
+# Abstract 
+
+If the universe follows a specific design, then a central question is which cost function is optimized by the observed forces. This is the problem of inverse optimal control, or inverse reinforcement learning, in which a reward function is inferred from the dynamics of the observed system. We first establish the least cost principle , whereby the laws of motion can be derived from minimization of a time-discounted integral of the acceleration cost minus a state-dependent reward function. After determining the functional form of the acceleration cost from basic principles, we infer the reward function from the laws of motion governing classical gravitation and Coulomb forces. The inferred reward function is high when pairs of particles have high relative velocities and when their relative motion is orthogonal to their distance vectors. All in all, our work suggests that relative motion and quasi-circular orbits are the dynamical and static features optimized by central forces in nature. 1
+
+> arXiv:2603.25444v1 [q-bio.NC] 26 Mar 2026
+
+If the universe has an intelligent design, a central question is which cost function is minimized. The cost function—or, more naturally, the reward function—could endow the universe with "desired" features that natural forces ought to optimize. A natural objective might be one that produces rich and structured motion. However, such motion should arise with minimal intervention by the interaction forces. The form of the cost and reward functions, even for classical interactions such as Newtonian gravitation or Coulomb forces, has not yet been established. Here, we use inverse optimal control (IOC) 1–4 to derive the reward function from the system’s dynamics. These and related methods in inverse reinforcement learning have been used to infer cost functions in both linear 1,5,6 and nonlinear 2,7,8 control problems, including impulse control 9,and are widely applied to infer reward functions from observed animal behavior 10,11 . However, IOC is limited by the complexity of the adopted control cost, as well as by assumptions about time horizon and time discounting. In this paper, we establish the least cost principle . This principle implies that the laws of motion in classical systems with central forces, such as Newtonian gravitation and Coulomb forces, arise as the optimal solution to a control problem 12,13 that minimizes the time-discounted integral of acceleration cost minus a reward function. The least cost principle resembles the least action principle 14 , but the former is an optimal control problem, whereas the latter is an optimal path problem 12 . Both principles lead to identical laws of motion, much like uncountably many different parabolas share the same minimum; their individual merits lie in the distinct insights that each framework provides. From basic principles—rather than being assumed for mathematical convenience 1,2,13 —we show that the control cost associated with the least cost principle is quadratic, taking the form of a sum of squared accelerations across particles. Applying IOC using the least cost principle and the derived acceleration cost, we obtain the form of the unknown reward function for Newtonian gravitation and Coulomb forces. We find that the inferred reward function promotes two salient features: it is positive for high relative motion between pairs of particles and negative when their relative motion is not orthogonal to their distance vectors. These effects are inversely modulated by the distance between the particles. All in all, we uncover two salient features that natural forces optimize: relative motion and circular-like orbits. Optimizing these features may provide the universe with fundamental ingredi-ents for the emergence of complexity. The maximization of motion and its diversity is also a central idea in other principles, such as the maximum occupancy principle 15,16 and empowerment 17 . In this paper, we show that motion emerges as an optimized quantity in nature, rather than being assumed as a principle. Our quantitative characterization of the reward function also goes well beyond the qualitative description of gravitation and other central forces as producing "attraction" or "repulsion" between pairs of particles, by demonstrating that the generation of relative motion and circular-like orbits is actively promoted. 
+
+The Least Cost Principle — We define the time-discounted cumulative cost of a trajectory 
+
+xik (t), t ≥ t0, of i = 1 , · · · , N particles with Cartesian coordinates k as 
+
+C =
+
+Z ∞
+
+> t0
+
+dt e −γ(t−t0)
+
+"X
+
+> i
+
+12mi ∥¨xi(t)∥2 − R(x(t), ˙x(t)) 
+
+#
+
+, (1) with fixed initial coordinates x0 = x(t0) and velocities ˙x0 = ˙x(t0), where we use the notation 
+
+x = ( x1, · · · , x N ), with xi = ( xi1, x i2, x i3). Here, γ > 0 is the temporal discount exponent and the term Ca( ¨x) = P 
+
+> i
+> 12
+
+mi ∥¨xi(t)∥2 is the acceleration (control) cost. The state reward function R(x, ˙x)
+
+depends on the system state, which includes the particle coordinates x and their velocities ˙x.Importantly, the reward does not explicitly depend on accelerations ¨x; the only dependence on accelerations appears in the acceleration cost. The acceleration cost implements a penalty for having large accelerations, such that strong forces are discouraged. We will refer to C as simply 2cost-to-go, and assume that it is finite. The cost-to-go C is a functional of the trajectories. The equations of motion are determined by finding the acceleration trajectory ¨x∗(t), t ≥ t0, that minimize the cost-to-go with fixed initial conditions x0 and ˙x0,
+
+C∗(x0, ˙x0) = min  
+
+> ¨x
+
+C, ¨x∗ = arg min  
+
+> ¨x
+
+C , (2) where C∗ is the minimum (optimal) cost-to-go; by definition it is time-invariant and thus independent of t0.Eqs. 1-2 define the least cost principle . Thus, obtaining the laws of motion reduces to an optimal control problem 12,13,18 . This problem effectively amounts to maximizing the reward function—which contains the desired dynamical and static features—while using the weakest possible forces. The least cost principle is related to, but different from the least action principle 14 .While the action is a functional of the Lagrangian, similar to a cost function, it does not explicitly depend on accelerations, in contrast to the cost-to-go in Eq. 1. The form of the acceleration cost in Eq. 1 is uniquely determined by symmetry principles and invariances (see details in Appendix 1). We first impose the condition that the acceleration cost is time and rotational invariant, and that it is additive over particles and their masses. Second, we impose that changes in the acceleration cost induced by internal forces are invariant to the choice of a homogeneously accelerated reference frame. These two sets of conditions are sufficient to determine the acceleration cost Ca( ¨x) identically as in Eq. 1. Quadratic cost terms are typically assumed in optimal control problems for mathematical convenience 12,13,18 . Here we have shown that this form arises from first principles in closed systems. We note that when the reward function is zero, the cost-to-go reduces to 
+
+C = R ∞ 
+
+> 0
+
+dte −γt P 
+
+> i
+> 12
+
+mi ∥¨xi(t)∥2. Minimizing this cost-to-go using Eq. 2 gives rise to the equations of motion ¨xik = 0 . Their solution corresponds to rectilinear motion at constant speed for each of the N particles. Therefore, this optimal control problem corresponds to N independent particles. 
+
+Inverse Optimal Control for General Forces — Our goal is to determine the unknown reward function in Eq. 1 given the laws of motion. We show that inferring the reward function in a time-discounted cost-to-go for general forces is tractable. The optimal cost-to-go in Eq. 1 can be expressed in the form of a Bellman equation by heuristically dividing time into differential steps dt , expanding the exponential and the next-step optimal cost up to first order in dt , dx , and d ˙x as 
+
+C∗ = min 
+
+> ¨x
+
+( X
+
+> ik
+
+12mi ¨x2 
+
+> ik
+
+− R(x, ˙x)
+
+!
+
+dt 
+
++(1 − γdt ) C∗ + X
+
+> ik
+
+∂C∗
+
+∂x ik 
+
+dx ik + X
+
+> ik
+
+∂C∗
+
+∂ ˙xik 
+
+d ˙xik 
+
+! ) 
+
+, (3) where C∗ = C∗(x, ˙x). After using the identities dx = ˙xdt and d ˙x = ¨xdt , minimization over the accelerations leads to the optimal equations of motion 
+
+mi ¨xik = − ∂C∗
+
+∂ ˙xik 
+
+, (4) and to the Hamilton-Jacobi-Bellman equation, which explicitly expresses the unknown reward function as a function of the optimal cost-to-go as 
+
+R(x, ˙x) = X
+
+> ik
+
+"
+
+12mi
+
+ ∂C∗
+
+∂ ˙xik 
+
+2
+
++ ∂C∗
+
+∂x ik 
+
+˙xik + ∂C∗
+
+∂ ˙xik 
+
+¨xik 
+
+#
+
+− γC∗. (5) 3Given known forces Fik (x), from mi ¨xik = Fik and Eq. 4 the optimal cost-to-go becomes 
+
+C∗(x, ˙x) = − X
+
+> ik
+
+Fik (x) ˙ xik + B(x) , (6) where B(x) is an arbitrary function independent of the velocities ˙x. For B(x) = 0 , the optimal cost-to-go is the negative time derivative of the work, dW dt = − P 
+
+> ik
+
+Fik (x) ˙xik . Generalization to the case of velocity-dependent forces is straightforward and explicit if a primitive can be found. After inserting the solution of Eq. 6 into Eq. 5, the unknown reward function takes the form 
+
+R(x, ˙x) = − X
+
+> ik,jp
+
+˙xik ˙xjp 
+
+∂F ik 
+
+∂x jp 
+
+− 12
+
+X
+
+> ik
+
+F 2
+
+> ik
+
+mi
+
+,
+
++ X
+
+> ik
+
+˙xik 
+
+
+
+γF ik + ∂B ∂x ik 
+
+
+
+− γB (x) (7) which is our second central result. If the force is conservative with potential energy U (x), then the first term can be rewritten in a more symmetric form as − P 
+
+> ik,jp
+
+˙xik ˙xjp ∂2U∂x ik ∂x jp .As we will see below, the first term in Eq. 7 contains contributions favoring high velocities. The second term clearly penalizes strong forces. Our derivation shows that the equations of motion mi ¨xik = Fik minimize the cost-to-go in Eq. 1 under the reward function in Eq. 7. This can also be explicitly shown (see details in Appendix 2): trajectories generated by the dynamics mi ¨xik = ˜Fik with ˜Fik different from Fik leads to a non-lower cost-to-go in Eq. 1 when the reward function is chosen as in Eq. 7. We now specialize Eq. 7 to two important cases: 
+
+i) The Reward Function for Classical Gravitation — The total gravitational force on particle i
+
+due a system of N particles is 
+
+Fik (x) = − X 
+
+> j, j ̸=i
+
+Gm imj
+
+r3
+
+> ij
+
+(xik − xjk ) , (8) with rij = ∥xi − xj ∥. After some straightforward but lengthy calculations, the reward function in Eq. 7 with B(x) = 0 becomes 
+
+R(x, ˙x) = G
+
+2
+
+X
+
+> i̸=j
+
+mimj
+
+r3
+
+> ij
+
+∥ ˙xi − ˙xj ∥2 (I) 
+
+−3G
+
+2
+
+X
+
+> i̸=j
+
+mimj
+
+r5
+
+> ij
+
+[( xi − xj ) · ( ˙ xi − ˙xj )] 2 (II) 
+
+−G2
+
+2
+
+X
+
+> i̸=l,i ̸=s
+
+1
+
+mi
+
+m2 
+
+> i
+
+mlms
+
+r3
+
+> il
+
+r3
+
+> is
+
+(xi − xl) · (xi − xs) (III) (9) where we have omitted the term proportional to γ, as it can be be made arbitrarily small. In the last and next equations, sums run over all indexes involved. Masses are not canceled for later convenience. The optimal cost-to-go is from Eq. 6 
+
+C∗(x, ˙x) = G
+
+2
+
+X
+
+> i̸=j
+
+mimj
+
+r3
+
+> ij
+
+(xi − xj ) · ( ˙ xi − ˙xj ) . (10) Both the reward function and the optimal cost-to-go depend only on relative positions and velocities, as expected for a closed system. 4From Eqs. 6-7, the optimal cost-to-go and reward function are defined up to an arbitrary function B(x). As a consequence, B(x) can be chosen such that an arbitrary function of x alone, as well as an arbitrary term linear in ˙x, can be added to the reward function. This implies that only Terms I and II are fundamental, since they are quadratic in the velocity and therefore cannot be absorbed into the contributions of B(x). Furthermore, Term III arises from the presence of the derived quadratic control cost in the cost-to-go, whereas Terms I and II are of a more intrinsic nature. First, reward Term I is non-negative and depends on the norm of the difference between the velocity vectors of pairs of particles. Consequently, this reward term is large when the relative motion between particles is high. This effect is also modulated by the distance between particles: high relative motion is promoted at short distances, but at large distances the reward function becomes neutral. Second, reward Term II is non-positive and depends on the dot product between the distance vector and the relative velocity vector of pairs of particles. A pairwise contribution to this reward becomes zero when the relative motion between the pair of particles is perpendicular to their distance vector. Consequently, Term II promotes circular-like motion of particles around one another. Non-circular motion is not penalized at long distances but becomes costly at short distances. Numerical simulations confirm our analytical results. As expected 14 , the generated trajectories are mostly curvilinear, and particles tend to form circular-like orbits when they are close to each other (Fig. 1a; N = 5 particles). The reward contributions of Terms I and II fluctuate over time (Fig. 1b), with Term I always positive and Term II always negative. The minimum cost-to-go is relatively small for most of the trajectory but is punctuated by semi-periodic positive and negative peaks (Fig. 1c). We verified that numerical integration of the cost-to-go (red line, not visible) matches the analytically derived cost-to-go in Eq. 10 (black). For a larger system with N = 10 particles, the fluctuations in cost-to-go increase, but the cost-to-go remains small for a larger fraction of the trajectory compared to the N = 5 particle system. The cost-to-go increases if the particles follow a non-Newtonian force 1/r 2+ ϵ (Fig. 1e). The minimum cost-to-go is attained when ϵ = 0 ,corresponding to purely Newtonian gravitation (Fig. 1f). 
+
+ii) The Reward Function for Coulomb Forces — For Coulomb electrostatic forces, the reward function is identical to Eq. 9, with G replaced by −CCoulomb and the masses mi in the numerators replaced by the charges qi, while masses in the denominators remain unchanged. For charges of opposite sign, the same rules apply as for Terms I and II in gravitation. However, for charges of the same sign, the features are inverted: relative motion is minimized, and the motion of particles tends to align parallel to their distance vectors, with identical intensity regardless of whether motion is toward or away from each other. As in the case of Newtonian gravitation, if the Coulomb force is perturbed from 1/r 2 to 1/r 2+2 ϵ,the resulting cost-to-go is higher than for the unperturbed case ϵ = 0 (Fig. 1f). 
+
+Discussion — We have inferred the reward function optimized by classical forces by first establishing the least cost principle and deriving the form of the acceleration cost from first principles. Our analysis has uncovered the dynamical and static features optimized by Newtonian gravitation, Coulomb interactions, and more general forces. In particular, relative motion and circular-like orbits are favored. These features are arguably two essential ingredients for the design of an "interesting" universe, as structured motion forms the basis for the emergence of complexity. The choice of a non-zero temporal discount exponent γ < 1 has several implications. First, it allows for mathematical tractability and avoids cumbersome derivations when searching for time-invariant reward functions 1,2 . Second, a non-zero temporal discount implicitly assumes that the system can evaporate or disintegrate, which is a reasonable assumption. Third, assuming 
+
+γ < 1 emphasizes transients rather than the stationary distribution, which is appropriate if the 5-6 -4 -2 0 2
+
+x
+
+-1 01
+
+> y
+
+a
+
+0 0.2 0.4 
+
+time (a.u.) 
+
+10 5
+
+10 10 
+
+> Rewards  RI
+> -R II
+
+b
+
+0 0.2 0.4 
+
+time (a.u.) 
+
+-2 02
+
+> Cost-To-Go
+
+10 5
+
+> N = 5
+
+c
+
+0 0.1 0.2 
+
+time (a.u.) 
+
+-1 01
+
+> Cost-To-Go
+
+10 7
+
+> N = 10
+
+d
+
+0 0.2 0.4 
+
+time (a.u.) 
+
+-5 05
+
+> Cost-To-Go
+
+10 5
+
+> perturb.
+
+e
+
+-0.2 0 0.2 
+
+, perturbation 
+
+00.5 1 
+
+> Cost-To-Go  Gravitation Coulomb, 20
+
+fFigure 1: Newtonian gravitation maximizes the reward function in Eq. 9. ( a) Trajectories of five particles following Newtonian gravitation. ( b) Reward contributions from Terms I and II in Eq. 9 as a function of time. Since reward Term II is non-positive, its absolute value is shown. ( c) The minimum cost-to-go in Eq. 10 for each state along the trajectory, plotted as a function of time (black line). This coincides with the actual cost incurrent by the trajectory numerically computed via Eq. 1 (red line; not visible). ( d) With an increasing number of particles, N = 10 , the cost-to-go fluctuates more widely but spends more time at relatively small values. ( e) A small perturbation of the Newtonian force from 1/r 2 to 1/r 2+ ϵ with ϵ = 0 .05 produces a higher cost-to-go (green line) than the optimal one (black). The cost-to-go is computed at each state along the trajectories generated with the perturbed force. ( f) Cost-to-go (black line) incurred by a perturbed Newtonian force 1/r 2+ ϵ as a function of ϵ, calculated using the same initial condition as in panel (b). The cost-to-go attains a minimum at ϵ = 0 . Cost-to-go (blue line) incurred by a perturbed Coulomb force 1/r 2+2 ϵ as a function of ϵ. Parameters are specified in Appendix 3. 6expected lifetime of the universe is finite. In contrast, taking γ = 1 would imply that the cost-to-go is dominated by the asymptotic stationary distribution; that is, the horizon would be so long that transient effects become negligible. Although this approach is sometimes adopted in reinforcement learning 19,20 , it may preclude the emergence of dynamical complexity across multiple temporal scales. We finally note that reward Terms I and II arise from the first term in the general expression of the reward function in Eq. 7, which is linear in the force. An important implication is that if the reward function optimized by each of a set of forces is known, then the reward function optimized by the sum of those forces corresponds to the sum of the individual reward functions. This, in turn, implies that the motion and circularity features we derived remain relevant even when new forces are added to the system. 
+
+Acknowledgments — I thank Dmytro Grytskyy for discovering typos in the equations. This project was supported by grants funded by the Spanish Ministry of Science, Innovation and Universities (MICIU/AEI/10.13039/501100011033) and by ICREA ACADÈMIA (2022) funded by the Catalan Institution for Research and Advanced Studies. 
+
+# References 
+
+1. Kalman, R.E. (1964). When is a linear control system optimal? Basic Eng, 86(1): 51-60. 2. Moylan, P., and Anderson, B. (1973). Nonlinear regulator theory and an inverse optimal control problem. IEEE Transactions on Automatic Control 18 , 460–465. 3. Casti, J. (1980). On the general inverse problem of optimal control theory. Journal of Optimization Theory and Applications 32 , 491–497. 4. Ab Azar, N., Shahmansoorian, A., and Davoudi, M. (2020). From inverse optimal control to inverse reinforcement learning: A historical review. Annual Reviews in Control 50 , 119–138. 5. Wu, H., Hu, Q., Zheng, J., Shao, X., Liu, Y., and Li, D. (2026). Output-feedback control of linear continuous-time systems using discounted inverse reinforcement learning. IEEE Transactions on Cybernetics. 6. Xue, W., Kolaric, P., Fan, J., Lian, B., Chai, T., and Lewis, F.L. (2021). Inverse reinforce-ment learning in tracking control based on inverse optimal control. IEEE Transactions on Cybernetics 52 , 10570–10581. 7. Ziebart, B.D., Maas, A.L., Bagnell, J.A., Dey, A.K. et al. (2008). Maximum entropy inverse reinforcement learning. In Aaai vol. 8. Chicago, IL, USA pp. 1433–1438. 8. Xu, Y., Xie, J., Zhao, T., Baker, C., Zhao, Y., and Wu, Y.N. (2022). Energy-based continuous inverse optimal control. IEEE transactions on neural networks and learning systems 34 ,10563–10577. 9. Wang, W., Li, C., and Huan, M. (2025). Optimal impulsive control and stabilization of dynamic systems based on quasi-variational inequalities. Mathematics 13 , 3864. 10. Drugowitsch, J., Moreno-Bote, R., Churchland, A.K., Shadlen, M.N., and Pouget, A. (2012). The cost of accumulating evidence in perceptual decision making. Journal of Neuroscience 
+
+32 , 3612–3628. 711. Rothkopf, C.A., and Ballard, D.H. (2013). Modular inverse reinforcement learning for visuo-motor behavior. Biological cybernetics 107 , 477–490. 12. Kirk, D.E. (2004). Optimal control theory: an introduction. Courier Corporation. 13. Fleming, W.H., and Soner, H.M. (2006). Controlled Markov processes and viscosity solutions. Springer. 14. Landau, L.D., and Lifshits, E. (1960). Mechanics vol. 1. CUP Archive. 15. Moreno-Bote, R., and Ramirez-Ruiz, J. (2023). Empowerment, free energy principle and maximum occupancy principle compared. In NeurIPS 2023 workshop: Information-Theoretic Principles in Cognitive Systems. 16. Ramirez-Ruiz, J., Grytskyy, D., Mastrogiuseppe, C., Habib, Y., and Moreno-Bote, R. (2024). Complex behavior from intrinsic motivation to occupy future action-state path space. Nature Communications 15 , 6368. 17. Klyubin, A.S., Polani, D., and Nehaniv, C.L. (2005). Empowerment: A universal agent-centric measure of control. In 2005 ieee congress on evolutionary computation vol. 1. IEEE pp. 128–135. 18. Lewis, F.L., and Vrabie, D. (2009). Reinforcement learning and adaptive dynamic program-ming for feedback control. IEEE circuits and systems magazine 9, 32–50. 19. Hazan, E., Kakade, S., Singh, K., and Van Soest, A. (2019). Provably efficient maximum entropy exploration. In International conference on machine learning. PMLR pp. 2681–2691. 20. Grytskyy, D., Ramírez-Ruiz, J., and Moreno-Bote, R. (2023). A general markov decision process formalism for action-state entropy-regularized reward maximization. arXiv preprint arXiv:2302.01098. 8Appendix 
+
+# 1 The Acceleration Cost for N Independent Particles 
+
+A fundamental question is why the acceleration cost in Eq. 1 has the form 
+
+Ca(¨ x) = X
+
+> i
+
+12mi ∥¨xi∥2 . (11) For instance, powers ∥¨xi∥n with n̸ = 2 could in principle be used. Indeed, all of them would lead to identical rectilinear equations of motion ¨xik = 0 . We next describe sufficient conditions for the derivation of the acceleration cost form in Eq. 11. First, because of time homogeneity, the acceleration cost cannot explicitly depend on time. Second, for N independent particles and due to additivity, the acceleration cost should be the sum of the individual acceleration costs of unit-mass particles Ca(¨ xi),
+
+Ca(¨ x) = X
+
+> i
+
+miCa(¨ xi) , (12) where ¨xi is the acceleration vector of particle i. Third, because of spatial isotropy, the unit-mass single particle acceleration cost should be a function of the squared modulus of the accelerations, that is, Ca( ¨xi) = Ca(∥¨xi∥2). We note that we are abusing notation when using the same symbol for different functions. We adopt the notational convention that different arguments indicate that the function can be different. Finally, we impose invariance in the acceleration cost changes due to internal forces across dif-ferent reference frames. We consider a system of N particles, and two different reference frames. The particles are initially non interacting, and they have accelerations ¨xi. These accelerations are due, for instance, to an external field such as gravity. Now, we assume that at some time t, the particles interact through mutual forces. This interaction causes a sudden change of accelerations from ¨xi to ¨x′ 
+
+> i
+
+= ¨xi + bi, where bi is the acceleration change for particle i. We impose that the change in acceleration cost before and after the sudden force onset be invariant to the reference frame chosen. This is trivially guaranteed for any inertial reference frame, as the accelerations of all particles are the same regardless of the reference frames chosen. Therefore, we ask the more stringent condition that the change in acceleration cost should be invariant to any homogeneously accelerated reference frame chosen. For instance, the change in acceleration cost of our system of particles should be the same within or outside a gravitational field. This condition suffices to fully determine the functional form of the acceleration cost, Eq. 11, as we show next. In the first reference frame the accelerations of the system particles change from is ¨xi to 
+
+¨x′ 
+
+> i
+
+= ¨xi + bi after the sudden onset of the internal forces. The change in acceleration cost is then 
+
+∆Ca = X
+
+> i
+
+mi(Ca(∥¨x′
+
+> i
+
+∥2) − Ca(∥¨xi∥2) . (13) In the second reference frame there is an additional homogeneous acceleration a(t) with k-th component ak(t); the acceleration vector is the same for all particles, and it can be time-dependent. In this reference frame, the acceleration of particle i changes from ¨xi + a(t) to ¨xi + bi + a(t) after the sudden onset of the internal forces. The change in acceleration cost is then 
+
+∆ ˜Ca = X
+
+> i
+
+mi(Ca(∥¨x′ 
+
+> i
+
++ a∥2) − Ca(∥¨xi + a∥2) . (14) 9Therefore, our invariance condition requires the identity ∆ ˜Ca = ∆ Ca, as the change in acceleration cost should be the same in any homogeneously accelerated reference frame. Expanding the last equation up to first order in the acceleration a,
+
+∆ ˜Ca = ∆ Ca + X
+
+> i
+
+mi
+
+ ddy Ca(∥¨x′
+
+> i
+
+∥2) ¨ x′ 
+
+> i
+
+− ddy Ca(∥¨xi∥2) ¨ xi
+
+
+
+· a + O(∥a∥2) , (15) where ddy Ca(∥¨xi∥2) is the derivative of the real-valued function Ca(y) evaluated at ∥¨xi∥2. Invariance implies that the first order term a vanishes. This condition holds if the derivative ddy Ca(∥¨xi∥2) is a constant, because from Newton Second Law, P 
+
+> i
+
+mibi = 0 in a closed system. Therefore, we obtain Ca(∥¨xi∥2) = 12 ∥¨xi∥2 choosing the standard factor 12 , and thus we recover the acceleration cost for N particles in Eq. 11. It is easy to see that the change in acceleration cost in Eq. 11 is invariant in any homogeneously accelerated reference frame not only to first order in a(t), but exactly at all orders. Furthermore, no other choice of the (differentiable) function Ca(y) satisfies invariance. This can be seen more simply by using the case of two particles, N = 2 . We define the functions gk( ¨xi) =  
+
+> ddy
+
+Ca(∥¨xi∥2) ¨xik . The vanishing condition at first order in Eq. 15 implies m1(gk( ¨x′
+
+> 1
+
+) − gk( ¨x1)) + 
+
+m2(gk( ¨x′
+
+> 2
+
+) − gk( ¨x2)) = 0 for all k, which means that m2/m 1 = −(gk( ¨x′
+
+> 1
+
+) − gk( ¨x1)) /(gk( ¨x′
+
+> 2
+
+) − gk( ¨x2)) .(The solution gk( ¨x) = d, with d constant, is not allowed because it would lead to non differentiable cost at zero, or the trivial solution that the acceleration cost is a constant for d = 0 .) Newton Second Law implies that m2/m 1 = −b1k/b 2k = −( ¨x′ 
+
+> 1k
+
+− ¨x1k)/( ¨x′ 
+
+> 2k
+
+− ¨x2k). Since the function gk
+
+should be independent of the masses, equating we obtain (gk( ¨x′
+
+> 1
+
+) − gk( ¨x1)) /(gk( ¨x′
+
+> 2
+
+) − gk( ¨x2)) = ( ¨x′ 
+
+> 1k
+
+− ¨x1k)/( ¨x′ 
+
+> 2k
+
+− ¨x2k). This condition should hold for any values of the coordinates consistent with having positive masses. For instance, we can take for all k ¨x1k = c arbitrary, ¨x′ 
+
+> 1k
+
+> c , ¨x2k = 1 
+
+and ¨x′ 
+
+> 2k
+
+= 0 , which implies that gk( ¨x′
+
+> 1
+
+) = gk(c) + ( gk(1) − gk(0))( ¨x′ 
+
+> 1k
+
+− c) (we denote by c, 1 and 
+
+0 the vectors with identical entries c, 1 and 0 respectively). By definition gk(0) = 0 , and thus 
+
+gk( ¨x′
+
+> 1
+
+) = ( gk(1) − gk(0)) ¨x′
+
+> 1k
+
+, which means that gk is proportional to the k-th component of the acceleration. Therefore, the derivative ddy Ca is again found to be constant, and thus we arrive to the solution in Eq. 11. 
+
+# 2 The Optimal Force for Fixed Reward Function 
+
+Here we show that for a fixed reward function R(x, ˙x) determined by some force functions Fik (x)
+
+as in Eq. 7, along with some regularity conditions, the trajectory that leads to the absolute minimum of the cost-to-go in Eq 1 is given by the equations of motion ¨xik = Fik . In other words, any other force ˜Fik ̸ = Fik would lead to non-lower cost-to-go. From Eq. 1, the cost-to-go is 
+
+C =
+
+Z ∞
+
+> t0
+
+dt e −γ(t−t0)
+
+"X
+
+> i
+
+12mi ∥¨xi(t)∥2 − R(x(t), ˙x(t)) 
+
+#
+
+, (16) where x and its temporal derivatives refer to the coordinates, velocities and accelerations of the particles, and we have taking the initial time to be zero, t0 = 0 . The reward function associated with the equation of motion mi ¨xik = Fik (x) is, from Eq. 7, 
+
+R(x, ˙x) = − X
+
+> ik,jp
+
+˙xik ˙xjp 
+
+∂F ik 
+
+∂x jp 
+
+− 12
+
+X
+
+> ik
+
+F 2
+
+> ik
+
+mi
+
++ γ X
+
+> ik
+
+˙xik Fik (17) 10 where we have taken B(x) = 0 . Therefore, inserting Eq. 17 into Eq. 16, the cost-to-go for initial condition x0 and ˙x0 is 
+
+C(x0, ˙x0) = 
+
+Z ∞
+
+> 0
+
+dt e −γt 
+
+ X
+
+> ik
+
+12mi ¨x2 
+
+> ik
+
++ X
+
+> ik,jp
+
+˙xik ˙xjp 
+
+∂F ik 
+
+∂x jp 
+
++ 12
+
+X
+
+> ik
+
+F 2
+
+> ik
+
+mi
+
+− γ X
+
+> ik
+
+˙xik Fik 
+
+
+
+. (18) The integral over the second term on the right-hand side can be rewritten integrating by parts as 
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik,jp
+
+˙xik ˙xjp 
+
+∂F ik 
+
+∂x jp 
+
+=
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik
+
+˙xik 
+
+ddt Fik (x)= e−γt X
+
+> ik
+
+˙xik Fik (x)
+
+> ∞
+> 0
+
+−
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik
+
+(−γ ˙xik + ¨ xik )Fik (x)= − X
+
+> ik
+
+˙xik, 0Fik (x0) −
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik
+
+(−γ ˙xik + ¨ xik )Fik (x) , (19) where we have assumed that the ˙xik Fik (x) remains bounded and therefore the decaying expo-nential term dominates at long times. Inserting this expression back into Eq. 18, 
+
+C(x0, ˙x0) = − X
+
+> ik
+
+˙xik, 0Fik (x0) + 
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik
+
+12mi ¨x2 
+
+> ik
+
+− ¨xik Fik + 12mi
+
+F 2
+
+> ik
+
+
+
+= − X
+
+> ik
+
+˙xik, 0Fik (x0) + 
+
+Z ∞
+
+> 0
+
+dt e −γt X
+
+> ik
+
+12mi
+
+(mi ¨xik − Fik )2 . (20) The first term in the right hand sie is precisely the minimum cost-to-go in Eq. 6. This means that we need to prove that when the dynamics follows mi ¨xik = Fik (x) the integral is zero, and when the dynamics follows mi ¨xik = ˜Fik (x), with ˜Fik (x)̸ = Fik (x), the remaining integral is non-negative. That the integral is zero when mi ¨xik = Fik (x) is obvious by direct substitution. Also, it is clear that the integral is non-negative for any choice of the dynamics different from mi ¨xik = Fik (x) because masses are non-negative. This proves our initial statement. 
+
+# 3 Parameters 
+
+In Fig. 1, panels a-c, we perform simulations of 5 particles under Newtonian gravitation. They are labeled as k = {0, 1, 2, 3, 4}, where particle k = 2 is heavy, with mass m1 = 10 , while the other particles are lighter with masses m2 = 1 + 0 .01 k, k = {0, 1, 3, 4}. We use G = 1 , γ = 10 , simulation time T = 2 (only a segment is plotted), and integration time step δt = 10 −7. Initial conditions on the x coordinate are x0 = 2( k − 2) /5, while in the y and z coordinates are all zero. Velocities only have non-zero y components, with value vy, 0 = 4( k − 2) /5.In Fig. 1d, we perform simulations of 10 particles under Newtonian gravitation. They are labeled as k = {0, · · · , 9}, where particle k = 5 is heavy, with mass m1 = 10 , while the other particles are lighter with masses m2 = 0 .01( k + 1) , k = {0, · · · , 4, 6, · · · , 9}. We use G = 1 , γ = 10 ,simulation time T = 1 (only a segment is plotted), and integration time step δt = 10 −10 . Initial conditions on the x coordinate are x0 = 3( k − 4.5) /10 , while in the y and z coordinates are all zero. Velocities only have non-zero y coordinates, with value vy, 0 = 3( k − 4.5) /5.In Fig. 1e, we perform simulations of 5 particles under perturbed Newtonian gravitation. All the parameters are as in Fig. 1a-c, except that the Newtonian force has been perturbed from 1/r 2 to 
+
+1/r 2+ ϵ with ϵ = 0 .05 . Trajectories are generated under the perturbed force, and the cost-to-go over each state of the trajectory is computed in two different ways. First, using the minimum cost-to-go 11 in Eq. 10 as if for each state from then onward the force would be back to the Newtonian force. And second, the cost-to-go produced by the perturbed force is numerically computed by a line integral over the generated trajectories using Eq. 1 with the reward function exactly as in Eq. 9 (with no perturbation added). The obtained cost-to-go produced by the perturbed force is shown to be always above the minimum cost-to-go. In Fig. 1f, we perform simulations of 3 particles under perturbed Newtonian gravitation and under Coulomb forces. For gravitation, we choose G = 1 and γ = 5 , simulation time T = 5 , and integration time step δt = 10 −7. The 3 particles are labeled as k = {0, 1, 2}, where particle k = 1 
+
+is heavy, with mass m1 = 10 , while the other particles are lighter with masses m2 = 0 .01( k + 1) ,
+
+k = {0, 2}. Initial conditions on the x coordinate are x0 = k − 1, while in the y and z coordinates are all zero. Velocities only have non-zero y coordinates, with value vy, 0 = 2( k − 1) .For Coulomb forces, the heavy particle has mass m1 = 10 , while the other particles are lighter with identical masses m2 = 0 .01 . The heavy mass has positive charge q = 1 , and the lighter particles have negative charge q = −1. We choose CCoulomb = 1 and γ = 5 , simulation time T = 5 ,and integration time step δt = 10 −7. Initial conditions on the x coordinate are x0 = k − 1, while in the y and z coordinates are all zero. Velocities only have non-zero y coordinates, with value 
+
+vy, 0 = 2(2 + 0 .01 k)( k − 1) .We did not observe any qualitative variation in the presented results when testing for different parameters, including initial conditions. 12

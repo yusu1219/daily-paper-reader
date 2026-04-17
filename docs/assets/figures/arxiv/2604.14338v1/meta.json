@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.14338v1/fig-001.webp",
+      "caption": "Figure 1: Convergence rate comparison between the deterministic PS-IG estimator and Monte Carlo sampling on a log-log scale.",
+      "page": 8,
+      "index": 1,
+      "width": 863,
+      "height": 504
+    }
+  ]
+}

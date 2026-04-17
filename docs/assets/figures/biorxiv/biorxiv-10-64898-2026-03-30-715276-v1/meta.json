@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715276-v1/fig-001.webp",
+      "caption": "Table 1: The 20 peptides represented in this dataset, described by their HLA context, source organism, minimum Levenshtein distance to any published epitope, and maximum shared substring with any published epitope.",
+      "page": 5,
+      "index": 1,
+      "width": 981,
+      "height": 741
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715276-v1/fig-002.webp",
+      "caption": "Table 2: structural methods were well-represented among the methods with macro-AUC_0.1 ≥ 0.52 (only the top method per team is described). There was a further distinction between methods that used AF3 for TCR-pMHC modelling and alternatives such as Chai-1 and Boltz-1. *Methods details and scores are shown for the top submission for the team in question, as multiple teams submitted closely-related methods. Supplementary Figure 3 and 4 show performance across all models submitted, and perpeptide and macro scores are found in Supplementary File 1.",
+      "page": 12,
+      "index": 2,
+      "width": 981,
+      "height": 562
+    }
+  ]
+}

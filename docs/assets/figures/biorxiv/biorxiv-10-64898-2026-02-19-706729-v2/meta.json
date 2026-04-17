@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-001.webp",
+      "caption": "Figure 5: Structural logic of TCR–pHLA engagement and distribution of significant residues. (A) Schematic of the peptide-binding groove in Class I HLAs (α1 and α2 helices), illustrating three categories of polymorphic residues: those related to TCR Vβ (blue), peptide (yellow) or both (green). (B) Schematic of the TCR binding interface (footprint), showing the arrangement of CDR loops categorized into three functional ‘topes’ (Cohn et al., 2019): Tope #1 (TCRβ CDR1/2) and Tope #3 (TCRα CDR1/2) engage the HLA helices, while Tope #2 (hypervariable CDR3s) primarily engages the peptide. The TCR Vβ domain (blue text, corresponding to Tope #1) typically contacts the α1 helix in the canonical diagonal orientation. (C) Overlay of the TCR footprint onto the Class I binding groove, illustrating the proximity of Vβ CDRs to the α1 helix. (D) Schematic of the Class II binding groove, formed by the α1 and β1 chains. Note that unlike Class I, for Class II HLAs, the β platform is encoded by the α chain (light grey) and β chain (dark grey). (E–G) Correlated positions highlighted on HLA-A (E), HLA-B (F) and HLA-DR (G). Residues are colored by their statistical association: TCR Vβ (blue), peptide (yellow) or both (green). These positions are identified in Fig. 4 (See details in Supplementary Section D).",
+      "page": 11,
+      "index": 1,
+      "width": 979,
+      "height": 681
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-002.webp",
+      "caption": "Table 1: Spearman ρ coefficients and bootstrap standard deviation (SD) of HLA sequence polymorphism measured with BLOSUM Distance, comparing TCR Vβ gene Preference with cosine distance and Peptide Motifs with JS Divergence for all loci and classes. A significance threshold of 0.01 was used and p-Values below this threshold are in bold. See details about TCR-HLA in Appendix Section C and HLA-Peptide in Appendix Section D.",
+      "page": 7,
+      "index": 2,
+      "width": 1027,
+      "height": 331
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-003.webp",
+      "caption": "Figure 4: Disentangling HLA positions correlated with Vβ gene usage vectors, the peptide repertoire or both. (A) Across all loci, HLA polymorphic positions significantly correlated (pvalue ≤ 0.01) with similarity in Vβ gene usage (blue), peptide repertoire similarity (yellow) and both (green). Shaded are the rough positions of the HLA binding groove helices. To allow positional comparison, for Class II we combined the α1 and β1 sequence. In light red is the α1 helix region (closest to TCRβ). In light green is the α2 helix (or β1 for Class II) (closest to TCRα). See also per-locus plots in Appendix C (TCRβ) and D (peptide). (B) Scatter plot of Spearman’s ρ values and bootstrapped standard deviation for the correlation of HLA polymorphism with peptide motif similarity versus its correlation with Vβ gene usage similarity. Only HLA positions where at least one significant correlation is derived are plotted. See per-locus plots and per-position values in Appendix E.",
+      "page": 10,
+      "index": 3,
+      "width": 961,
+      "height": 370
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-004.webp",
+      "caption": "Figure 1: Summary of our analysis workflow. (A) Starting from sets of TCRβs associated with specific HLAs, we generate normalized Vβ gene usage vectors for each HLA. We quantify TCR Vβ usage similarity in a pairwise manner, calculating the cosine distance between the Vβ gene usage vectors of two HLAs. (B) Starting from HLA protein sequences, HLA sequences are trimmed to the TCR-binding surface and aligned via Multiple Sequence Alignment (MSA) (Bradley, 2023). We quantify both overall and position-dependent HLA polymorphism by comparing HLA sequences using the BLOSUM62 substitution matrix. (C) We use MHC Motif Atlas (Tadros et al., 2023) to generate Position Weight Matrices (PWMs) of the peptide repertoire for a given HLA. PWMs encode the same information as logo plots, indicating the frequency of amino acid use at any given position. Using PWMs, we calculate the Jensen-Shannon Divergence to quantify similarity of the peptide repertoire of any two HLAs.",
+      "page": 8,
+      "index": 4,
+      "width": 920,
+      "height": 510
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-005.webp",
+      "caption": "Figure 2: TCR Vβ usage patterns among HLA-A*02:01-associated sequences are unaffected by CMV exposure. Background-normalized Vβ gene usage across HLA-A*02:01-positive donors is shown for CMV-positive (orange) and CMV-negative (blue) cohorts. Error bars indicate the standard deviation across individuals within each group. Usage patterns are consistent between CMV-positive and CMV-negative subjects, suggesting that CMV exposure does not influence HLAassociated Vβ preferences.",
+      "page": 9,
+      "index": 5,
+      "width": 967,
+      "height": 324
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-02-19-706729-v2/fig-006.webp",
+      "caption": "Figure 3: A pairwise comparison showing the relationship between HLA polymorphism, Vβ gene usage and the peptide repertoire. (A) TCR Vβ usage similarity plotted against HLA polymorphism. HLAs with similar sequences tend to have similar Vβ gene preferences. Dotted lines illustrate correlations which we quantify using partial Spearman’s ρ (class I: ρ 0.30 ± 0.04, class II: ρ 0.60 ± 0.02). (B) Peptide repertoire similarity plotted against HLA polymorphism. HLAs with similar sequences tend to have similar peptide repertoires. Dotted lines illustrate correlations which we quantify using partial Spearman’s ρ (class I: ρ 0.25 ± 0.04, class II: ρ 0.52 ± 0.02). See Table 1 for per locus Spearman’s ρ and p values and Appendix Section C for TCR-HLA and Appendix Section D.1 for HLA-peptide.",
+      "page": 9,
+      "index": 6,
+      "width": 964,
+      "height": 393
+    }
+  ]
+}

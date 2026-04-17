@@ -1,0 +1,1559 @@
+Title: HLA Alleles Imprint Distinct Biases in the Usage Preferences of TCR Vβ segments
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.02.19.706729v2.full.pdf
+
+Number of Pages: 22
+
+Markdown Content:
+# HLA Alleles Imprint Distinct Biases in the Usage Preferences of 1
+
+# TCR V β segments 2
+
+Leonardo V. Castorina 1, Matthew T. Noakes 2, Lorenzo Pisani 1, Julia Greissl 1, Harlan 3
+
+Robins 2, Haiyin Chen-Harris 2, and H. Jabran Zahid 1,* 
+
+> 4
+> 1
+
+Microsoft Research, 14820 NE 36th Street, Redmond, Washington, 98052, USA 5
+
+> 2
+
+Adaptive Biotechnologies, 1165 Eastlake Ave E Seattle, Washington, 98109, USA 6
+
+> *
+
+Corresponding author: H.Zahid@microsoft.com 7
+
+Abstract 8
+
+T cells must co-recognize peptide and HLA, yet the extent to which this specificity is 9
+
+shaped by germline-encoded TCR–HLA contacts versus selection during thymic development has 10 
+
+remained difficult to quantify. Leveraging population-scale TCR β repertoires linked to donor HLA 11 
+
+genotypes, we construct allele-specific V β usage profiles and normalize them to repertoire-wide 12 
+
+baselines to derive interpretable HLA-TCR V β preference vectors. We demonstrate that different 13 
+
+HLA alleles imprint distinct biases in the usage frequency of TCR V β gene segments among 14 
+
+the public TCRs that engage those alleles; consistent with germline-encoded TCR–HLA contact 15 
+
+preferences, certain V β genes are over-represented for particular HLA alleles. Similarities in HLA 16 
+
+amino-acid sequence predict similarities in both their V β preferences and peptide-binding motifs; 17 
+
+a residue-level analysis disentangles HLA positions primarily associated with TCR engagement 18 
+
+from those associated with peptide motifs. The TCR-associated HLA positions localize to 19 
+
+canonical TCR-facing helices, whereas peptide-associated HLA positions track binding pockets, 20 
+
+revealing distinct molecular routes by which HLA polymorphism shapes the TCR and peptide 21 
+
+sides of recognition. CMV exposure stratifications confirmed these patterns are not explained 22 
+
+by a few dominant infections. Together, these data support that germline-encoded constraints 23 
+
+set the landscape of TCR–HLA compatibility, while thymic and peptide-driven forces tune the 24 
+
+realized repertoire. These HLA-specific V β biases are a biological prior that should provide a 25 
+
+baseline for better understanding of TCR-pHLA specificity as a whole and should be accounted 26 
+
+for in future evaluation of any TCR-pHLA specificity prediction methods. 27 
+
+Keywords: Human Leukocyte Antigen (HLA), HLA Polymorphism, T Cell Receptor (TCR), 28 
+
+Germline Bias, TCR V β Gene Usage, TCR Repertoire, Structural Immunology. 29 
+
+## 1 Introduction 30 
+
+Interactions between T cell receptors (TCRs) and peptide-presenting Human Leukocyte Antigens 31 
+
+(HLAs) are central to adaptive immunity, enabling the immune system to distinguish self from non-self 32 
+
+1
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+and mount targeted responses to pathogens, cancer and other immunological threats (Murphy and 33 
+
+Weaver, 2017a). A deeper understanding of this interaction could transform our ability to predict 34 
+
+immune responses, design vaccines, personalize immunotherapies and uncover the pathogenesis of 35 
+
+autoimmune disorders. Achieving this will likely require a precise understanding of how TCRs engage 36 
+
+with peptide–HLA (pHLA) complexes at the molecular level. Despite substantial progress (Davis 37 
+
+and Bjorkman, 1988; Rudolph et al., 2006; Rossjohn et al., 2015; Murphy and Weaver, 2017b), key 38 
+
+aspects of this molecular interaction remain incompletely understood. 39 
+
+Understanding TCR–pHLA interactions is complicated by their extraordinary complexity. HLAs 40 
+
+are among the most polymorphic human genes, with tens of thousands of alleles identified across the 41 
+
+six classical class I (HLA-A, -B, -C) and II loci (HLA-DR, -DQ and -DP) (Klein and Sato, 2000). 42 
+
+Structurally, the HLA peptide-binding groove is defined by two helices: in Class I the helices are 43 
+
+named α1 and α2 and are part of the same polypeptide chain, while for Class 2 the groove is formed 44 
+
+by two distinct chains, α1 and β1. In the canonical binding mode, the TCR β interacts with around 45 
+
+the α1 helix in Class I and the β1 helix in Class II (See Figure5 A-D) Christopher Garcia et al. 46 
+
+(2009); Cohn et al. (2019)). 47 
+
+Polymorphisms are concentrated in the peptide-binding groove, influencing both peptide presen-48 
+
+tation and TCR binding (Tiercy, 2002; Nakamura et al., 2019; Karnaukhov et al., 2022). Moreover, 49 
+
+TCR binding is degenerate: a single TCR can recognize many pHLAs and many TCRs can recognize 50 
+
+the same pHLA (Davis and Bjorkman, 1988; Sewell, 2012; Murphy and Weaver, 2017b). While 51 
+
+many predictive models use sequence-based, structural or molecular dynamics approaches (Springer 52 
+
+et al., 2021; Grazioli et al., 2023; Bradley, 2023; Jensen and Nielsen, 2024), they often fail to general-53 
+
+ize (Drost et al., 2025), limited by interaction complexity and sparsity of high-quality data (Grazioli 54 
+
+et al., 2022; Castorina et al., 2025). In the absence of massive training sets, uncovering mechanistic 55 
+
+principles can provide inductive biases that improve model generalizability. This strategy mirrors 56 
+
+the success of AlphaFold, which leveraged Multiple Sequence Alignments to identify co-evolutionary 57 
+
+constraints and guide structural prediction (Jumper et al., 2021). Similarly, statistical frameworks 58 
+
+like ours may uncover residue-level features that constrain TCR–pHLA binding and inform the 59 
+
+next generation of predictive models. This perspective is especially relevant given ongoing efforts to 60 
+
+determine whether TCR specificity arises from germline-encoded features such as CDR1 and CDR2 61 
+
+loops that may have evolved HLA specificity or is shaped entirely by thymic selection acting on 62 
+
+random repertoires (La Gruta et al., 2018). Clarifying these mechanisms may guide the development 63 
+
+of more general and interpretable models. 64 
+
+Recent advances in sequencing technologies have enabled statistical approaches to examine how 65 
+
+HLA polymorphism shapes TCR gene usage. Sharon et al. (2016) proposed that if germline-encoded 66 
+
+contacts influence TCR–HLA interactions, then TCR V βs should show biased usage depending 67 
+
+on HLA type. Supporting this, their trans-eQTL analysis found that polymorphisms near the 68 
+
+HLA binding groove correlate with V β expression, linking HLA polymorphism to TCR repertoire 69 
+
+composition. However, their use of bulk RNA sequencing averaged over the entire T cell compartment, 70 
+
+potentially dilutes the HLA-specific signals. To improve resolution, we leverage a previously developed 71 
+
+2
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+method that uses large-scale repertoire sequencing to associate public TCR βs (i.e., those shared 72 
+
+across individuals) with specific HLAs. This approach, introduced and validated by Zahid et al. 73 
+
+(2025a), leverages TCR co-occurrence across thousands of subjects with known HLA genotypes to 74 
+
+identify TCR βs statistically associated with specific HLAs. These associations generalize to diverse, 75 
+
+unseen populations, yielding TCR β sets with strong evidence of true immunological specificity. 76 
+
+Using HLA-associated TCR β sets, we quantify V β gene usage for each HLA and examine 77 
+
+how these patterns correlate with HLA polymorphism, while statistically accounting for potential 78 
+
+mediation by shared peptide motifs. We identify HLA residues associated with V β usage, peptide 79 
+
+repertoire or both. To compare patterns across HLA types, we harmonize sequence and structural 80 
+
+data through sequence alignments and 3D structure mapping. Although our analysis is limited to 81 
+
+the TCR β chain, it reveals population-level trends consistent with germline influences and highlights 82 
+
+candidate HLA residues that may shape TCR–HLA specificity through direct structural mechanisms. 83 
+
+The scale of this analysis enables resolution of TCR–HLA associations not previously accessible, 84 
+
+offering biologically grounded priors to inform predictive models. 85 
+
+## 2 Materials and Methods 86 
+
+2.1 HLAdb 87 
+
+Using direct HLA genotyping and 4,144 TCR β repertoires, Zahid et al. (2025a) built sensitive and 88 
+
+specific HLA imputation models from TCR βs associated with hundreds of common HLAs. We 89 
+
+impute 145 of the most common HLAs for 30,000 subjects in the T-Detect COVID cohort (Zahid 90 
+
+et al., 2025b). These imputed HLAs were used as case-control labels and TCR βs were statistically 91 
+
+associated to HLAs using via a one-sided Fisher’s Exact Test following Zahid et al. (2025a). By 92 
+
+imputing HLAs on a set of repertoires that are nearly an order of magnitude larger in sample size 93 
+
+than the original data set used to build the models, we are able to leverage the genotyped labels 94 
+
+available for a smaller set of repertoires and the statistical power of sequence discovery offered by 95 
+
+the larger cohort. 96 
+
+We restricted analysis to HLAs with more than 5,000 associated public TCR βs. In total, 2,827,857 97 
+
+public TCR V β sequences from 41 unique public TCR V β genes associated with 91 HLA alleles 98 
+
+were included in this analysis (see Supplementary Table S1). Using the set of TCR βs associated 99 
+
+with each HLA, we generate the TCR V β usage pattern as the distribution of V β gene preferences 100 
+
+for that particular HLA. V β genes are not uniformly represented in the TCR β repertoire, thus we 101 
+
+normalize V β gene usage to the background frequency measured from all TCR βs (public and private) 102 
+
+summed across repertoires and this is represented as a vector (see Supplementary Figure S2 and 103 
+
+Supplementary Table S1). 104 
+
+2.2 TCR V β Normalization 105 
+
+We start with a matrix whose rows are HLAs and columns are TCR V β s, containing co-occurrence 106 
+
+counts. We also have background counts for each TCR V β . First, we remove ambiguous or undefined 107 
+
+3
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Vβ genes. We then normalize TCR β V-gene counts by dividing by the corresponding background 108 
+
+counts to correct for any underlying baseline TCR V β frequency, for each TCR V β gene, the total 109 
+
+number of times it was observed across 30,000 repertoires was used for background normalization. 110 
+
+Any ambiguous or undefined V β genes were removed. 111 
+
+After background adjustment, we convert counts into frequencies by dividing each each Nij by 112 
+
+the total for HLA i:113 
+
+• For each HLA i, compute P 
+
+> j
+
+Nij .114 
+
+• Define Fij = Nij 
+
+P 
+
+> j
+
+Nij 
+
+> 115
+
+This ensures P 
+
+> j
+
+Fij = 1 for each HLA i.116 
+
+We call the frequency vector Fi for HLA i the “V β gene preference”. 117 
+
+2.3 Pairwise Distance Analysis of HLA 118 
+
+The TCR-pHLA interaction involves the TCR, the HLA and a peptide. We characterize HLA 119 
+
+differences with three pairwise distance matrices: 120 
+
+• HLA polymorphism : BLOSUM62 distance between HLA sequences (See 2.3.1). 121 
+
+• Vβ gene preference change : cosine distance between V β preference vectors (See 2.3.2). 122 
+
+• Peptide motif change : Jensen–Shannon (JS) divergence between Position Weight Matrix 123 
+
+(PWM) (See 2.3.3). 124 
+
+We then correlate these matrices to identify HLA positions whose variation is associated with 125 
+
+TCR β usage or peptide motifs, disentangling TCR–HLA from pHLA effects. 126 
+
+We analyse both within HLA loci and between loci. Within-locus analyses aim to identify 127 
+
+binding-groove positions most significant for the peptide or the TCR β.128 
+
+Between-locus analyses aim to identify sequence positions that distinguish loci and correlate 129 
+
+with the TCR β or the peptide motifs. 130 
+
+2.3.1 HLA Polymorphism 131 
+
+We use the HLA sequences dataset from the TCR Dock pipeline Bradley (2023), restricted to the 132 
+
+TCR-binding groove to ensure comparable sequence lengths and also focuses the analysis around 133 
+
+areas of major polymorphism. 134 
+
+HLA sequences are aligned using Clustal ω (Sievers et al., 2011). Pairwise differences are 135 
+
+computed using the BLOSUM62 substitution matrix (Henikoff and Henikoff, 1992) whose log-odds 136 
+
+quantify amino acids substitution likelihoods. We calculate both per-position and overall differences 137 
+
+by summing scores across positions.. 138 
+
+4
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+For position k in aligned sequences Si and Sj , we calculate a per-position distance, Dseq [k], using 139 
+
+the exponential of the BLOSUM score: 140 
+
+Dseq [k] = 1exp( BLOSUM (Si[k], S j [k])) 
+
+The overall sequence divergence is calculated by summing these per-position distances: 141 
+
+Dseq (i, j ) = 
+
+> L
+
+X
+
+> k=1
+
+Dseq [k]
+
+To summarize: 142 
+
+• Si, S j : HLA sequences i and j.143 
+
+• L: sequence length. 144 
+
+• Si[k], S j [k]: amino acids at position k.145 
+
+• BLOSUM (Si[k], S j [k]) : Raw BLOSUM62 log-odds score. 146 
+
+• Dseq [k]: per-position distance (inverse likelihood). 147 
+
+2.3.2 TCR V β Preference Distance 148 
+
+For each HLA, we calculate the V β gene preference F (Section 2.2). Difference between two vectors 149 
+
+Fi and Fj are measured with cosine distance: 150 
+
+DV Gene (i, j ) = 1 − Fi · Fj
+
+∥Fi∥∥ Fj ∥
+
+where: 151 
+
+• Fi and Fj : V β preference vectors for HLAs i and j.152 
+
+• Fi · Fj : dot product. 153 
+
+• ∥Fi∥ and ∥Fj ∥: vector magnitudes. 154 
+
+2.3.3 Peptide Motif Distance 155 
+
+For each HLA, aligned peptide sequences from the MHC Motif Atlas dataset (Tadros et al., 2023) 156 
+
+are used to build a peptide motif matrix as a PWM. Distances between peptide motifs are measured 157 
+
+with JS divergence, yielding a symmetric distance matrix. 158 
+
+Dmotif (i, j ) = JS (Pi, P j )
+
+where: 159 
+
+5
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+• Pi and Pj : PWMs for HLAs i and j.160 
+
+The following HLAs are absent from the Atlas and excluded from peptide analysis: DPA1 ×161 
+
+01:03+DPB113:01, DQA101:02+DQB106:09, DQA101:03+DQB106:01, DQA101:04+DQB105:03, 162 
+
+DQA101:05+DQB105:01, DQA103:03+DQB102:02, DQA103:03+DQB103:01, DQA104:01+DQB1 ×163 
+
+04:02, DQA105:05+DQB103:01. 164 
+
+2.3.4 Distance Correlations 165 
+
+To capture non-linear relationships among Dseq , DV Gene , Dmotif , we use Spearman correlation with 166 
+
+a stringent 1% False Discovery Rate (FDR) N = 1000 bootstrapping replicates to ensure robust 167 
+
+correlation estimates. 168 
+
+Each HLA position is assigned a correlation coefficient and standard deviation for TCR β usage 169 
+
+and peptide motifs, enabling identification of positions more strongly correlated with one or the 170 
+
+other. 171 
+
+To avoid redundancy, correlations are computed only on the lower triangle of the distance 172 
+
+matrices. For any pairs considered (i, j ) where i < j :173 
+
+Correlation seq −V Gene = ρ (Dseq (i, j ), D V Gene (i, j )) 
+
+Correlation seq −motif = ρ (Dseq (i, j ), D motif (i, j )) 
+
+Correlation V Gene −motif = ρ (DV Gene (i, j ), D motif (i, j )) 
+
+We also report the overall correlations from the full distance matrices. 174 
+
+2.4 HLA Position Importance Disentanglement 175 
+
+For each HLA position, Correlation seq −V Gene and Correlation seq −motif provide coefficients for TCR β176 
+
+usage and peptide motifs. Significant position are plottedin Figure 4C (per-locus plots and per-177 
+
+position values in Appendix E). 178 
+
+These positions are highlighted in their respective 3D structure for each locus (see Appendix E.3) 179 
+
+and overall (see Figure 4D). 180 
+
+2.5 Vβ Promiscuity and HLA Restriction 181 
+
+To understand the breadth of HLA restriction for individual TCR V βs, we calculate the conditional 182 
+
+probability P (HLA i | Vβj ). While our previous analysis focused on HLA preferences ( P (Vβ | HLA )), 183 
+
+this “V-gene centric” view quantifies how specific or promiscuous a V β is across the HLA landscape. 184 
+
+We derive this by column-normalizing the co-occurrence matrix C:185 
+
+• Cij : count of TCR V β j for HLA i.186 
+
+6
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+• P 
+
+> k
+
+Ckj : total count of V β j across all HLAs. 187 
+
+• Restriction probability: 188 
+
+Gji = Cij 
+
+P 
+
+> k
+
+Ckj 
+
+Each row j of matrix G represents the probability distribution of HLA alleles associated with a 189 
+
+given V β. To identify V βs with shared HLA binding preferences, we perform hierarchical clustering 190 
+
+on the columns using cosine distance. 191 
+
+Finally, we quantify the “promiscuity” of each V β using the Shannon entropy of its HLA 192 
+
+distribution: 193 
+
+H(Vβj ) = − X
+
+> i
+
+Gji log 2 Gji 
+
+To compare restriction breadth across HLA loci with varying numbers of alleles ( N ), we calculated 194 
+
+the normalized entropy (Hnorm = H/ ln N ), which scales the measure between 0 and 1. We interpret 195 
+
+Vβs with low normalized entropy as “specialists” and those with high normalized entropy as 196 
+
+“generalists.” 197 
+
+Differences in normalized entropy distributions between loci were assessed using pairwise Mann-198 
+
+Whitney U tests. To account for multiple comparisons across all locus pairs, p-values were adjusted 199 
+
+using the Bonferroni correction. 200 
+
+Class Locus # Alleles HLA-TCR HLA-Peptide Spearman ρ ± SD p-Value Spearman ρ ± SD p-Value 
+
+1 all 34 0.30 ± 0.04 4.43E-13 0.25 ± 0.04 1.08E-09 
+
+2 all 57 0.60 ± 0.02 1.07E-155 0.52 ± 0.02 1.04E-74 
+
+1 A 12 0.35 ± 0.11 4.17E-03 0.57 ± 0.09 4.31E-07 
+
+1 B 17 0.29 ± 0.08 7.78E-04 0.33 ± 0.08 9.76E-05 
+
+1 C 5 -0.18 ± 0.38 6.51E-01 0.57 ± 0.28 8.97E-02 2 DP 12 0.26 ± 0.12 3.22E-02 0.80 ± 0.06 2.22E-13 
+
+2 DQ 16 0.27 ± 0.09 3.19E-03 0.48 ± 0.15 8.31E-03 
+
+2 DR 29 0.48 ± 0.04 1.00E-24 0.36 ± 0.05 5.25E-14 
+
+Table 1: Spearman ρ coefficients and bootstrap standard deviation (SD) of HLA sequence polymor-phism measured with BLOSUM Distance, comparing TCR V β gene Preference with cosine distance and Peptide Motifs with JS Divergence for all loci and classes. A significance threshold of 0.01 
+
+was used and p-Values below this threshold are in bold. See details about TCR-HLA in Appendix Section C and HLA-Peptide in Appendix Section D. 7
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Pairwise Comparison 
+
+……WDQ ETRNMK AH SD ANL…… 
+
+……WD RNTQ IS KTN TYE SL…… 
+
+Input Data 
+
+HLA Associated 
+
+T Cell Receptors 
+
+HLA Protein 
+
+Sequences 
+
+MHC Motif Atlas 
+
+Derived Metrics 
+
+Cosine Similarity 
+
+V-gene Usage Vectors 
+
+BLOSUM62 Distance 
+
+Summed Across All Positions 
+
+BLOSUM62 Distance 
+
+at Each Position 
+
+Jensen -Shannon Divergence of 
+
+Position Weight Matrices 
+
+(A) 
+
+(B) 
+
+(C) 
+
+Pre -Processing 
+
+V-Gene Usage Vector 
+
+> ……WDQETRNMKAHSQTDRANL……
+> ……WDGETRKVKAHSQTHRVDL……
+> ……WDGETRKVKAHSQTHRVDL……
+> ……WDQETRNVKAQSQTDRVDL……
+> ……WDEETGKVKAHSQTDRENL……
+> ……WDLQTRNVKAQSQTDRANL……
+> ……WDQETRNVKAHSQTDRENL……
+> ……WDRNTRKVKAQSQTDRVDL……
+> ……WDRNTQIYKAQAQTDRESL……
+
+Trimmed and Aligned 
+
+HLA Sequences 
+
+Position Weight Matrix Figure 1: Summary of our analysis workflow. (A) Starting from sets of TCR βs associated with specific HLAs, we generate normalized V β gene usage vectors for each HLA. We quantify TCR V β
+
+usage similarity in a pairwise manner, calculating the cosine distance between the V β gene usage vectors of two HLAs. 
+
+(B) Starting from HLA protein sequences, HLA sequences are trimmed to the TCR-binding surface and aligned via Multiple Sequence Alignment (MSA) (Bradley, 2023). We quantify both overall and position-dependent HLA polymorphism by comparing HLA sequences using the BLOSUM62 substitution matrix. 
+
+(C) We use MHC Motif Atlas (Tadros et al., 2023) to generate Position Weight Matrices (PWMs) of the peptide repertoire for a given HLA. PWMs encode the same information as logo plots, indicating the frequency of amino acid use at any given position. Using PWMs, we calculate the Jensen-Shannon Divergence to quantify similarity of the peptide repertoire of any two HLAs. 8
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint TCRBV02-01 
+
+> TCRBV04-01
+> TCRBV04-02
+> TCRBV04-03
+> TCRBV05-01
+> TCRBV05-03
+> TCRBV05-04
+> TCRBV05-05
+> TCRBV05-06
+> TCRBV05-08
+> TCRBV06-01
+> TCRBV06-02
+> TCRBV06-04
+> TCRBV06-05
+> TCRBV06-06
+> TCRBV07-02
+> TCRBV07-03
+> TCRBV07-05
+> TCRBV07-06
+> TCRBV07-07
+> TCRBV07-08
+> TCRBV07-09
+> TCRBV09-01
+> TCRBV10-01
+> TCRBV10-02
+> TCRBV10-03
+> TCRBV11-01
+> TCRBV11-02
+> TCRBV11-03
+> TCRBV12-05
+> TCRBV13-01
+> TCRBV14-01
+> TCRBV15-01
+> TCRBV16-01
+> TCRBV18-01
+> TCRBV19-01
+> TCRBV20-01
+> TCRBV24-01
+> TCRBV25-01
+> TCRBV27-01
+> TCRBV28-01
+> TCRBV29-01
+> TCRBV30-01
+> TCRBV
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> 0.12
+> Frequency value
+
+HLA-A*02:01 
+
+> CMV+ | A*02:01+
+> CMV- | A*02:01+
+
+Figure 2: TCR V β usage patterns among HLA-A*02:01-associated sequences are unaf-fected by CMV exposure. Background-normalized V β gene usage across HLA-A*02:01-positive donors is shown for CMV-positive (orange) and CMV-negative (blue) cohorts. Error bars indicate the standard deviation across individuals within each group. Usage patterns are consistent between CMV-positive and CMV-negative subjects, suggesting that CMV exposure does not influence HLA-associated V β preferences. 0 100 200 300 400 500 
+
+BLOSUM Distance between HLA Sequences 
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> Cosine Distance of TCR Frequencies
+
+Class I Class II 
+
+(A) 0 100 200 300 400 500 
+
+BLOSUM Distance between HLA Sequences 
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> Peptide Motif JS Divergence
+
+Class I Class II (B) 
+
+Figure 3: A pairwise comparison showing the relationship between HLA polymorphism, Vβ gene usage and the peptide repertoire. (A) TCR V β usage similarity plotted against HLA polymorphism. HLAs with similar sequences tend to have similar V β gene preferences. Dotted lines illustrate correlations which we quantify using partial Spearman’s ρ (class I: ρ 0.30 ± 0.04, class II: 
+
+ρ 0.60 ± 0.02). 
+
+(B) Peptide repertoire similarity plotted against HLA polymorphism. HLAs with similar sequences tend to have similar peptide repertoires. Dotted lines illustrate correlations which we quantify using partial Spearman’s ρ (class I: ρ 0.25 ± 0.04, class II: ρ 0.52 ± 0.02). See Table 1 for per locus Spearman’s ρ and p values and Appendix Section C for TCR-HLA and Appendix Section D.1 for HLA-peptide. 9
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint 10         
+
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> 110
+> 120
+> 130
+> 140
+> 150
+> 160
+> 170
+> HLA Position
+> DR
+> DQ
+> DP
+> B
+> A
+> HLA Locus
+> 12/1-platform
+> Correlation
+> Peptide
+> TCR
+> Both
+> 0.4 0.2 0.0 0.2 0.4 0.6 0.8
+
+Spearman (TCR) 
+
+> 0.4
+> 0.2
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Spearman  (Peptide)
+> HLA Locus
+> A
+> B
+> DP
+> DQ
+> DR
+
+(A) (B) 
+
+Figure 4: Disentangling HLA positions correlated with V β gene usage vectors, the peptide repertoire or both. (A) Across all loci, HLA polymorphic positions significantly correlated (p-value ≤ 0.01) with similarity in V β gene usage (blue), peptide repertoire similarity (yellow) and both (green). Shaded are the rough positions of the HLA binding groove helices. To allow positional comparison, for Class II we combined the α1 and β1 sequence. In light red is the α1 helix region (closest to TCR β). In light green is the α2 helix (or β1 for Class II) (closest to TCR α). See also per-locus plots in Appendix C (TCR β) and D (peptide). 
+
+(B) Scatter plot of Spearman’s ρ values and bootstrapped standard deviation for the correlation of HLA polymorphism with peptide motif similarity versus its correlation with V β gene usage similarity. Only HLA positions where at least one significant correlation is derived are plotted. See per-locus plots and per-position values in Appendix E. 10 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint α1 α2
+
+> peptide
+> TCR V β-related
+> Peptide-related
+> TCR V β- &
+> Peptide-related
+
+(A) CDR1 β 
+
+> CDR2 β
+> CDR2 α
+> CDR1 α
+> CDR3 β
+> TCRV β-TCRV α
+> CDR3 α
+> #1
+> #2
+> #3
+
+(B) CDR1 β 
+
+> CDR2 β
+> CDR2 α
+> CDR1 α
+> CDR3 β
+> CDR3 α
+> TCRV β-TCRV α
+> #3
+
+(C) α1 β1  
+
+> βPlatform
+
+(D) 
+
+(E) HLA-A (I) (F) HLA-B (I) (G) HLA-DR (II) 
+
+Figure 5: Structural logic of TCR–pHLA engagement and distribution of significant residues. (A) Schematic of the peptide-binding groove in Class I HLAs ( α1 and α2 helices), illustrating three categories of polymorphic residues: those related to TCR V β (blue), peptide (yellow) or both (green). 
+
+(B) Schematic of the TCR binding interface (footprint), showing the arrangement of CDR loops categorized into three functional ‘topes’ (Cohn et al., 2019): Tope #1 (TCR β CDR1/2) and Tope #3 (TCR α CDR1/2) engage the HLA helices, while Tope #2 (hypervariable CDR3s) primarily engages the peptide. The TCR V β domain (blue text, corresponding to Tope #1) typically contacts the α1 helix in the canonical diagonal orientation. 
+
+(C) Overlay of the TCR footprint onto the Class I binding groove, illustrating the proximity of V β
+
+CDRs to the α1 helix. 
+
+(D) Schematic of the Class II binding groove, formed by the α1 and β1 chains. Note that unlike Class I, for Class II HLAs, the β platform is encoded by the α chain (light grey) and β chain (dark grey). 
+
+(E–G) Correlated positions highlighted on HLA-A (E), HLA-B (F) and HLA-DR (G). Residues are colored by their statistical association: TCR V β (blue), peptide (yellow) or both (green). These positions are identified in Fig. 4 (See details in Supplementary Section D). 
+
+## 3 Results 201 
+
+TCR recognition of pHLA complexes is primarily mediated by three complementarity-determining 202 
+
+regions (CDRs). CDR1 and CDR2 are encoded by the V β gene, while the hypervariable CDR3 region 203 
+
+11 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+is generated by V(D)J recombination (Davis and Bjorkman, 1988; Murphy and Weaver, 2017b). 204 
+
+To better understand how germline-encoded TCR features and HLA polymorphisms shape pHLA 205 
+
+recognition, we examine how HLA polymorphism correlates with TCR V β gene usage, focusing on 206 
+
+CDR1 and CDR2 regions and distinguishing direct HLA effects from peptide-mediated influences. 207 
+
+Our goal is to disentangle the contributions of direct TCR–HLA interactions from those arising 208 
+
+indirectly through variation in peptide presentation. 209 
+
+Our analysis draws on large-scale repertoire sequencing data linking TCR βs with HLAs across 210 
+
+a cohort of approximately 30,000 individuals (see Methods Section 2.1). V β gene usage patterns 211 
+
+for common HLAs are derived from TCR βs statistically associated with each HLA and aggregated 212 
+
+into vectors of normalized frequencies (Supplementary Figure S2), which we interpret as V β gene 213 
+
+preferences of each HLA. To validate that these patterns are stable and not confounded by individual 214 
+
+immune exposure, we compare repertoires from Cytomegalovirus (CMV) -positive and CMV-negative 215 
+
+subjects, restricting analysis to HLA-associated TCRs observed in individuals carrying the relevant 216 
+
+HLA allele. We use CMV exposure as a test case as it typically has a strong impact on the 217 
+
+T cell repertoire (Klenerman and Oxenius, 2016) and can be inferred directly from the TCR β218 
+
+repertoire (Emerson et al., 2017; May et al., 2024). This makes CMV a strong test case: if a 219 
+
+single dominant exposure perturbs V β usage patterns, we should detect it in CMV-positive subjects. 220 
+
+As shown in Figure 2, V β usage is consistent between CMV-positive and CMV-negative subjects, 221 
+
+supporting the conclusion that V β gene preferences reflect HLA-driven selection rather than exposure-222 
+
+dependent biases. Using the T-Detect COVID cohort (Zahid et al., 2025b) of approximately 30,000 223 
+
+individuals, we infer both CMV exposure status (Emerson et al., 2017) and HLA genotype (Zahid 224 
+
+et al., 2025a). We focus on individuals carrying HLA-A02:01, comparing V β usage among CMV-225 
+
+positive (N = 5,449) and CMV-negative (N = 8,136) subjects. For each person, we quantify V β usage 226 
+
+across all HLA-A02:01–associated TCR β sequences in their repertoire (45,737 unique sequences). We 227 
+
+observe no significant difference in V β usage patterns between the CMV-positive and CMV-negative 228 
+
+groups (see Figure 2). Restricting the analysis to other HLAs yields consistent results. 229 
+
+Although this analysis does not rule out contributions from other antigen exposures, it shows 230 
+
+that even a strong immune stimulus like CMV does not measurably influence HLA-associated V β231 
+
+usage patterns. This supports the interpretation that the observed associations reflect generalizable, 232 
+
+population-level trends. 233 
+
+Next, we analyzed how HLA polymorphism influences TCR β recognition and peptide binding. We 234 
+
+represent HLA polymorphism using aligned sequences trimmed to the TCR-facing surface, including 235 
+
+peptide-binding domains (Bradley, 2023). Peptide repertoires for each HLA are obtained from the 236 
+
+MHC Motif Atlas (Tadros et al., 2023) and represented as Position Weight Matrices (PWMs), which 237 
+
+capture amino acid frequencies across positions (Parker et al., 1994) (Supplementary Table S1). 238 
+
+Then, we define three pairwise distance metrics between HLA alleles (e.g., A02:01 vs. A02:02 ): (i) 239 
+
+HLA sequence divergence, calculated from BLOSUM62-derived substitution scores (Henikoff and 240 
+
+Henikoff, 1992), either summed across aligned residues to yield a global similarity score or evaluated 241 
+
+at individual positions for residue-level analysis; (ii) TCR V β usage similarity, computed as the 242 
+
+12 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+cosine distance between normalized V β gene frequency vectors; and (iii) peptide motif divergence, 243 
+
+measured as Jensen-Shannon (JS) divergence between PWMs. This framework enables us to assess 244 
+
+whether specific HLA polymorphisms are more strongly associated with the peptide repertoire or 245 
+
+with the set of TCR βs likely to recognize a given HLA. A summary of the analysis workflow is shown 246 
+
+in Figure 1. 247 
+
+Before examining how HLA sequence variation relates to similarity in V β gene usage across 248 
+
+alleles, we first characterize the overall breadth of V β restriction exhibited by different HLA loci. 249 
+
+3.1 Variation in V β Preference Breadth Across HLA Loci 250 
+
+To assess how HLA polymorphism affects the breadth of the T cell repertoire, we quantified how 251 
+
+“exclusive” the V β gene usage was for each HLA gene using Shannon entropy ( Hnorm ) on the 252 
+
+conditional probability distribution P (HLA | Vβ). In the case of HLA-associated TCRs restricted 253 
+
+to single V β gene, the entropy score would be close to 0. Conversely, uniform usage of all V β genes 254 
+
+would yield a score closer to 1. 255 
+
+As shown in Supplementary Figure S18, there is a significant difference in restriction breadth 256 
+
+across loci. Class II loci HLA-DR and HLA-DP displayed normalized entropy values approaching 257 
+
+the theoretical maximum ( Hnorm ≈ 0.99 ), corresponding to a nearly uniform distribution of V β258 
+
+usage across alleles. In contrast, HLA-C exhibited a significantly lower mean entropy and higher 259 
+
+variance compared to HLA-DR (see Supplementary Table S10). HLA-C shows the lowest entropy 260 
+
+and highest variance across loci, indicating a high degree of restriction due to specific V β genes being 261 
+
+associated with a limited subset of alleles. HLA-A, -B and -DQ display intermediate entropy profiles 262 
+
+significantly distinct from both the HLA-C and HLA-DR/DP extremes (Supplementary Table S10) 263 
+
+These differences highlight substantial locus specific variation in the overall permissiveness of 264 
+
+Vβ gene usage. With this baseline heterogeneity in mind, we next examine how differences in HLA 265 
+
+sequence relate to similarity in V β gene preferences and peptide binding across alleles. 266 
+
+3.2 Global Correlations Across HLAs 267 
+
+To test whether HLA polymorphism systematically shapes TCR and/or peptide features, we analyze 268 
+
+correlations between global HLA sequence similarity (summed across all aligned positions), V β269 
+
+gene usage and peptide motif similarity within each HLA class. We find that overall HLA sequence 270 
+
+similarity correlates with both TCR V β gene preference (Figure 3A) and peptide motif similarity 271 
+
+(Figure 3B; Table 1), even when using partial Spearman correlation to control for HLA locus 272 
+
+structures. These results suggest that variation in HLA sequence alone is sufficient to predict 273 
+
+meaningful trends in V β gene usage, highlighting the potential for sequence-based features to inform 274 
+
+models of TCR–HLA specificity. 275 
+
+At the locus level, HLA sequence similarity correlates with both V β gene and peptide features 276 
+
+for loci A, B, DQ and DR (see Table 1 and Figure 4). DR shows the strongest association with 277 
+
+Vβ gene preference, while DP shows the strongest correlation with peptide motifs but not with V β278 
+
+gene features. Locus C does not show significant correlations in any analysis, likely due to its lower 279 
+
+13 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+surface expression and resulting in limited statistical power (Neefjes and Ploegh, 1988). Notably, we 280 
+
+observe that V β gene usage frequencies are more variable among Class I alleles compared to Class 281 
+
+II, which exhibit more uniform usage patterns across alleles (Supplementary Figure S3).. These 282 
+
+findings indicate that the relationship between HLA polymorphism, TCR β engagement and peptide 283 
+
+binding is both locus- and class-dependent, with distinct correlation patterns emerging across class I 284 
+
+and class II molecules. 285 
+
+To further probe the structural basis of these patterns, we restrict our analysis to HLA residues 286 
+
+known to contact either the peptide or the TCR, based on solved pHLA–TCR structures. This 287 
+
+restriction strengthens the observed correlations (see Supplementary Figure S1), suggesting the 288 
+
+correlation is driven by a subset of positions and thus motivating a focused, residue-level investigation 289 
+
+of TCR–HLA specificity. 290 
+
+3.3 Residue-Level Correlation Analysis 291 
+
+We hypothesize that polymorphic HLA residues influence TCR recognition through distinct mecha-292 
+
+nisms, with some acting directly on TCR engagement while others act indirectly via influence on 293 
+
+peptide binding. To test this, we analyze residue-specific HLA polymorphisms, which are largely 294 
+
+concentrated in the peptide-binding groove, while more distal regions remain conserved (Supplemen-295 
+
+tary Figure S5). This pattern of polymorphism further suggests that only a subset of residues drive 296 
+
+correlations with V β gene usage and peptide motifs. We quantify each residue’s contribution by 297 
+
+correlating per-residue polymorphism with both V β gene preference and peptide motif similarity (see 298 
+
+Supplementary Figures S8 and S11). This analysis identifies HLA residues statistically associated 299 
+
+with TCR recognition, peptide binding or both. 300 
+
+We visualize the spatial distribution of residues significantly associated with V β gene usage or 301 
+
+peptide motifs across class I and class II loci (Figure 4; see Supplementary Sections B–D for details). 302 
+
+Peptide-associated residues are broadly distributed across the binding groove, though in HLA-A they 303 
+
+cluster near the α1, closest to the TCR β. Residues associated with V β gene usage appear primarily 304 
+
+in loci A, B and DR, clustering near the TCR-facing helices in class I and spanning the polymorphic 305 
+
+DRB chain in class II. As expected, significant positions in DR are restricted to the polymorphic 306 
+
+DRB chain, as the invariant DRA chain does not contribute variation in our polymorphism-based 307 
+
+analysis. These findings suggest that residues correlated with peptide and TCR features occupy 308 
+
+overlapping but structurally distinct regions, with class-specific patterns across loci. 309 
+
+To compare the relative influence of each HLA position on TCR V β usage and peptide presentation, 310 
+
+we compute residue-specific Spearman correlation coefficients for both signals. For each polymorphic 311 
+
+residue, we calculate its correlation with V β gene preference and peptide motif similarity. We then 312 
+
+plot all positions with at least one significant correlation in Figure 4B. Points above the identity line 313 
+
+indicate stronger correlations with peptide motifs, while those below indicate stronger correlations 314 
+
+with V β gene usage. Positions in loci A and B are fairly balanced around the line, suggesting a mix 315 
+
+of peptide- and TCR-associated effects. In contrast, most significant positions in loci DP and DQ are 316 
+
+peptide-associated, while positions in DR cluster near the identity line with a modest bias toward 317 
+
+14 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+TCR association. These results highlight locus-specific differences in how HLA residues influence 318 
+
+TCR and peptide features, with distinct correlation patterns across class I and class II loci. 319 
+
+Surprisingly, several positions exhibit negative correlations, indicating that sequence differences at 320 
+
+these sites are associated with greater similarity in peptide motifs or V β gene usage (see Supplementary 321 
+
+Table S4 to Table S8). Although the reasons underlying this effect remain unclear, we hypothesize 322 
+
+that such positions may reflect compensatory or co-evolutionary structural effects, where variation 323 
+
+at one site may alter the HLA conformation in a way that preserves peptide presentation and/or 324 
+
+TCR binding despite sequence divergence. Further structural and mutational studies are needed to 325 
+
+test this hypothesis and clarify how these residues contribute to pHLA recognition. 326 
+
+3.4 Structural Distribution of Significant Positions 327 
+
+We visualize the significant positions on the 3D structure of an HLA molecule (Figure 5). Most 328 
+
+fall within the peptide-binding groove, the most polymorphic region (Supplementary Figure S5). 329 
+
+Residues more strongly correlated with peptide motifs (yellow) are primarily located on the β-sheets 330 
+
+beneath the peptide and on the peptide-facing α-helices. In contrast, residues associated with TCR β331 
+
+features or with both TCR β and peptide features are predominantly found on the α-helices. In class 332 
+
+I HLAs, these TCR- and dual-associated positions cluster near the region of the α1 helix (closest 333 
+
+to the TCR β). In class II HLAs, they are more broadly distributed across the binding groove, 334 
+
+particularly along the polymorphic DRB chain, consistent with the invariant nature of the DRA 335 
+
+chain. 336 
+
+Together, these analyses show that HLA polymorphisms shape TCR recognition and peptide 337 
+
+presentation by partially overlapping but distinct sets of HLA polymorphic contacts. Some residues 338 
+
+directly influence TCR engagement, others act indirectly via peptide binding and a subset contribute 339 
+
+to both. The balance of these effects varies across loci, with clear differences between class I 340 
+
+and class II HLAs. This residue-level map of functional variation offers a valuable foundation for 341 
+
+refining models of TCR–pHLA specificity and guiding future structural and computational work in 342 
+
+immunogenetics. 343 
+
+## 4 Discussion 344 
+
+Our analysis leverages a large-scale statistical framework, using 30,000 TCR β repertoires to associate 345 
+
+specific TCR βs with individual HLAs. By averaging across thousands of individuals and diverse 346 
+
+but commonly shared antigenic exposures, we derive normalized V β gene preferences for each HLA, 347 
+
+enabling a robust, population-level assessment of TCR β-HLA preferences. This approach yields 348 
+
+sets of TCR βs that are statistically enriched for HLA specificity, providing statistical power to link 349 
+
+TCR βs to their restricting HLAs despite the polygenic nature of HLA phenotypes. 350 
+
+To understand how HLA polymorphism shapes peptide binding and TCR engagement, we 351 
+
+analyze correlations between HLA sequence similarity, peptide motifs and V β gene usage across the 352 
+
+cohort. Our goal is to distinguish direct TCR–HLA associations from peptide-mediated effects. We 353 
+
+15 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+find that HLA sequence similarity correlates with both V β gene usage and peptide motifs. These 354 
+
+associations map to specific polymorphic residues linked to either V β preference, peptide features or 355 
+
+both. Structurally, key positions cluster around the α1 helix in class I and the β1 helix in class II, 356 
+
+with particularly strong signals in the DR locus. These results suggest that TCR–HLA specificity is 357 
+
+shaped by a combination of germline-encoded contacts and indirect peptide-driven effects, including 358 
+
+potential allosteric modulation of pHLA conformation. Together, these patterns highlight distinct 359 
+
+structural contributions to recognition across HLA classes. Notably, the clustering of TCR-associated 360 
+
+residues on the Class I α1 helix structurally confirms the germline contact maps proposed by Marrack 361 
+
+et al. (2008). 362 
+
+A longstanding question in immunology is whether TCR–pHLA specificity is governed more by 363 
+
+inherited structural constraints or by developmental selection, reflecting broader questions about 364 
+
+how evolutionary forces (Feng et al., 2007; Marrack et al., 2008; Christopher Garcia et al., 2009; 365 
+
+Yin et al., 2012) and thymic processes (Van Laethem et al., 2007, 2012; Lu et al., 2019) shape 366 
+
+the TCR repertoire. Evidence for intrinsic specificity includes recognition of pHLAs by randomly 367 
+
+generated T cells (Krovi et al., 2019), QTL associations between HLAs and TCR V β usage (Sharon 368 
+
+et al., 2016; Gao et al., 2019) and alloreactivity (Felix and Allen, 2007), where TCRs selected on 369 
+
+self-HLAs cross-react with non-self HLAs. Our findings support this view. Namely, polymorphic 370 
+
+residues, especially in the α1 helix of class I and the β1 helix of class II, correlate with V β gene 371 
+
+preference but not peptide motifs, consistent with germline-encoded structural bias and allele-specific 372 
+
+recognition (Cohn et al., 2019). We also identify residues associated only with peptide motifs 373 
+
+and those associated with both peptide motifs and V β genes, indicating multiple mechanisms 374 
+
+through which HLA polymorphism shapes TCR engagement. A parsimonious interpretation is that 375 
+
+TCR–HLA interactions reflect both co-evolution and selection (Rangarajan and Mariuzza, 2014; 376 
+
+La Gruta et al., 2018), with germline contacts priming initial binding and thymic selection, subject 377 
+
+to these germline constraints, sculpting the final repertoire. This layered model helps reconcile 378 
+
+competing hypotheses and offers a unified framework for understanding repertoire architecture. 379 
+
+Our analysis suggests that V β restriction follows a continuum rather than a simple Class I 380 
+
+versus Class II split. HLA-DR and HLA-DP appear to be “generalists” with high entropy and broad 381 
+
+compatibility. On the other hand, HLA-C seems to act as a “specialist” with lower entropy compared 382 
+
+to other HLAs. This complements Gao et al. (2019)’s observation that HLA-C has fewer TCR 383 
+
+associations than other Class I loci. While they attribute this to low surface expression, our data 384 
+
+implies that these associations are more specific for HLA-C than for other loci. Therefore, the weak 385 
+
+HLA-C signal could result from a combination of low abundance and structural selectivity. This 386 
+
+divergence in part reflects the functional needs of CD8+ T cells to have precise recognition to avoid 387 
+
+autoimmunity, whereas CD4+ T cells benefit from broader scanning capabilities. 388 
+
+Several findings raise compelling questions for future investigation. In class I HLAs, V β gene 389 
+
+associations cluster near the α1 helix, which directly contacts the TCR β chain. In contrast, HLA-DR 390 
+
+associations are exclusively driven by the polymorphic β chain (DRB), since the α chain (DRA) 391 
+
+remains constant. This provides a residue-level mechanism for the HLA-DRB1 expression QTLs 392 
+
+16 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+reported by Sharon et al. (2016). Given that in Class II HLAs, the TCR β primarily contacts the α1393 
+
+helix, it suggests that DRB polymorphisms may influence TCR binding indirectly, for example by 394 
+
+changing pHLA conformation or stability, rather than through direct contact with the V β domain. 395 
+
+The absence of similar correlations in HLA-DQ and -DP, where both chains are polymorphic, 396 
+
+underscores the unique role of the invariant DRA chain in shaping recognition. Additionally, we 397 
+
+identify HLA positions with negative correlations to TCR β or peptide similarity, potentially reflecting 398 
+
+compensatory or co-evolutionary effects that preserve recognition despite sequence divergence. These 399 
+
+patterns suggest novel structural mechanisms of immune recognition and point to the value of 400 
+
+follow-up studies using mutagenesis, structural modeling or biophysical assays. 401 
+
+Despite the statistical power and scale of our framework, several limitations should guide 402 
+
+interpretation. Our analysis focuses exclusively on the TCR β chain and does not account for 403 
+
+potential contributions from the TCR α chain, which also engages the pHLA surface and may exhibit 404 
+
+its own germline biases. Likewise, our emphasis on HLA polymorphism may overlook conserved 405 
+
+germline-encoded residues that play critical roles in TCR recognition. While we focus on V β406 
+
+gene–encoded CDR1 and CDR2 regions, we do not account for the hypervariable CDR3 loop, which 407 
+
+is central to peptide recognition and also influences HLA binding. In addition, peptide repertoires 408 
+
+used to define motif similarity are drawn from public datasets often biased toward disease-associated 409 
+
+antigens, potentially limiting their generalizability. Furthermore, some observed correlations may 410 
+
+arise from linkage disequilibrium between HLA alleles, rather than from direct structural contacts. 411 
+
+Conversely, the absence of correlation does not imply a lack of interaction but may reflect limited 412 
+
+power, resolution or data sparsity. Structural modeling and molecular dynamics simulations could 413 
+
+help resolve these ambiguities by assessing the functional impact of specific residues. Finally, as 414 
+
+high-throughput technologies improve, future studies incorporating paired TCR αβ repertoires and 415 
+
+more representative peptide libraries will be essential to validate and expand these insights. 416 
+
+A key assumption of our analysis is that the structural associations identified in the public 417 
+
+repertoire reflect fundamental biophysical constraints applicable to all TCRs. Under this assumption, 418 
+
+the V β–HLA associations we identify provide important constraints for modeling TCR-pHLA 419 
+
+interactions. The P (V β | HLA ) and P (HLA | V β ) matrices provide simple priors that can bias a 420 
+
+model toward germline-consistent TCRs when assigning HLAs or ranking candidate receptors. This 421 
+
+is particularly useful in low-data settings (e.g. rare HLAs or small clinical cohorts), where these 422 
+
+priors could help prevent models from overfitting to noise. These priors can also be incorporated 423 
+
+into benchmarking via a simple prior-weighted accuracy metric. 424 
+
+Our findings support a model of TCR–HLA specificity shaped by both inherited constraints 425 
+
+and adaptive processes. Germline-encoded biases appear to define the baseline potential for V β426 
+
+engagement with HLA, while thymic selection and immune experience further sculpt the repertoire. 427 
+
+By leveraging tens of thousands of repertoires to derive V β usage patterns and mapping these onto 428 
+
+HLA sequence and structure, we perform a residue-level analysis that provides insights into the 429 
+
+molecular basis of TCR–HLA interactions. Our approach demonstrates the power of population-430 
+
+scale, structure-aware statistical analysis to uncover fundamental principles of immune recognition. 431 
+
+17 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+These insights offer not only a clearer understanding of repertoire formation but also a scalable 432 
+
+and interpretable framework to guide future efforts in TCR modeling, repertoire engineering and 433 
+
+immunotherapy design. 434 
+
+## Conflict of Interest Statement 435 
+
+HJ Zahid, L Pisani, J Greissl have employment and equity ownership with Microsoft. M Noakes, HS 436 
+
+Robins have employment and equity ownership with Adaptive Biotechnologies. LV Castorina has 437 
+
+employment with AstraZeneca. The authors declare no other competing interests. 438 
+
+## Author Contributions 439 
+
+LVC, MTN, HCH, and HJZ were involved in the writing of the paper. LVC worked on the analyses 440 
+
+and code. LVC, MTN, HJZ created the visualizations. LP adviced on code structure. JG, HJZ, 441 
+
+MTN, and HCH mentored LVC throughout the stages of the work. All authors provided feedback 442 
+
+on the drafts of the paper. 443 
+
+## Funding 444 
+
+The work was funded by Microsoft Corporation and Adaptive Biotechnologies. 445 
+
+## Acknowledgments 446 
+
+We thank Haiyin Chen for her persistent encouragement to pursue this problem, which ultimately 447 
+
+motivated the work presented here. 448 
+
+## Supplemental Data 449 
+
+Supplementary Material should be uploaded separately on submission, if there are Supplementary 450 
+
+Figures, please include the caption in the same file as the figure. LaTeX Supplementary Material 451 
+
+templates can be found in the Frontiers LaTeX folder. 452 
+
+## Data Availability Statement 453 
+
+All data and code are available at https://github.com/microsoft/tcr-mhc. 454 
+
+## References 455 
+
+Bradley, P. (2023). Structure-based prediction of T cell receptor:peptide-MHC interactions. eLife 456 
+
+12, e82813. doi:10.7554/eLife.82813 457 
+
+18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Castorina, L. V., Grazioli, F., Machart, P., Mösch, A., and Errica, F. (2025). Assessing the 458 
+
+generalization capabilities of tcr binding predictors via peptide distance analysis. PLOS One 20, 459 
+
+e0324011. doi:10.1371/journal.pone.0324011 460 
+
+Christopher Garcia, K., Adams, J. J., Feng, D., and Ely, L. K. (2009). The molecular basis of tcr 461 
+
+germline bias for mhc is surprisingly simple. Nature immunology 10, 143–147 462 
+
+Cohn, M., Anderson, C. C., and Dembic, Z. (2019). The case for allele-specific recognition by the 463 
+
+tcr. Scandinavian Journal of Immunology 90. doi:10.1111/sji.12790 464 
+
+Davis, M. M. and Bjorkman, P. J. (1988). T-cell antigen receptor genes and T-cell recognition. 465 
+
+Nature 334, 395–402. doi:10.1038/334395a0 466 
+
+Drost, F., Chernysheva, A., Albahah, M., Kocher, K., Schober, K., and Schubert, B. (2025). 467 
+
+Benchmarking of t cell receptor-epitope predictors with epytope-tcr. Cell Genomics 5468 
+
+Emerson, R. O., DeWitt, W. S., Vignali, M., Gravley, J., Hu, J. K., Osborne, E. J., et al. (2017). 469 
+
+Immunosequencing identifies signatures of cytomegalovirus exposure history and hla-mediated 470 
+
+effects on the t cell repertoire. Nature genetics 49, 659–665 471 
+
+Felix, N. J. and Allen, P. M. (2007). Specificity of t-cell alloreactivity. Nature Reviews Immunology 472 
+
+7, 942–953 473 
+
+Feng, D., Bond, C. J., Ely, L. K., Maynard, J., and Garcia, K. C. (2007). Structural evidence for 474 
+
+a germline-encoded t cell receptor–major histocompatibility complex interaction’codon’. Nature 475 
+
+immunology 8, 975–983 476 
+
+Gao, K., Chen, L., Zhang, Y., Zhao, Y., Wan, Z., Wu, J., et al. (2019). Germline-encoded tcr-mhc 477 
+
+contacts promote tcr v gene bias in umbilical cord blood t cell repertoire. Frontiers in Immunology 478 
+
+10. doi:10.3389/fimmu.2019.02064 479 
+
+Grazioli, F., Machart, P., Mösch, A., Li, K., Castorina, L. V., Pfeifer, N., et al. (2023). Attentive 480 
+
+Variational Information Bottleneck for TCR–peptide interaction prediction. Bioinformatics 39, 481 
+
+btac820. doi:10.1093/bioinformatics/btac820 482 
+
+Grazioli, F., Mösch, A., Machart, P., Li, K., Alqassem, I., O’Donnell, T. J., et al. (2022). On TCR 483 
+
+binding predictors failing to generalize to unseen peptides. Frontiers in Immunology 13, 1014256. 484 
+
+doi:10.3389/fimmu.2022.1014256 485 
+
+Henikoff, S. and Henikoff, J. G. (1992). Amino acid substitution matrices from protein blocks. 486 
+
+Proceedings of the National Academy of Sciences 89, 10915–10919. doi:10.1073/pnas.89.22.10915 487 
+
+[Dataset] Jensen, M. F. and Nielsen, M. (2024). NetTCR 2.2 - Improved TCR specificity predictions 488 
+
+by combining pan- and peptide-specific training strategies, loss-scaling and integration of sequence 489 
+
+similarity. doi:10.7554/eLife.93934.2 490 
+
+19 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Jumper, J., Evans, R., Pritzel, A., Green, T., Figurnov, M., Ronneberger, O., et al. (2021). Highly 491 
+
+accurate protein structure prediction with alphafold. nature 596, 583–589 492 
+
+Karnaukhov, V., Paes, W., Woodhouse, I. B., Partridge, T., Nicastri, A., Brackenridge, S., et al. 493 
+
+(2022). HLA variants have different preferences to present proteins with specific molecular 494 
+
+functions which are complemented in frequent haplotypes. Frontiers in Immunology 13, 1067463. 495 
+
+doi:10.3389/fimmu.2022.1067463 496 
+
+Klein, J. and Sato, A. (2000). The hla system. New England Journal of Medicine 343, 702–709 497 
+
+Klenerman, P. and Oxenius, A. (2016). T cell responses to cytomegalovirus. Nature Reviews 498 
+
+Immunology 16, 367–377 499 
+
+Krovi, S. H., Kappler, J. W., Marrack, P., and Gapin, L. (2019). Inherent reactivity of unselected 500 
+
+tcr repertoires to peptide-mhc molecules. Proceedings of the National Academy of Sciences 116, 501 
+
+22252–22261. doi:10.1073/pnas.1909504116 502 
+
+La Gruta, N. L., Gras, S., Daley, S. R., Thomas, P. G., and Rossjohn, J. (2018). Understanding 503 
+
+the drivers of MHC restriction of T cell receptors. Nature Reviews Immunology 18, 467–478. 504 
+
+doi:10.1038/s41577-018-0007-5 505 
+
+Lu, J., Van Laethem, F., Bhattacharya, A., Craveiro, M., Saba, I., Chu, J., et al. (2019). Molecular 506 
+
+constraints on cdr3 for thymic selection of mhc-restricted tcrs from a random pre-selection 507 
+
+repertoire. Nature communications 10, 1019 508 
+
+Marrack, P., Scott-Browne, J. P., Dai, S., Gapin, L., and Kappler, J. W. (2008). Evolutionarily 509 
+
+conserved amino acids that control tcr-mhc interaction. Annu. Rev. Immunol. 26, 171–203 510 
+
+May, D. H., Woodhouse, S., Zahid, H. J., Elyanow, R., Doroschak, K., Noakes, M. T., et al. (2024). 511 
+
+Identifying immune signatures of common exposures through co-occurrence of t-cell receptors in 512 
+
+tens of thousands of donors. BioRxiv , 2024–03 513 
+
+Murphy, K. and Weaver, C. (2017a). Janeway’s Immunobiology (Garland Science, Taylor & Francis 514 
+
+Group), 9th edn. 515 
+
+Murphy, K. M. and Weaver, C. (2017b). Janeway’s Immunobiology (New York London: GS, Garland 516 
+
+Science, Taylor & Francis Group), 9th edition edn. 517 
+
+Nakamura, T., Shirouzu, T., Nakata, K., Yoshimura, N., and Ushigome, H. (2019). The Role 518 
+
+of Major Histocompatibility Complex in Organ Transplantation- Donor Specific Anti-Major 519 
+
+Histocompatibility Complex Antibodies Analysis Goes to the Next Stage -. International Journal 520 
+
+of Molecular Sciences 20, 4544. doi:10.3390/ijms20184544 521 
+
+Neefjes, J. J. and Ploegh, H. L. (1988). Allele and locus-specific differences in cell surface expression 522 
+
+and the association of hla class i heavy chain with β2-microglobulin: differential effects of inhibition 523 
+
+of glycosylation on class i subunit association. European journal of immunology 18, 801–810 524 
+
+20 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Parker, K. C., Bednarek, M. A., and Coligan, J. E. (1994). Scheme for ranking potential hla-a2 525 
+
+binding peptides based on independent binding of individual peptide side-chains. Journal of 526 
+
+immunology (Baltimore, Md.: 1950) 152, 163–175 527 
+
+Rangarajan, S. and Mariuzza, R. A. (2014). T cell receptor bias for mhc: co-evolution or co-receptors? 528 
+
+Cellular and molecular life sciences 71, 3059–3068 529 
+
+Rossjohn, J., Gras, S., Miles, J. J., Turner, S. J., Godfrey, D. I., and McCluskey, J. (2015). T cell 530 
+
+antigen receptor recognition of antigen-presenting molecules. Annual review of immunology 33, 531 
+
+169–200 532 
+
+Rudolph, M. G., Stanfield, R. L., and Wilson, I. A. (2006). How tcrs bind mhcs, peptides, and 533 
+
+coreceptors. Annu. Rev. Immunol. 24, 419–466 534 
+
+Sewell, A. K. (2012). Why must t cells be cross-reactive? Nature Reviews Immunology 12, 669–677. 535 
+
+doi:10.1038/nri3279 536 
+
+Sharon, E., Sibener, L. V., Battle, A., Fraser, H. B., Garcia, K. C., and Pritchard, J. K. (2016). 537 
+
+Genetic variation in MHC proteins is associated with T cell receptor expression biases. Nature 538 
+
+Genetics 48, 995–1002. doi:10.1038/ng.3625 539 
+
+Sievers, F., Wilm, A., Dineen, D., Gibson, T. J., Karplus, K., Li, W., et al. (2011). Fast, scalable 540 
+
+generation of high-quality protein multiple sequence alignments using Clustal Omega. Molecular 541 
+
+Systems Biology 7, 539. doi:10.1038/msb.2011.75 542 
+
+Springer, I., Tickotsky, N., and Louzoun, Y. (2021). Contribution of T Cell Receptor Alpha and Beta 543 
+
+CDR3, MHC Typing, V and J Genes to Peptide Binding Prediction. Frontiers in Immunology 12, 544 
+
+664514. doi:10.3389/fimmu.2021.664514 545 
+
+Tadros, D. M., Eggenschwiler, S., Racle, J., and Gfeller, D. (2023). The MHC Motif Atlas: A 546 
+
+database of MHC binding specificities and ligands. Nucleic Acids Research 51, D428–D437. 547 
+
+doi:10.1093/nar/gkac965 548 
+
+Tiercy, J.-M. (2002). Molecular basis of HLA polymorphism: Implications in clinical transplantation. 549 
+
+Transplant Immunology 9, 173–180. doi:10.1016/S0966-3274(02)00007-2 550 
+
+Van Laethem, F., Sarafova, S. D., Park, J.-H., Tai, X., Pobezinsky, L., Guinter, T. I., et al. (2007). 551 
+
+Deletion of cd4 and cd8 coreceptors permits generation of αβ t cells that recognize antigens 552 
+
+independently of the mhc. Immunity 27, 735–750 553 
+
+Van Laethem, F., Tikhonova, A. N., and Singer, A. (2012). Mhc restriction is imposed on a diverse t 554 
+
+cell receptor repertoire by cd4 and cd8 co-receptors during thymic selection. Trends in immunology 555 
+
+33, 437–441 556 
+
+Yin, L., Scott-Browne, J., Kappler, J. W., Gapin, L., and Marrack, P. (2012). T cells and their 557 
+
+eons-old obsession with mhc. Immunological reviews 250, 49–60 558 
+
+21 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 19, 2026. ;https://doi.org/10.64898/2026.02.19.706729 doi: bioRxiv preprint
+
+Zahid, H. J., Taniguchi, R., Ebert, P., Chow, I.-T., Gooley, C., Lv, J., et al. (2025a). Large-scale 559 
+
+statistical mapping of t-cell receptor β sequences to human leukocyte antigens. Frontiers in 560 
+
+Immunology Volume 16 - 2025. doi:10.3389/fimmu.2025.1603730 561 
+
+Zahid, H. J., Taniguchi, R., Noceda, M. G., Robins, H., and Greissl, J. (2025b). T cell receptor 562 
+
+diversity, cancer and sex: Insights from 30,000 tcr β repertoires. bioRxiv doi:10.1101/2024.10.21. 563 
+
+619470 564 
+
+22

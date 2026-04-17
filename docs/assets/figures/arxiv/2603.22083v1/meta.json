@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.22083v1/fig-001.webp",
+      "caption": "Figure 2: Illustration for EoG Agent with DT-MDP-CE.",
+      "page": 5,
+      "index": 1,
+      "width": 398,
+      "height": 346
+    }
+  ]
+}

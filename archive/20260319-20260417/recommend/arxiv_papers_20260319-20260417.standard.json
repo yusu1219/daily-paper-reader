@@ -1,0 +1,819 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-17T08:29:55.207687+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 18,
+    "deep_cap": 6,
+    "deep_selected": 8,
+    "quick_candidates": 50,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "biorxiv-10-64898-2025-12-19-695451-v2",
+      "source": "biorxiv",
+      "title": "Rapid and Reliable Structural Modeling of Adaptive Immune Receptors Using an Optimized AlphaFold3 workflow",
+      "abstract": "AlphaFold (AF), a deep-learning based protein modelling approach, has revolutionized structural biology by generally achieving near-experimental accuracy in protein structure prediction. An impactful application of AF is the modelling of antibodies (Abs) and T-cell receptors (TCRs), key mediators of cellular immunity, whose structural specificity underlies responses in cancer, infection, and autoimmune diseases. In this work, we analyse AF3 performance by systematically examining how MSA composition and the number of inference phases affect prediction accuracy and computational efficiency. Using reduced UniRef90 subsets, we present a ~45-fold accelerated and highly accurate variant of the AF3 workflow specifically optimized for the modelling of the Abs and TCRs receptor domains, enabling rapid, reliable structural predictions at a scale suitable for high-throughput immunological studies. Our findings provide a foundation for faster therapeutic discovery and deeper molecular mechanism understanding of immune recognition.",
+      "authors": [
+        "Jann, A.",
+        "Perez, M. A. S.",
+        "Zoete, V."
+      ],
+      "primary_category": "immunology",
+      "categories": [
+        "immunology"
+      ],
+      "published": "2026-04-15T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2025.12.19.695451v2.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.5,
+      "llm_evidence_en": "structural modeling of T-cell receptors using deep learning",
+      "llm_evidence_cn": "利用深度学习进行 T 细胞受体结构建模",
+      "llm_evidence": "利用深度学习进行 T 细胞受体结构建模",
+      "canonical_evidence": "利用深度学习进行 T 细胞受体结构建模",
+      "llm_tldr_en": "Optimizes AlphaFold3 for rapid and reliable structural modeling of T-cell receptors.",
+      "llm_tldr_cn": "优化 AlphaFold3，用于快速可靠的 T 细胞受体结构建模。",
+      "llm_tldr": "优化 AlphaFold3，用于快速可靠的 T 细胞受体结构建模。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2603.26994v1",
+      "source": "arxiv",
+      "title": "ImmSET: Sequence-Based Predictor of TCR-pMHC Specificity at Scale",
+      "abstract": "T cells are a critical component of the adaptive immune system, playing a role in infectious disease, autoimmunity, and cancer. T cell function is mediated by the T cell receptor (TCR) protein, a highly diverse receptor targeting specific peptides presented by the major histocompatibility complex (pMHCs). Predicting the specificity of TCRs for their cognate pMHCs is central to understanding adaptive immunity and enabling personalized therapies. However, accurate prediction of this protein-protein interaction remains challenging due to the extreme diversity of both TCRs and pMHCs. Here, we present ImmSET (Immune Synapse Encoding Transformer), a novel sequence-based architecture designed to model interactions among sets of variable-length biological sequences. We train this model across a range of dataset sizes and compositions and study the resulting models' generalization to pMHC targets. We describe a failure mode in prior sequence-based approaches that inflates previously reported performance on this task and show that ImmSET remains robust under stricter evaluation. In systematically testing the scaling behavior of ImmSET with training data, we show that performance scales consistently with data volume across multiple data types and compares favorably with the pre-trained protein language model ESM2 fine-tuned on the same datasets. Finally, we demonstrate that ImmSET can outperform AlphaFold2 and AlphaFold3-based pipelines on TCR-pMHC specificity prediction when provided sufficient training data. This work establishes ImmSET as a scalable modeling paradigm for multi-sequence interaction problems, demonstrated in the TCR-pMHC setting but generalizable to other biological domains where high-throughput sequence-driven reasoning complements structure prediction and experimental mapping.",
+      "authors": [
+        "Marco Garcia Noceda",
+        "Matthew T Noakes",
+        "Andrew FigPope",
+        "Daniel E Mattox",
+        "Bryan Howie",
+        "Harlan Robins"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "q-bio.QM"
+      ],
+      "published": "2026-03-27T21:08:10+00:00",
+      "link": "https://arxiv.org/pdf/2603.26994v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Transformer architecture for predicting TCR-pMHC specificity at scale",
+      "llm_evidence_cn": "用于大规模预测 TCR-pMHC 特异性的 Transformer 架构",
+      "llm_evidence": "用于大规模预测 TCR-pMHC 特异性的 Transformer 架构",
+      "canonical_evidence": "用于大规模预测 TCR-pMHC 特异性的 Transformer 架构",
+      "llm_tldr_en": "Introduces ImmSET, a sequence-based Transformer for modeling TCR-pMHC interactions and specificity.",
+      "llm_tldr_cn": "推出 ImmSET，一种基于序列的 Transformer 架构，用于建模 TCR-pMHC 相互作用和特异性。",
+      "llm_tldr": "推出 ImmSET，一种基于序列的 Transformer 架构，用于建模 TCR-pMHC 相互作用和特异性。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.13254v1",
+      "source": "arxiv",
+      "title": "Calibrated Abstention for Reliable TCR--pMHC Binding Prediction under Epitope Shift",
+      "abstract": "Predicting T-cell receptor (TCR)--peptide-MHC (pMHC) binding is central to vaccine design and T-cell therapy, yet deployed models frequently encounter epitopes unseen during training, causing silent overconfidence and unreliable prioritization. We address this by framing TCR--pMHC prediction as a \\emph{selective prediction} problem: a calibrated model should either output a trustworthy confidence score or explicitly abstain. Concretely, we (1) introduce a dual-encoder architecture encoding both CDR3$α$/CDR3$β$ and peptide sequences via a pre-trained protein language model; (2) apply temperature scaling to correct systematic probability miscalibration; and (3) impose a conformal abstention rule that provides finite-sample coverage guarantees at a user-specified target error rate. Evaluated under three split strategies -- random, epitope-held-out, and distance-aware -- our method achieves AUROC 0.813 and ECE 0.043 under the challenging epitope-held-out protocol, reducing ECE by 69.7\\% relative to an uncalibrated baseline. At 80\\% coverage, the selective model further reduces error rate from 18.7\\% to 10.9\\%, demonstrating that calibrated abstention enables principled coverage-risk trade-offs aligned with practical screening budgets.",
+      "authors": [
+        "Arman Bekov",
+        "Timur Bekzhanov",
+        "Bekzat Sadykov"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR"
+      ],
+      "published": "2026-04-14T19:38:54+00:00",
+      "link": "https://arxiv.org/pdf/2604.13254v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "TCR-pMHC binding prediction using protein language models",
+      "llm_evidence_cn": "利用蛋白质语言模型进行TCR-pMHC结合预测",
+      "llm_evidence": "利用蛋白质语言模型进行TCR-pMHC结合预测",
+      "canonical_evidence": "利用蛋白质语言模型进行TCR-pMHC结合预测",
+      "llm_tldr_en": "Improves TCR-pMHC binding prediction reliability using language models and calibrated abstention.",
+      "llm_tldr_cn": "利用语言模型和校准拒绝策略提升TCR-pMHC结合预测的可靠性。",
+      "llm_tldr": "利用语言模型和校准拒绝策略提升TCR-pMHC结合预测的可靠性。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2604.13256v1",
+      "source": "arxiv",
+      "title": "Counterfactual Peptide Editing for Causal TCR--pMHC Binding Inference",
+      "abstract": "Neural models for TCR-pMHC binding prediction are susceptible to shortcut learning: they exploit spurious correlations in training data -- such as peptide length bias or V-gene co-occurrence -- rather than the physical binding interface. This renders predictions brittle under family-held-out and distance-aware evaluation, where such shortcuts do not transfer. We introduce \\emph{Counterfactual Invariant Prediction} (CIP), a training framework that generates biologically constrained counterfactual peptide edits and enforces invariance to edits at non-anchor positions while amplifying sensitivity at MHC anchor residues. CIP augments the base classifier with two auxiliary objectives: (1) an invariance loss penalizing prediction changes under conservative non-anchor substitutions, and (2) a contrastive loss encouraging large prediction changes under anchor-position disruptions. Evaluated on a curated VDJdb-IEDB benchmark under family-held-out, distance-aware, and random splits, CIP achieves AUROC 0.831 and counterfactual consistency (CFC) 0.724 under the challenging family-held-out protocol -- a 39.7\\% reduction in shortcut index relative to the unconstrained baseline. Ablations confirm that anchor-aware edit generation is the dominant driver of OOD gains, providing a practical recipe for causally-grounded TCR specificity modeling.",
+      "authors": [
+        "Sanjar Khudoyberdiev",
+        "Arman Bekov"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.GR"
+      ],
+      "published": "2026-04-14T19:40:46+00:00",
+      "link": "https://arxiv.org/pdf/2604.13256v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "causal TCR-pMHC binding inference and counterfactual peptide editing",
+      "llm_evidence_cn": "因果TCR-pMHC结合推断和反事实肽编辑",
+      "llm_evidence": "因果TCR-pMHC结合推断和反事实肽编辑",
+      "canonical_evidence": "因果TCR-pMHC结合推断和反事实肽编辑",
+      "llm_tldr_en": "CIP improves TCR-pMHC binding prediction accuracy and interpretability using counterfactual edits.",
+      "llm_tldr_cn": "CIP通过反事实编辑提高了TCR-pMHC结合预测的准确性和可解释性。",
+      "llm_tldr": "CIP通过反事实编辑提高了TCR-pMHC结合预测的准确性和可解释性。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-03-20-713313-v1",
+      "source": "biorxiv",
+      "title": "TCRseek: Scalable Approximate Nearest Neighbor Search for T-Cell Receptor Repertoires via Windowed k-mer Embeddings",
+      "abstract": "The rapid growth of T-cell receptor (TCR) sequencing data has created an urgent need for computational methods that can efficiently search CDR3 sequences at scale. Existing approaches either rely on exact pairwise distance computation, which scales quadratically with repertoire size, or employ heuristic grouping that sacrifices sensitivity. Here we present TCRseek, a two-stage retrieval framework that combines biologically informed sequence embeddings with approximate nearest neighbor (ANN) indexing for scalable search over TCR repertoires. TCRseek first encodes CDR3 amino acid sequences into fixed-length numerical vectors through a multi-scale windowed k-mer embedding scheme derived from BLOSUM62 eigendecomposition, then indexes these vectors using FAISS-based structures (IVF-Flat, IVF-PQ, or HNSW-Flat) that support sublinear-time search. A second-stage reranking module refines the shortlisted candidates using exact sequence alignment scores (Needleman-Wunsch with BLOSUM62), Levenshtein distance, or Hamming distance. We benchmarked TCRseek against tcrdist3, TCRMatch, and GIANA on a 100,000-sequence corpus with precomputed exact ground truth under three distance metrics. Under cross-metric evaluation--where the reranking and ground truth metrics differ, providing the most informative test of generalization--TCRseek achieved NDCG@10 = 0.890 (Levenshtein ground truth) and 0.880 (Hamming ground truth), ranking highest among the retained baselines under Hamming and remaining competitive with tcrdist3 (0.894) under Levenshtein. When the reranking metric matches the ground truth definition (BLOSUM62 alignment), NDCG@10 reached 0.993, confirming that the ANN shortlist captures >99% of true neighbors--the expected ceiling of the two-stage design. On the 100,000-sequence corpus, TCRseek achieved 3.6-39.6x speedup over exact brute-force search depending on index type and distance metric, with the largest gains for alignment-based retrieval. These results demonstrate that embedding-based ANN search provides a practical and scalable alternative for TCR repertoire analysis.",
+      "authors": [
+        "Yang, Y."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-03-24T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.20.713313v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "scalable search and embedding of TCR repertoires",
+      "llm_evidence_cn": "TCR 免疫组库的大规模搜索与嵌入",
+      "llm_evidence": "TCR 免疫组库的大规模搜索与嵌入",
+      "canonical_evidence": "TCR 免疫组库的大规模搜索与嵌入",
+      "llm_tldr_en": "Presents TCRseek for scalable search over TCR repertoires using windowed k-mer embeddings.",
+      "llm_tldr_cn": "提出 TCRseek，利用窗口 k-mer 嵌入对 TCR 免疫组库进行大规模搜索。",
+      "llm_tldr": "提出 TCRseek，利用窗口 k-mer 嵌入对 TCR 免疫组库进行大规模搜索。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-03-30-715276-v1",
+      "source": "biorxiv",
+      "title": "IMMREP25: Unseen Peptides",
+      "abstract": "T cell receptors (TCRs) can bind to peptides presented by MHC molecules (pMHC) as a first step to trigger a T cell response. Reliable approaches to predict TCR:pMHC binding would have broad applications in clinical diagnostics, therapeutics, and the fundamental understanding of molecular interactions. IMMREP is a community organized series of prediction contests that asks participants to predict TCR:pMHC binding on unpublished datasets. Previous iterations in 2022 and 2023 showed multiple approaches can predict TCR-pMHC binding with significant accuracy (median AUC_0.1[&ge;]0.7) for peptides where experimental data is available (\"seen\" peptides). In contrast, models did not outperform random guessing for peptides that have no such data available (\"unseen\" peptides). Here we report on the results of IMMREP25, which focused solely on unseen peptides in order to evaluate the cutting edge of the field. We received 126 named submissions predicting the specificity of 1,000 TCRs against twenty unseen peptides restricted by one of two MHC molecules (HLA-A*02:01 and HLA-B*40:01). The best performing methods showed a macro-AUC_0.1 of 0.60, significantly better than random, demonstrating significant advances in the field. The top performing methods incorporated structural modeling into their approach, indicating that especially for  unseen peptides, a structural understanding aids in the prediction of TCR:pMHC interactions. The results from this benchmark highlight the significant challenges remaining for TCR:pMHC predictions and will inform future method development.",
+      "authors": [
+        "Richardson, E.",
+        "Aarts, Y. J. M.",
+        "Altin, J. A.",
+        "Baakman, C. A. B.",
+        "Bradley, P.",
+        "Chen, B.",
+        "Clifford, J.",
+        "Dhar, M.",
+        "Diepenbroek, D.",
+        "Fast, E.",
+        "Gowthaman, R.",
+        "He, J.",
+        "Karnaukhov, V.",
+        "Marzella, D. F.",
+        "Meysman, P.",
+        "Nielsen, M.",
+        "Nilsson, J. B.",
+        "Deleuran, S. N.",
+        "Parizi, F. M.",
+        "Pelissier, A.",
+        "Pierce, B. G.",
+        "Rodriguez Martinez, M.",
+        "Roran A R, D.",
+        "Saravanakumar, S.",
+        "Shao, Y.",
+        "Smit, N.",
+        "Van Houcke, M.",
+        "Visani, G. M.",
+        "Wan, Y.-T. R.",
+        "Wang, X.",
+        "Woods, L.",
+        "Wuyts, S.",
+        "Xiao, C.",
+        "Xue, L. C.",
+        "IMMREP25 Participant Consortium,",
+        "Barton, J.",
+        "Noakes, M.",
+        "May, D. H.",
+        "Peters, B."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-01T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.30.715276v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Predicts TCR:pMHC binding and evaluates models on unseen peptides",
+      "llm_evidence_cn": "预测TCR:pMHC结合并评估模型在未见肽段上的表现",
+      "llm_evidence": "预测TCR:pMHC结合并评估模型在未见肽段上的表现",
+      "canonical_evidence": "预测TCR:pMHC结合并评估模型在未见肽段上的表现",
+      "llm_tldr_en": "Reports on community contests for predicting TCR-peptide binding, highlighting challenges with unseen peptides.",
+      "llm_tldr_cn": "报告了预测TCR-肽结合的社区竞赛结果，强调了处理未见肽段的挑战。",
+      "llm_tldr": "报告了预测TCR-肽结合的社区竞赛结果，强调了处理未见肽段的挑战。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-07-717034-v1",
+      "source": "biorxiv",
+      "title": "MHCXGraph: A Graph-Based approach to detecting T cell receptor cross-reactivity",
+      "abstract": "AO_SCPLOWBSTRACTC_SCPLOWThe T cell receptor (TCR) recognition of multiple peptides presented by the major histocompatibility complex (MHC) is a key natural phenomenon, enabling the T cell repertoire to respond to a broad array of antigens. Despite its importance to the immune response, T cell cross-reactivity poses a major challenge for the development of novel T cell-based therapies. In this study, we present MHCXGraph, a graph-based computational approach for identifying conserved and immunologically relevant regions across multiple structures of peptides bound to MHC molecules (pMHC). Our approach provides three operational modes with user-defined parameters, allowing flexible configuration according to specific scientific needs while delivering fully interpretable results through user-friendly interfaces. We evaluated MHCXGraph across three case studies, including peptides bound to classical MHC Class I, MHC Class II, and unbound HLA alleles, demonstrating its ability to capture conserved structural determinants beyond sequence similarity. By integrating structural information with efficient graph-based analysis, MHCXGraph addresses key limitations of sequence-based methods while maintaining computational scalability. Collectively, these results indicate that MHCXGraph can be readily integrated into computational pipelines for T cell cross-reactivity discovery, especially in the context of de novo pMHC engager design and T cell-based vaccine development.",
+      "authors": [
+        "Simoes, C. D. M. S.",
+        "Maidana, R. L. B. R.",
+        "De Assis, S. C.",
+        "Guerra, J. V. d. S.",
+        "Ribeiro-Filho, H. V."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-10T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.07.717034v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Graph-based approach to detecting T cell receptor cross-reactivity",
+      "llm_evidence_cn": "基于图的方法检测T细胞受体交叉反应性",
+      "llm_evidence": "基于图的方法检测T细胞受体交叉反应性",
+      "canonical_evidence": "基于图的方法检测T细胞受体交叉反应性",
+      "llm_tldr_en": "MHCXGraph identifies immunologically relevant regions in pMHC to predict TCR cross-reactivity.",
+      "llm_tldr_cn": "MHCXGraph通过图计算识别pMHC中的免疫相关区域，用于预测TCR交叉反应性。",
+      "llm_tldr": "MHCXGraph通过图计算识别pMHC中的免疫相关区域，用于预测TCR交叉反应性。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-10-717405-v1",
+      "source": "biorxiv",
+      "title": "Deciphering antigen-driven T cell responses through vectorized TCRdist sequence neighborhood quantification",
+      "abstract": "T cells provide precise mechanisms to defend the body against infection and malignancies, mediated through the expression of their hypervariable T cell receptors (TCRs). Interpreting similarity between TCRs, however, remains a significant challenge. While performant clustering methods exist, these often fail to distinguish between antigen-driven convergent selection and patterns arising stochastically from biases in the V(D)J recombination mechanism. Moreover, defining enrichment in sequence similarity among large repertoires is computationally taxing. To address these limitations, we present an efficient computational framework for rapid approximation of TCRdist distances using fixed-length vector embeddings and highly optimized nearest neighbor search, allowing sequence similarity enrichment testing at a multi-repertoire-wide scale. This framework leverages a novel shuffling-based background model that preserves important repertoire characteristics such as V gene frequency, CDR3 sequence length and generation probability more accurately than synthetic models. Together, these tools enable the efficient and robust identification of significantly neighbor enriched (SNE) TCR sequences at scale. We validate this approach by showing a significant enrichment of SNE clones in memory T cell fractions and further demonstrate its utility in identifying convergent T cell signatures of response to vaccination and viral infections, providing a scalable approach for antigen-agnostic T cell response profiling.",
+      "authors": [
+        "Valkiers, S.",
+        "Mayer-Blackwell, K.",
+        "Yeh, A. C.",
+        "Van Deuren, V. M. L.",
+        "Fiore-Gartland, A.",
+        "Hill, G.",
+        "Laukens, K.",
+        "Meysman, P.",
+        "Bradley, P."
+      ],
+      "primary_category": "immunology",
+      "categories": [
+        "immunology"
+      ],
+      "published": "2026-04-14T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.10.717405v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Computational framework for TCRdist distances and vectorized TCR sequence neighborhood",
+      "llm_evidence_cn": "用于TCRdist距离和向量化TCR序列邻域分析的计算框架",
+      "llm_evidence": "用于TCRdist距离和向量化TCR序列邻域分析的计算框架",
+      "canonical_evidence": "用于TCRdist距离和向量化TCR序列邻域分析的计算框架",
+      "llm_tldr_en": "Presents an efficient framework for quantifying TCR similarity to decipher antigen-driven T cell responses.",
+      "llm_tldr_cn": "提出一种高效的TCR相似性量化框架，用于解析抗原驱动的T细胞反应。",
+      "llm_tldr": "提出一种高效的TCR相似性量化框架，用于解析抗原驱动的T细胞反应。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.14338v1",
+      "source": "arxiv",
+      "title": "Path-Sampled Integrated Gradients",
+      "abstract": "We introduce path-sampled integrated gradients (PS-IG), a framework that generalizes feature attribution by computing the expected value over baselines sampled along the linear interpolation path. We prove that PS-IG is mathematically equivalent to path-weighted integrated gradients, provided the weighting function matches the cumulative distribution function of the sampling density. This equivalence allows the stochastic expectation to be evaluated via a deterministic Riemann sum, improving the error convergence rate from $O(m^{-1/2})$ to $O(m^{-1})$ for smooth models. Furthermore, we demonstrate analytically that PS-IG functions as a variance-reducing filter against gradient noise - strictly lowering attribution variance by a factor of 1/3 under uniform sampling - while preserving key axiomatic properties such as linearity and implementation invariance.",
+      "authors": [
+        "Firuz Kamalov",
+        "Fadi Thabtah",
+        "R. Sivaraj",
+        "Neda Abdelhamid"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-04-15T18:46:19+00:00",
+      "link": "https://arxiv.org/pdf/2604.14338v1",
+      "tags": [
+        "query:GenTCR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "generalization and improvement of Integrated Gradients framework",
+      "llm_evidence_cn": "Integrated Gradients 框架的泛化与改进",
+      "llm_evidence": "Integrated Gradients 框架的泛化与改进",
+      "canonical_evidence": "Integrated Gradients 框架的泛化与改进",
+      "llm_tldr_en": "Introduces Path-Sampled Integrated Gradients to improve feature attribution accuracy and reduce variance.",
+      "llm_tldr_cn": "引入路径采样集成梯度，以提高特征归因准确性并降低方差。",
+      "llm_tldr": "引入路径采样集成梯度，以提高特征归因准确性并降低方差。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.19473v1",
+      "source": "arxiv",
+      "title": "Reinforcement-guided generative protein language models enable de novo design of highly diverse AAV capsids",
+      "abstract": "Adeno-associated viral (AAV) vectors are widely used delivery platforms in gene therapy, and the design of improved capsids is key to expanding their therapeutic potential. A central challenge in AAV bioengineering, as in protein design more broadly, is the vast sequence design space relative to the scale of feasible experimental screening. Machine-guided generative approaches provide a powerful means of navigating this landscape and proposing novel protein sequences that satisfy functional constraints. Here, we develop a generative design framework based on protein language models and reinforcement learning to generate highly novel yet functionally plausible AAV capsids. A pretrained model was fine-tuned on experimentally validated capsid sequences to learn patterns associated with viability. Reinforcement learning was then used to guide sequence generation, with a reward function that jointly promoted predicted viability and sequence novelty, thereby enabling exploration beyond regions represented in the training data. Comparative analyses showed that fine-tuning alone produces sequences with high predicted viability but remains biased toward the training distribution, whereas reinforcement learining-guided generation reaches more distant regions of sequence space while maintaining high predicted viability. Finally, we propose a candidate selection strategy that integrates predicted viability, sequence novelty, and biophysical properties to prioritize variants for downstream evaluation. This work establishes a framework for the generative exploration of protein sequence space and advances the application of generative protein language models to AAV bioengineering.",
+      "authors": [
+        "Lucas Ferraz",
+        "Ana F. Rodrigues",
+        "Pedro Giesteira Cotovio",
+        "Mafalda Ventura",
+        "Gabriela Silva",
+        "Ana Sofia Coroadinha",
+        "Miguel Machuqueiro",
+        "Catia Pesquita"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM",
+        "cs.LG"
+      ],
+      "published": "2026-03-19T21:11:17+00:00",
+      "link": "https://arxiv.org/pdf/2603.19473v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Generative protein language models and reinforcement learning for sequence design",
+      "llm_evidence_cn": "基于蛋白质语言模型和强化学习的生成式设计框架",
+      "llm_evidence": "基于蛋白质语言模型和强化学习的生成式设计框架",
+      "canonical_evidence": "基于蛋白质语言模型和强化学习的生成式设计框架",
+      "llm_tldr_en": "Develops a RL-guided generative protein language model for designing novel sequences with functional constraints.",
+      "llm_tldr_cn": "开发了一种强化学习引导的生成式蛋白质语言模型，用于设计具有功能约束的新型序列。",
+      "llm_tldr": "开发了一种强化学习引导的生成式蛋白质语言模型，用于设计具有功能约束的新型序列。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发生成式大型语言模型用于TCR序列设计和优化",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.22083v1",
+      "source": "arxiv",
+      "title": "A Context Engineering Framework for Improving Enterprise AI Agents based on Digital-Twin MDP",
+      "abstract": "Despite rapid progress in AI agents for enterprise automation and decision-making, their real-world deployment and further performance gains remain constrained by limited data quality and quantity, complex real-world reasoning demands, difficulties with self-play, and the lack of reliable feedback signals. To address these challenges, we propose a lightweight, model-agnostic framework for improving LLM-based enterprise agents via offline reinforcement learning (RL). The proposed Context Engineering via DT-MDP (DT-MDP-CE) framework comprises three key components: (1) A Digital-Twin Markov Decision Process (DT-MDP), which abstracts the agent's reasoning behavior as a finite MDP; (2) A robust contrastive inverse RL, which, armed with the DT-MDP, to efficiently estimate a well-founded reward function and induces policies from mixed-quality offline trajectories; and (3) RL-guided context engineering, which uses the policy obtained from the integrated process of (1) and (2), to improve the agent's decision-making behavior. As a case study, we apply the framework to a representative task in the enterprise-oriented domain of IT automation. Extensive experimental results demonstrate consistent and significant improvements over baseline agents across a wide range of evaluation settings, suggesting that the framework can generalize to other agents sharing similar characteristics in enterprise environments.",
+      "authors": [
+        "Xi Yang",
+        "Aurelie Lozano",
+        "Naoki Abe",
+        "Bhavya",
+        "Saurabh Jha",
+        "Noah Zheutlin",
+        "Rohan R. Arora",
+        "Yu Deng",
+        "Daby M. Sow"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-03-23T15:15:42+00:00",
+      "link": "https://arxiv.org/pdf/2603.22083v1",
+      "tags": [
+        "keyword:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses contrastive inverse RL to improve LLM-based agents",
+      "llm_evidence_cn": "使用对比逆强化学习来改进基于大语言模型的智能体",
+      "llm_evidence": "使用对比逆强化学习来改进基于大语言模型的智能体",
+      "canonical_evidence": "使用对比逆强化学习来改进基于大语言模型的智能体",
+      "llm_tldr_en": "Proposes a framework using offline inverse reinforcement learning to optimize LLM-based enterprise agents.",
+      "llm_tldr_cn": "提出一个利用离线逆强化学习优化基于大语言模型的企业智能体的框架。",
+      "llm_tldr": "提出一个利用离线逆强化学习优化基于大语言模型的企业智能体的框架。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "应用逆强化学习算法于免疫组库数据建模和生成",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-1101-2025-09-19-677421-v3",
+      "source": "biorxiv",
+      "title": "Efficient generation of epitope-targeted de novo antibodies with Germinal",
+      "abstract": "Obtaining novel antibodies against specific protein targets is a widely important yet experimentally laborious process. Meanwhile, computational methods for antibody design have been limited by low success rates that currently require resource-intensive screening. Here, we introduce Germinal, a broadly enabling generative pipeline that designs antibodies against specific epitopes with nanomolar binding affinities while requiring only low-n experimental testing. Our method co-optimizes antibody structure and sequence by integrating a structure predictor with an antibody-specific protein language model to perform de novo design of functional complementarity-determining regions (CDRs) onto a user-specified structural framework. When tested against four diverse protein targets, Germinal successfully designed functional antibodies across all targets and binder formats, testing only 43-101 designs for each antigen. Validated designs also exhibited robust expression in mammalian cells and high sequence and structural novelty. We provide open-source code and full computational and experimental protocols to facilitate wide adoption. Germinal represents a milestone in efficient, epitope-targeted de novo antibody design, with notable implications for the development of molecular tools and therapeutics.",
+      "authors": [
+        "Mille-Fragoso, L. S.",
+        "Driscoll, C. L.",
+        "Wang, J. N.",
+        "Dai, H.",
+        "Widatalla, T. M.",
+        "Zhang, J. L.",
+        "Zhang, X.",
+        "Rao, B.",
+        "Feng, L.",
+        "Hie, B. L.",
+        "Gao, X. J."
+      ],
+      "primary_category": "synthetic biology",
+      "categories": [
+        "synthetic biology"
+      ],
+      "published": "2026-04-15T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.1101/2025.09.19.677421v3.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "generative pipeline for de novo antibody design using language models",
+      "llm_evidence_cn": "使用语言模型进行从头抗体设计的生成式流水线",
+      "llm_evidence": "使用语言模型进行从头抗体设计的生成式流水线",
+      "canonical_evidence": "使用语言模型进行从头抗体设计的生成式流水线",
+      "llm_tldr_en": "Introduces Germinal, a generative pipeline integrating language models for epitope-targeted antibody design.",
+      "llm_tldr_cn": "介绍了Germinal，一种集成语言模型用于表位靶向抗体设计的生成式流水线。",
+      "llm_tldr": "介绍了Germinal，一种集成语言模型用于表位靶向抗体设计的生成式流水线。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发生成式大型语言模型用于TCR序列设计和优化",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2603.29727v2",
+      "source": "arxiv",
+      "title": "Latent-Y: A Lab-Validated Autonomous Agent for De Novo Drug Design",
+      "abstract": "Drug discovery relies on iterative expert workflows that are slow to parallelize and difficult to scale. Here we introduce Latent-Y, an AI agent that autonomously executes complete antibody design campaigns from text prompts, covering literature review, target analysis, epitope identification, candidate design, computational validation, and selection of lab-ready sequences. Latent-Y is integrated into the Latent Labs Platform, where it operates in the same environment as drug-discovery experts with access to bioinformatics tools, biological databases, and scientific literature. The agent can run fully autonomously end-to-end, or collaboratively, where researchers review progress, provide feedback, and direct subsequent steps. Candidate antibodies are generated using Latent-X2, our frontier generative model for drug-like antibody design. We demonstrate the agent's capability across three distinct campaign types: epitope discovery guided by therapeutic specifications, cross-species binder design, and autonomous design from a scientific publication targeting human transferrin receptor for blood-brain barrier crossing. Across nine targets, Latent-Y produced lab-confirmed nanobody binders against six, achieving a 67% target-level success rate with binding affinities reaching the single-digit nanomolar range, without human filtering or intervention. In user studies, experts working with Latent-Y completed design campaigns 56 times faster than independent expert time estimates, compressing weeks of work into hours. Because Latent-X2 is a general-purpose atomic-level model for biologics design, the same agent architecture naturally extends to macrocyclic peptide and mini-binder design campaigns, broadening autonomous discovery across therapeutic modalities. Latent-Y is available to selected partners at https://platform.latentlabs.com.",
+      "authors": [
+        "Latent Labs Team",
+        "Sebastian M. Schmon",
+        "Daniella Pretorius",
+        "Simon Mathis",
+        "Rebecca Bartke-Croughan",
+        "Aishaini Puvanendran",
+        "James Vuckovic",
+        "Henry Kenlay",
+        "Mária Vlachynská",
+        "Alex Bridgland",
+        "Ivan Grishin",
+        "Sven Over",
+        "David Li",
+        "Bridget Li",
+        "Jonathan Crabbé",
+        "Agrin Hilmkil",
+        "Alexander W. R. Nelson",
+        "David Yuan",
+        "Annette Obika",
+        "Simon A. A. Kohl"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM"
+      ],
+      "published": "2026-03-31T13:26:33+00:00",
+      "link": "https://arxiv.org/pdf/2603.29727v2",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Autonomous AI agent for antibody design and sequence selection",
+      "llm_evidence_cn": "用于抗体设计和序列选择的自主AI代理",
+      "llm_evidence": "用于抗体设计和序列选择的自主AI代理",
+      "canonical_evidence": "用于抗体设计和序列选择的自主AI代理",
+      "llm_tldr_en": "Latent-Y is an AI agent that automates antibody design, including candidate selection and validation.",
+      "llm_tldr_cn": "Latent-Y是一个自主AI代理，可自动执行抗体设计全流程，包括候选序列选择和验证。",
+      "llm_tldr": "Latent-Y是一个自主AI代理，可自动执行抗体设计全流程，包括候选序列选择和验证。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.25240v1",
+      "source": "arxiv",
+      "title": "Lingshu-Cell: A generative cellular world model for transcriptome modeling toward virtual cells",
+      "abstract": "Modeling cellular states and predicting their responses to perturbations are central challenges in computational biology and the development of virtual cells. Existing foundation models for single-cell transcriptomics provide powerful static representations, but they do not explicitly model the distribution of cellular states for generative simulation. Here, we introduce Lingshu-Cell, a masked discrete diffusion model that learns transcriptomic state distributions and supports conditional simulation under perturbation. By operating directly in a discrete token space that is compatible with the sparse, non-sequential nature of single-cell transcriptomic data, Lingshu-Cell captures complex transcriptome-wide expression dependencies across approximately 18,000 genes without relying on prior gene selection, such as filtering by high variability or ranking by expression level. Across diverse tissues and species, Lingshu-Cell accurately reproduces transcriptomic distributions, marker-gene expression patterns and cell-subtype proportions, demonstrating its ability to capture complex cellular heterogeneity. Moreover, by jointly embedding cell type or donor identity with perturbation, Lingshu-Cell can predict whole-transcriptome expression changes for novel combinations of identity and perturbation. It achieves leading performance on the Virtual Cell Challenge H1 genetic perturbation benchmark and in predicting cytokine-induced responses in human PBMCs. Together, these results establish Lingshu-Cell as a flexible cellular world model for in silico simulation of cell states and perturbation responses, laying the foundation for a new paradigm in biological discovery and perturbation screening.",
+      "authors": [
+        "Han Zhang",
+        "Guo-Hua Yuan",
+        "Chaohao Yuan",
+        "Tingyang Xu",
+        "Tian Bian",
+        "Hong Cheng",
+        "Wenbing Huang",
+        "Deli Zhao",
+        "Yu Rong"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.AI",
+        "q-bio.GN"
+      ],
+      "published": "2026-03-26T09:46:27+00:00",
+      "link": "https://arxiv.org/pdf/2603.25240v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Generative model for transcriptomic state distributions in discrete token space",
+      "llm_evidence_cn": "离散标记空间中转录组状态分布的生成模型",
+      "llm_evidence": "离散标记空间中转录组状态分布的生成模型",
+      "canonical_evidence": "离散标记空间中转录组状态分布的生成模型",
+      "llm_tldr_en": "Lingshu-Cell is a generative diffusion model for simulating cellular transcriptomic responses to perturbations.",
+      "llm_tldr_cn": "Lingshu-Cell是一个生成式扩散模型，用于模拟细胞对扰动的转录组响应。",
+      "llm_tldr": "Lingshu-Cell是一个生成式扩散模型，用于模拟细胞对扰动的转录组响应。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-02-19-706729-v2",
+      "source": "biorxiv",
+      "title": "HLA Alleles Imprint Distinct Biases in the Usage Preferences of TCR Vβ segments",
+      "abstract": "T cells must co-recognize peptide and HLA, yet the extent to which this specificity is shaped by germline-encoded TCR-HLA contacts versus selection during thymic development has remained difficult to quantify. Leveraging population-scale TCR{beta} repertoires linked to donor HLA genotypes, we construct allele-specific V{beta} usage profiles and normalize them to repertoire-wide baselines to derive interpretable HLA-TCR V{beta} preference vectors. We demonstrate that different HLA alleles imprint distinct biases in the usage frequency of TCR V{beta} gene segments among the public TCRs that engage those alleles; consistent with germline-encoded TCR-HLA contact preferences, certain V{beta} genes are over-represented for particular HLA alleles. Similarities in HLA amino-acid sequence predict similarities in both their V{beta} preferences and peptide-binding motifs; a residue-level analysis disentangles HLA positions primarily associated with TCR engagement from those associated with peptide motifs. The TCR-associated HLA positions localize to canonical TCR-facing helices, whereas peptide-associated HLA positions track binding pockets, revealing distinct molecular routes by which HLA polymorphism shapes the TCR and peptide sides of recognition. CMV exposure stratifications confirmed these patterns are not explained by a few dominant infections. Together, these data support that germline-encoded constraints set the landscape of TCR-HLA compatibility, while thymic and peptide-driven forces tune the realized repertoire. These HLA-specific V{beta} biases are a biological prior that should provide a baseline for better understanding of TCR-pHLA specificity as a whole and should be accounted for in future evaluation of any TCR-pHLA specificity prediction methods.",
+      "authors": [
+        "Castorina, L. V.",
+        "Noakes, M. T.",
+        "Pisani, L.",
+        "Greissl, J.",
+        "Robins, H.",
+        "Chen-Harris, H.",
+        "Zahid, H. J."
+      ],
+      "primary_category": "immunology",
+      "categories": [
+        "immunology"
+      ],
+      "published": "2026-03-19T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.02.19.706729v2.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Modeling population-scale TCR repertoires and HLA biases",
+      "llm_evidence_cn": "建模大规模TCR免疫组库与HLA偏好",
+      "llm_evidence": "建模大规模TCR免疫组库与HLA偏好",
+      "canonical_evidence": "建模大规模TCR免疫组库与HLA偏好",
+      "llm_tldr_en": "Analyzes how HLA alleles bias TCR V-segment usage in large-scale repertoires.",
+      "llm_tldr_cn": "分析了HLA等位基因如何在大规模免疫组库中影响TCR V片段的使用偏好。",
+      "llm_tldr": "分析了HLA等位基因如何在大规模免疫组库中影响TCR V片段的使用偏好。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2604.01345v1",
+      "source": "arxiv",
+      "title": "Malliavin Calculus for Counterfactual Gradient Estimation in Adaptive Inverse Reinforcement Learning",
+      "abstract": "Inverse reinforcement learning (IRL) recovers the loss function of a forward learner from its observed responses adaptive IRL aims to reconstruct the loss function of a forward learner by passively observing its gradients as it performs reinforcement learning (RL). This paper proposes a novel passive Langevin-based algorithm that achieves adaptive IRL. The key difficulty in adaptive IRL is that the required gradients in the passive algorithm are counterfactual, that is, they are conditioned on events of probability zero under the forward learner's trajectory. Therefore, naive Monte Carlo estimators are prohibitively inefficient, and kernel smoothing, though common, suffers from slow convergence. We overcome this by employing Malliavin calculus to efficiently estimate the required counterfactual gradients. We reformulate the counterfactual conditioning as a ratio of unconditioned expectations involving Malliavin quantities, thus recovering standard estimation rates. We derive the necessary Malliavin derivatives and their adjoint Skorohod integral formulations for a general Langevin structure, and provide a concrete algorithmic approach which exploits these for counterfactual gradient estimation.",
+      "authors": [
+        "Vikram Krishnamurthy",
+        "Luke Snow"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-04-01T19:56:02+00:00",
+      "link": "https://arxiv.org/pdf/2604.01345v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Algorithm for adaptive inverse reinforcement learning",
+      "llm_evidence_cn": "自适应逆强化学习算法",
+      "llm_evidence": "自适应逆强化学习算法",
+      "canonical_evidence": "自适应逆强化学习算法",
+      "llm_tldr_en": "Proposes a novel algorithm for adaptive inverse reinforcement learning using Malliavin calculus.",
+      "llm_tldr_cn": "提出了一种利用Malliavin微积分实现自适应逆强化学习的新算法。",
+      "llm_tldr": "提出了一种利用Malliavin微积分实现自适应逆强化学习的新算法。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "应用逆强化学习算法于免疫组库数据建模和生成",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2603.25444v1",
+      "source": "arxiv",
+      "title": "The Reward Function and the Least Cost Principle for Gravitation and other Laws of Physics",
+      "abstract": "If the universe follows a specific design, then a central question is which cost function is optimized by the observed forces. This is the problem of inverse optimal control, or inverse reinforcement learning, in which a reward function is inferred from the dynamics of the observed system. We first establish the {\\em least cost principle}, whereby the laws of motion can be derived from minimization of a time-discounted integral of the acceleration cost minus a state-dependent reward function. After determining the functional form of the acceleration cost from basic principles, we infer the reward function from the laws of motion governing classical gravitation and Coulomb forces. The inferred reward function is high when pairs of particles have high relative velocities and when their relative motion is orthogonal to their distance vectors. All in all, our work suggests that relative motion and quasi-circular orbits are the dynamical and static features optimized by central forces in nature.",
+      "authors": [
+        "Rubén Moreno-Bote"
+      ],
+      "primary_category": "q-bio.NC",
+      "categories": [
+        "q-bio.NC",
+        "physics.class-ph"
+      ],
+      "published": "2026-03-26T13:39:45+00:00",
+      "link": "https://arxiv.org/pdf/2603.25444v1",
+      "tags": [
+        "keyword:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Inverse reinforcement learning for inferring reward functions from observed dynamics",
+      "llm_evidence_cn": "逆强化学习用于从观察到的动力学中推断奖励函数",
+      "llm_evidence": "逆强化学习用于从观察到的动力学中推断奖励函数",
+      "canonical_evidence": "逆强化学习用于从观察到的动力学中推断奖励函数",
+      "llm_tldr_en": "Establishes a principle for inverse reinforcement learning to infer reward functions in complex systems.",
+      "llm_tldr_cn": "确立了逆强化学习推断复杂系统奖励函数的原则，可迁移至免疫组库建模。",
+      "llm_tldr": "确立了逆强化学习推断复杂系统奖励函数的原则，可迁移至免疫组库建模。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "应用逆强化学习算法于免疫组库数据建模和生成",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-03-17-712532-v1",
+      "source": "biorxiv",
+      "title": "immunoPETE: A DNA-based integrated B-cell and T-cell receptor profiling platform",
+      "abstract": "The vast diversity of B and T cell receptors generated through the recombination of Variable (V), Diversity (D), and Joining (J) gene segments plays a critical role in adaptive immunity. Profiling immune repertoires at the DNA level provides a robust and stable approach to capture the clonal composition of these receptors. immunoPETE is an assay designed to target recombined human T-cell Receptor Beta (TRB), T-cell Receptor Delta (TRD), and Immunoglobulin Heavy (IGH) chain genes directly from genomic DNA. Simultaneous profiling of B and T cell receptor chains in a single reaction provides internally normalized clone counts and facilitates the study of B-T cell interactions. Full-length amplicon consensus sequences representative of original template DNA molecules are accurately reconstructed using Unique Molecular Identifiers (UMIs). An in-house pipeline compiles VDJ rearrangements from the Complementarity-Determining Region 3 (CDR3) of TRB, TRD and IGH chains into comprehensive readouts at cell-level resolution. In this study, we describe the immunoPETE end-to-end workflow, followed by a comprehensive benchmarking of its performance in adaptive immune profiling. Where applicable, we used both natural and contrived samples and characterized the assays accuracy, linearity, and reproducibility across several metrics: retrieving CDR3 sequences, determining B and T cell ratios, total cell count, yield, fraction of functional rearrangements, clonal diversity, composition of dominant clones, pairwise similarity, and V/J gene usage frequencies. Furthermore, we assessed its quantitative limits concerning the total number of lymphocytes and the detection of rare clones. As an example of its applications, we show that adding immune biomarkers extracted from immunoPETE data to clinical factors improves prediction of progression-free survival in a cohort of non-muscle invasive bladder cancer (NMIBC) patients. Finally, we discuss the broad applications of immunoPETE in the study of aging, cancers, infections, and autoimmune disorders with reference to select published studies.",
+      "authors": [
+        "Zhao, H.",
+        "Mirebrahim, H.",
+        "Telman, D.",
+        "Dannebaum, R.",
+        "McNamara, S.",
+        "Tabari, E.",
+        "Lin, H.",
+        "Rubelt, F.",
+        "Berka, J.",
+        "Luong, K.",
+        "Joseph, M.",
+        "Bryan, R.",
+        "Ward, D.",
+        "Hayday, A.",
+        "Utiramerur, S.",
+        "Kumar, D.",
+        "Asgharian, H."
+      ],
+      "primary_category": "immunology",
+      "categories": [
+        "immunology"
+      ],
+      "published": "2026-03-20T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.17.712532v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Profiling T-cell receptor repertoires at the DNA level",
+      "llm_evidence_cn": "在DNA水平上分析T细胞受体组库",
+      "llm_evidence": "在DNA水平上分析T细胞受体组库",
+      "canonical_evidence": "在DNA水平上分析T细胞受体组库",
+      "llm_tldr_en": "immunoPETE is a platform for simultaneous profiling of B and T cell receptor repertoires from DNA.",
+      "llm_tldr_cn": "immunoPETE是一个从DNA中同时分析B细胞和T细胞受体组库的平台。",
+      "llm_tldr": "immunoPETE是一个从DNA中同时分析B细胞和T细胞受体组库的平台。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2604.09369v1",
+      "source": "arxiv",
+      "title": "Biologically-Grounded Multi-Encoder Architectures as Developability Oracles for Antibody Design",
+      "abstract": "Generative models can now propose thousands of \\emph{de novo} antibody sequences, yet translating these designs into viable therapeutics remains constrained by the cost of biophysical characterization. Here we present CrossAbSense, a framework of property-specific neural oracles that combine frozen protein language model encoders with configurable attention decoders, identified through a systematic hyperparameter campaign totaling over 200 runs per property. On the GDPa1 benchmark of 242 therapeutic IgGs, our oracles achieve notable improvements of 12--20\\% over established baselines on three of five developability assays and competitive performance on the remaining two. The central finding is that optimal decoder architectures \\emph{invert} our initial biological hypotheses: self-attention alone suffices for aggregation-related properties (hydrophobic interaction chromatography, polyreactivity), where the relevant sequence signatures -- such as CDR-H3 hydrophobic patches -- are already fully resolved within single-chain embeddings by the high-capacity 6B encoder. Bidirectional cross-attention, by contrast, is required for expression yield and thermal stability -- properties that inherently depend on the compatibility between heavy and light chains. Learned chain fusion weights independently confirm heavy-chain dominance in aggregation ($w_H = 0.62$) versus balanced contributions for stability ($w_H = 0.51$). We demonstrate practical utility by deploying CrossAbSense on 100 IgLM-generated antibody designs, illustrating a path toward substantial reduction in experimental screening costs.",
+      "authors": [
+        "Simon J. Crouzet"
+      ],
+      "primary_category": "q-bio.BM",
+      "categories": [
+        "q-bio.BM",
+        "cs.LG",
+        "q-bio.QM"
+      ],
+      "published": "2026-04-10T14:39:57+00:00",
+      "link": "https://arxiv.org/pdf/2604.09369v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "generative models and neural oracles for antibody design",
+      "llm_evidence_cn": "用于抗体设计的生成模型和神经预测器",
+      "llm_evidence": "用于抗体设计的生成模型和神经预测器",
+      "canonical_evidence": "用于抗体设计的生成模型和神经预测器",
+      "llm_tldr_en": "CrossAbSense uses protein language models as oracles to guide generative antibody design.",
+      "llm_tldr_cn": "CrossAbSense利用蛋白质语言模型作为预测器来指导生成式抗体设计。",
+      "llm_tldr": "CrossAbSense利用蛋白质语言模型作为预测器来指导生成式抗体设计。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发生成式大型语言模型用于TCR序列设计和优化",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

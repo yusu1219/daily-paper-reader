@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-001.webp",
+      "caption": "Figure 4: Comparison of ImmSET vs ESM2 finetuned on the same datasets.",
+      "page": 6,
+      "index": 1,
+      "width": 481,
+      "height": 785
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-002.webp",
+      "caption": "Figure 15: ImmSET cross-HLA generalization.",
+      "page": 26,
+      "index": 2,
+      "width": 481,
+      "height": 963
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-003.webp",
+      "caption": "Figure 11: Best fits and 95% confidence intervals of scaling parameters for both ESM2 and ImmSET",
+      "page": 21,
+      "index": 3,
+      "width": 481,
+      "height": 556
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-004.webp",
+      "caption": "Figure 5: ImmSET ensembles evaluated against AlphaFold on the IMMREP25 benchmark.",
+      "page": 7,
+      "index": 4,
+      "width": 481,
+      "height": 963
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-005.webp",
+      "caption": "Table 9: Performance of minimal model.",
+      "page": 28,
+      "index": 5,
+      "width": 672,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-006.webp",
+      "caption": "Figure 16: Change in model score as a function of the change in charge and mutation position",
+      "page": 28,
+      "index": 6,
+      "width": 976,
+      "height": 217
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-007.webp",
+      "caption": "Table 3: Loss weighting scheme stability.",
+      "page": 13,
+      "index": 7,
+      "width": 462,
+      "height": 300
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-008.webp",
+      "caption": "Table 2: Transformer and classifier parameters used in ImmSET.",
+      "page": 13,
+      "index": 8,
+      "width": 497,
+      "height": 325
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-009.webp",
+      "caption": "Figure 1: ImmSET architecture and training overview. (a) Segment-specific start and end tokens are used to differentiate the multiple input segments. (b) The MLM objective (above) masks random characters, while the CSM objective (below) masks entire segments.",
+      "page": 4,
+      "index": 9,
+      "width": 932,
+      "height": 450
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-010.webp",
+      "caption": "Figure 2: Performance of a model encoding only the TCR sequence and no peptide features.",
+      "page": 4,
+      "index": 10,
+      "width": 484,
+      "height": 320
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-011.webp",
+      "caption": "Table 6: CDR length statistics per dataset (median and range).",
+      "page": 19,
+      "index": 11,
+      "width": 976,
+      "height": 503
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-012.webp",
+      "caption": "Figure 9: ImmSET scaling analysis under different performance metrics",
+      "page": 19,
+      "index": 12,
+      "width": 979,
+      "height": 613
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-013.webp",
+      "caption": "Figure 14: Ensemble scaling",
+      "page": 24,
+      "index": 13,
+      "width": 882,
+      "height": 388
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-014.webp",
+      "caption": "Figure 13: Schematic of ImmSET ensemble",
+      "page": 24,
+      "index": 14,
+      "width": 786,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-015.webp",
+      "caption": "Figure 10: Comparison of ImmSET and ESM2 under different performance metrics",
+      "page": 20,
+      "index": 15,
+      "width": 976,
+      "height": 1183
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-016.webp",
+      "caption": "Figure 3: ImmSET scaling behavior as a function of training data",
+      "page": 5,
+      "index": 16,
+      "width": 484,
+      "height": 610
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-017.webp",
+      "caption": "Figure 8: Format of a single training grid. The blue arrows show steps down in the number of peptides and red arrows show steps down in the number of TCRs. Each individual set is a strict subset of all parents – both those to the right in the grid (more peptides) and below in the grid (more TCRs).",
+      "page": 16,
+      "index": 17,
+      "width": 481,
+      "height": 319
+    },
+    {
+      "url": "assets/figures/arxiv/2603.26994v1/fig-018.webp",
+      "caption": "Figure 7: Derivation of positive and negative labels from MIRA experiments. Each peptide in the the experiment is present in a unique combination of the lettered pools (upper left). The activation patter of each TCR tested in the experiment is read out as activated (check mark) or not activated (dash) in each of the letted pools (lower left). Matching these activation patterns to the peptide pool assignments provides both positive and negative evidence of TCR-pMHC specificity (right).",
+      "page": 16,
+      "index": 18,
+      "width": 882,
+      "height": 300
+    }
+  ]
+}

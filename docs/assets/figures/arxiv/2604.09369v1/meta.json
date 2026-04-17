@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.09369v1/fig-001.webp",
+      "caption": "Table 1: GDPa1 benchmark performance (Spearman ρ, 5-fold cluster-stratified CV). All baselines from Arsiwala et al. (2025). Best results per property are highlighted in bold.",
+      "page": 3,
+      "index": 1,
+      "width": 636,
+      "height": 243
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09369v1/fig-002.webp",
+      "caption": "Figure 1: Developability delta of 100 IgLM-generated designs relative to the trastuzumab reference, normalized by GDPa1 training set standard deviation (sign-corrected: positive = improvement). Error bars indicate inter-design standard deviation. Only HIC shows consistent improvement, PR CHO clusters near zero (matching trastuzumab’s floor); and all other properties degrade, with the largest deficits on AC-SINS and Titer — the two properties requiring inter-chain reasoning.",
+      "page": 7,
+      "index": 2,
+      "width": 829,
+      "height": 404
+    }
+  ]
+}

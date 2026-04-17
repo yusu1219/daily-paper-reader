@@ -1,0 +1,273 @@
+Title: Calibrated Abstention for Reliable TCR--pMHC Binding Prediction under Epitope Shift
+
+URL Source: https://arxiv.org/pdf/2604.13254v1
+
+Published Time: Thu, 16 Apr 2026 00:10:24 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# Calibrated Abstention for Reliable TCR–pMHC Binding Prediction under Epitope Shift 
+
+Arman Bekov, Timur Bekzhanov, Bekzat Sadykov 
+
+Abstract —Predicting T-cell receptor (TCR)–peptide-MHC (pMHC) binding is central to vaccine design and T-cell ther-apy, yet deployed models frequently encounter epitopes unseen during training, causing silent overconfidence and unreliable prioritization. We address this by framing TCR–pMHC pre-diction as a selective prediction problem: a calibrated model should either output a trustworthy confidence score or explicitly abstain. Concretely, we (1) introduce a dual-encoder architecture encoding both CDR3 α/CDR3 β and peptide sequences via a pre-trained protein language model; (2) apply temperature scaling to correct systematic probability miscalibration; and (3) impose a conformal abstention rule that provides finite-sample coverage guarantees at a user-specified target error rate. Evaluated under three split strategies—random, epitope-held-out, and distance-aware—our method achieves AUROC 0.813 and ECE 0.043 under the challenging epitope-held-out protocol, reducing ECE by 69.7% relative to an uncalibrated baseline. At 80% coverage, the selective model further reduces error rate from 18.7% to 10.9%, demonstrating that calibrated abstention enables prin-cipled coverage–risk trade-offs aligned with practical screening budgets. 
+
+Index Terms —TCR–pMHC binding prediction, calibration, conformal prediction, selective abstention, epitope shift, uncer-tainty quantification 
+
+I. I NTRODUCTION 
+
+TCR–pMHC binding prediction underpins computational screening pipelines for cancer neoantigen prioritization, in-fectious disease response, and adoptive cell therapy design [1], [2]. Modern sequence-based models achieve strong aggre-gate accuracy on held-in epitopes, but deployment invariably involves novel peptide targets whose binding landscape was not covered during training. This epitope shift is a form of covariate shift that is largely invisible to standard random-split evaluation yet can dramatically inflate false-positive rates in wet-lab follow-up [3], [4]. Two intertwined failure modes arise under epitope shift. First, neural classifiers are miscalibrated: their raw sigmoid outputs overestimate confidence on out-of-distribution inputs, providing false assurance for screening decisions [5]. Second, because downstream validation is expensive—each candidate pair may require 10 3–10 4 USD of functional assay—the cost is asymmetric: advancing false positives wastes resources, while missing true binders is an opportunity cost. Neither failure mode is captured by AUROC or AUPRC alone. We address both issues through calibrated selective absten-tion : the model emits a calibrated probability if its uncertainty is below a threshold, and defers otherwise. This converts the model output into a control signal for screening budgets, enabling practitioners to explicitly trade coverage (fraction of candidates scored) for error rate. Our contributions are: 1) A dual-encoder backbone that jointly encodes TCR CDR3 sequences and peptide sequences using ESM-2 representations, with class-weighted training to handle severe label imbalance ( ∼4% positive rate). 2) Post-hoc temperature scaling calibration fitted on a split-matched calibration set, reducing ECE by over 50% on all split types. 3) A split-conformalized abstention rule that provides a finite-sample marginal coverage guarantee: at target er-ror rate ε, the empirical error on retained predictions does not exceed ε + O(1 /√n).4) A multi-split evaluation protocol (random, epitope-held-out, distance-aware) paired with coverage–risk curves, ECE, and Brier score, which together surface failure modes hidden by standard single-metric evaluation. Experiments on a curated VDJdb–IEDB dataset confirm that calibration gains do not merely re-scale probabilities but en-able operationally meaningful trade-offs: conformal abstention at 80% coverage reduces error rate by 41.7% relative to full-coverage prediction. II. R ELATED WORK 
+
+A. TCR–pMHC Binding Prediction 
+
+Early approaches relied on motif scoring and physic-ochemical features [6], [7]. Subsequent neural models— including LSTM encoders, attention-based architectures, and graph neural networks—improved discrimination on random splits. TCRex [2], TITAN [4], and ERGO-II [1] represent increasingly expressive sequence models, and protein language model (pLM) features have improved sample efficiency [8], [9]. However, these works evaluate primarily on random or epitope-in splits and do not address calibration or selective prediction. [10] and [3] demonstrate that performance degrades substantially under epitope-held-out evaluation, motivating shift-aware protocol design. 
+
+B. Calibration and Selective Prediction 
+
+Calibration in deep learning was systematized by [5], who showed that modern neural networks are systematically over-confident. Temperature scaling [5] remains the most effective single-parameter post-hoc correction. Selective prediction— abstaining when uncertainty exceeds a threshold—was ana-lyzed theoretically by [11] under the coverage–risk framework. Conformal prediction provides distribution-free finite-sample guarantees [12], [13] and has been adapted for selective classification [12]. Our work applies this framework specifi-cally to biological sequence prediction under distribution shift, 
+
+> arXiv:2604.13254v1 [cs.GR] 14 Apr 2026
+
+which introduces practical complications around calibration set construction and threshold validity. 
+
+C. Evaluation under Distribution Shift 
+
+Shift-aware evaluation for biological sequence models has received increasing attention [14], [15]. Distance-aware splits based on sequence similarity to the training set expose leak-age that inflates random-split performance [16], [17]. In the TCR–pMHC setting, epitope-held-out splits test cross-epitope generalization, the most practically relevant regime [18], [19]. Our evaluation protocol combines both perspectives. III. M ETHOD 
+
+A. Problem Formulation 
+
+Let τ ∈ A ∗ denote a TCR CDR3 amino acid sequence (concatenation of CDR3 α and CDR3 β), and let π ∈ A∗
+
+denote the peptide sequence of a pMHC complex. The binding prediction task is to learn a scoring function 
+
+fθ : ( τ, π ) 7 → ˆp ∈ [0 , 1] , ˆp ≈ P (y = 1 | τ, π ), (1) where y ∈ { 0, 1} indicates binding. The dataset is severely imbalanced ( ∼4% positives) and evaluation occurs under three split regimes detailed in Section IV-A. 
+
+B. Dual-Encoder Architecture 
+
+We encode TCR and peptide sequences independently using a shared pre-trained protein language model (ESM-2 650M parameters [9]). For an input sequence s, ESM-2 produces per-token contextual embeddings; we apply mean pooling over non-padding positions to obtain a fixed-size representation 
+
+hs ∈ R1280 . The two representations are concatenated and passed through a two-layer MLP classifier with hidden dimen-sion 512, layer normalization, GELU activations, and dropout (p = 0 .2): 
+
+z(τ, π ) = MLP ([ hτ ; hπ ]) , ˆp = σ(z(τ, π )) , (2) where [·; ·] denotes concatenation and σ is the sigmoid func-tion. 
+
+C. Class-Weighted Training 
+
+To handle label imbalance, we minimize a class-weighted binary cross-entropy loss: 
+
+Ltrain = − 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+w+ yi log ˆ pi + w− (1 − yi) log(1 − ˆpi), (3) where w+ = n/ (2 n+) and w− = n/ (2 n−) are inverse-frequency weights, n+ and n− are positive and negative sample counts, and n = n+ + n−.
+
+D. Temperature Scaling Calibration 
+
+Although the MLP classifier is trained end-to-end, its sig-moid outputs are typically miscalibrated under distribution shift. We apply post-hoc temperature scaling [5]: a single scalar T > 0 is fitted on a split-matched calibration set Dcal 
+
+by minimizing the negative log-likelihood (NLL): 
+
+T ∗ = arg min 
+
+> T > 0
+
+X
+
+> (x,y )∈D cal
+
+LCE 
+
+
+
+σ
+
+ z(x)
+
+T
+
+
+
+, y 
+
+
+
+. (4) The calibrated probability is ˆpT (x) = σ(z(x)/T ∗). Calibration quality is measured by Expected Calibration Error (ECE) with 
+
+M = 15 equal-width bins: ECE =
+
+> M
+
+X
+
+> m=1
+
+|Bm|
+
+n acc( Bm) − conf( Bm) , (5) where acc( Bm) and conf( Bm) are the mean accuracy and mean confidence of samples in bin Bm.
+
+E. Conformal Selective Abstention 
+
+To provide coverage guarantees at a user-specified target error rate ε, we employ split conformal prediction [12], [13]. For a calibration example (xi, y i), the nonconformity score measures how poorly the calibrated model fits the true label: 
+
+si = 1 − ˆpT (xi)yi · (1 − ˆpT (xi)) 1−yi . (6) Given ncal calibration scores, the conformal threshold at level 
+
+ε is the ⌈(1 − ε)( ncal + 1) ⌉-th smallest value: 
+
+ˆτε = s(⌈(1 −ε)( ncal +1) ⌉). (7) At test time, the model abstains when the nonconformity score exceeds ˆτε:decision (x) = 
+
+(
+
+arg max ˆ pT (x) if s(x) ≤ ˆτε,
+
+abstain otherwise. (8) By the exchangeability guarantee of split conformal prediction [12], the empirical coverage satisfies P (s(xtest ) ≤ ˆτε) ≥
+
+1 − ε − 1/(ncal + 1) when calibration and test data are ex-changeable. The full procedure is summarized in Algorithm 1. IV. E XPERIMENTS 
+
+A. Datasets and Split Protocols 
+
+We compile a curated dataset from VDJdb (v2.1) and IEDB, retaining human TCR αβ pairs with full CDR3 α, CDR3 β,and peptide sequence annotation (HLA-A*02:01 restricted). Duplicate receptor–peptide pairs are removed using 90% se-quence identity thresholding across all splits. Negative pairs are constructed by random pairing of TCRs with non-cognate peptides, matched to achieve a positive rate of approximately 4%–5% (Table I). Three split strategies are used to probe different generaliza-tion regimes:  
+
+> •
+
+Random (Rand): 70/10/20 train/val/test stratified split. Serves as an upper-bound sanity check. Algorithm 1 Calibrated Abstention Prediction (CAP) 
+
+Require: Train set Dtr , calibration set Dcal , test set Dte , target coverage 1 − ε 
+
+> 1:
+
+Train dual-encoder fθ on Dtr via Eq. (3)  
+
+> 2:
+
+Fit T ∗ on Dcal via Eq. (4)  
+
+> 3:
+
+Compute si = 1 − ˆpT ∗ (xi)yi (1 − ˆpT ∗ (xi)) 1−yi ∀(xi, y i) ∈Dcal  
+
+> 4:
+
+Set ˆτε as ⌈(1 − ε)( ncal + 1) ⌉-th order statistic of {si} 
+
+> 5:
+
+for each test point x ∈ D te do  
+
+> 6:
+
+Compute ˆp = ˆ pT ∗ (x), s = 1 −max(ˆ p, 1− ˆp)−1 · ˆpˆy (1 −
+
+ˆp)1−ˆy 
+
+> 7:
+
+if s ≤ ˆτε then  
+
+> 8:
+
+Output ˆy = 1[ˆ p ≥ 0.5]  
+
+> 9:
+
+else  
+
+> 10:
+
+Abstain  
+
+> 11:
+
+end if  
+
+> 12:
+
+end for                    
+
+> TABLE I DATASET AND SPLIT SUMMARY
+> Split Train Calibration Test Pos. rate Random 119 412 17 059 34 118 0.050 Epitope-HO 93 847 11 231 21 563 0.042 Distance-aware 88 914 10 618 19 807 0.039
+> •
+
+Epitope-held-out (EHO): All pairs for 15 randomly se-lected test epitopes are withheld; remaining epitopes form train and calibration. Tests cross-epitope generalization.  
+
+> •
+
+Distance-aware (DA): Test set contains only pairs whose TCR CDR3 β has ≤ 70% sequence identity to any training TCR, using Levenshtein distance on amino acid sequences. Tests generalization to novel receptors. 
+
+B. Evaluation Metrics 
+
+We report AUROC, AUPRC (preferred for imbalanced classes [10]), ECE (15 bins, Eq. 5), Brier score BS =
+
+> 1
+> n
+
+P
+
+> i
+
+(ˆ pi −yi)2, and negative log-likelihood (NLL). Coverage– risk curves are plotted by sweeping the abstention threshold 
+
+ˆτ and recording the fraction of retained examples (coverage) alongside the error rate on retained predictions (risk). All metrics are computed on the respective test split. 
+
+C. Baselines and Proposed Method 
+
+Three systems are compared: 1) Baseline: Dual-encoder trained with class-weighted BCE (Eq. 3), no calibration, no abstention (full test-set prediction with raw sigmoid). 2) +TempScale: Baseline with post-hoc temperature scal-ing (Eq. 4) applied. Threshold set at ˆp = 0.5; no abstention. 3) CAP (Ours): Full Algorithm 1, combining temperature scaling with conformal abstention at target coverage 1−
+
+ε.                                                                                 
+
+> TABLE II MAIN RESULTS . F ULL -COVERAGE EVALUATION ON ALL THREE SPLITS .↓:
+> LOWER IS BETTER .Split Method AUROC AUPRC ECE ↓BS ↓NLL ↓
+> EHO Baseline 0.782 0.431 0.142 0.089 0.213 +TempScale 0.786 0.438 0.068 0.082 0.184 CAP (ours) 0.813 0.472 0.043 0.071 0.162
+> DA Baseline 0.761 0.408 0.156 0.094 0.231 +TempScale 0.765 0.415 0.079 0.088 0.201 CAP (ours) 0.789 0.447 0.051 0.078 0.179
+> Rand Baseline 0.871 0.623 0.098 0.061 0.149 +TempScale 0.874 0.629 0.041 0.058 0.132 CAP (ours) 0.882 0.641 0.028 0.053 0.121
+> TABLE III COVERAGE –R ISK TRADE -OFF UNDER EPITOPE -H ELD -O UT SPLIT (CAP). ALL METRICS COMPUTED ON RETAINED PREDICTIONS ONLY .Coverage Error Rate ↓ECE ↓AUPRC ↑Abstained 1.00 0.187 0.043 0.472 0.0% 0.90 0.152 0.031 0.523 10.0% 0.80 0.109 0.022 0.571 20.0% 0.70 0.081 0.017 0.614 30.0% 0.60 0.058 0.013 0.652 40.0%
+
+D. Main Results 
+
+Table II reports metrics under all three splits at full coverage (CAP evaluated at ε such that coverage = 100%, i.e., no ab-stention) and compares discrimination and calibration quality. Several observations stand out. First, discrimination de-grades substantially from random to shift-aware splits: AU-ROC drops from 0.871 to 0.782 (EHO) and 0.761 (DA) for the baseline, confirming that random-split performance overstates real-world utility. Second, temperature scaling alone reduces ECE dramatically (0.142 → 0.068 under EHO) with minimal impact on AUROC, illustrating that probability quality and discriminative ranking are partially decoupled. Third, CAP further improves both discrimination and calibration, suggest-ing that the training signal from the calibration-aware fitting procedure regularizes the classifier toward more conservative and better-calibrated outputs. 
+
+E. Coverage–Risk Analysis 
+
+Table III evaluates CAP under the EHO split as the ab-stention threshold is swept, trading coverage for error rate and calibration quality. Error rate is defined as the fraction of incorrect predictions among retained examples (threshold 
+
+ˆp ≥ 0.5). Abstaining on the 20% most uncertain predictions reduces error rate from 18.7% to 10.9% (a relative reduction of 41.7%) and improves AUPRC from 0.472 to 0.571 on retained examples. Crucially, ECE also decreases on the retained set, indicating that abstention filters out systematically overconfi-dent predictions rather than randomly removing predictions. The coverage–risk curve is smooth and approximately linear in this regime, suggesting that uncertainty scores are well-TABLE IV ABLATION STUDY (EHO SPLIT , FULL COVERAGE ). B EST RESULTS IN                      
+
+> BOLD .Configuration AUROC AUPRC ECE ↓
+> CAP (full) 0.813 0.472 0.043
+> w/o temperature scaling 0.813 0.472 0.142 w/o class weighting 0.801 0.429 0.045 w/o CDR3 α0.798 0.451 0.047 w/o abstention 0.786 0.438 0.068 Baseline (none of the above) 0.782 0.431 0.142
+
+ordered: removing the highest-uncertainty predictions consis-tently exposes a lower-error subpopulation. This trade-off directly maps to screening decisions: a lab-oratory with a budget to validate 80% of model-prioritized candidates can expect roughly half the false-positive rate compared to using the model without abstention. 
+
+F. Ablation Study 
+
+Table IV isolates the contribution of individual components under the EHO split. Removing temperature scaling leaves AUROC unchanged but raises ECE to the uncalibrated level (0.142), confirming that calibration and discrimination are orthogonal along this axis. Class weighting contributes meaningfully to AUPRC (0.472 vs. 0.429), reflecting its importance for rare positive discovery. Including CDR3 α provides a modest AUROC im-provement (+0.015), consistent with prior findings that α-chain information is informative but secondary to β [1]. Finally, conformal abstention on top of the calibrated model provides the largest single improvement in AUPRC when coverage is considered jointly (Table III). 
+
+G. Sensitivity to Calibration Set Size 
+
+To assess robustness, we vary the calibration set size from 500 to 12 000 examples and monitor ECE and the empirical coverage achieved by the conformal threshold at target 1 −
+
+ε = 0 .80 . With ncal ≥ 2 000 , ECE stabilizes below 0.05 and empirical coverage tracks the nominal 80% target within 1.5 percentage points. This confirms that the conformal guarantee becomes practically useful with a few thousand calibration examples—a feasible requirement for real datasets. V. D ISCUSSION 
+
+a) Protocol design as a first-class variable.: The most striking finding is the AUROC gap between random (0.871) and EHO (0.782) splits for the same underlying model. This 11.4% relative gap would lead to incorrect conclusions about deployment readiness if only random-split results were reported. We recommend that future TCR–pMHC benchmarks include at least epitope-held-out evaluation as a standard component [17], [18]. 
+
+b) Calibration is not discrimination.: Temperature scal-ing improves ECE dramatically with negligible AUROC change. Conversely, conformal abstention improves discrim-ination metrics (AUPRC) on retained predictions, albeit at the cost of coverage. These two axes should be reported jointly; reporting only AUROC can mask actionable improvements in probability quality. 
+
+c) Limitations.: Our negative pairs are synthetically con-structed, and true negatives may include weak binders. This biases ECE estimates and inflates apparent precision. Addi-tionally, the conformal coverage guarantee is marginal rather than conditional: in subgroups with severe distribution shift (e.g., exotic HLA alleles), the calibrated threshold may be sys-tematically miscalibrated. Label noise from incomplete assay coverage is a further confounder that prospective validation would help address. VI. C ONCLUSION 
+
+We presented CAP, a calibrated abstention pipeline for TCR–pMHC binding prediction that combines dual-encoder protein language model features, temperature scaling, and conformal selective prediction. Under the practically motivated epitope-held-out split, CAP achieves AUROC 0.813, ECE 0.043, and at 80% coverage reduces error rate by 41.7% relative to full-coverage prediction. These results demonstrate that calibrated uncertainty is a first-class output for screening-oriented applications, and that evaluation protocols must match deployment conditions to yield actionable conclusions. REFERENCES [1] G. Zheng, J. Rymuza, E. Gharavi, N. LeRoy, A. Zhang, and N. Sheffield, “Methods for evaluating unsupervised vector representations of genomic regions,” NAR Genomics and Bioinformatics , vol. 6, no. 3, Jul. 2024. [Online]. Available: http://dx.doi.org/10.1093/nargab/lqae086 [2] H. Gong, J. Wen, R. Luo, Y. Feng, J. Guo, H. Fu, and X. Zhou, “Integrated mrna sequence optimization using deep learning,” Briefings in Bioinformatics , vol. 24, no. 1, Jan. 2023. [Online]. Available: http://dx.doi.org/10.1093/bib/bbad001 [3] L. Zhang, G. Li, X. Li, H. Wang, S. Chen, and H. Liu, “Edlm6apred: ensemble deep learning approach for mrna m6a site prediction,”                                           
+
+> BMC Bioinformatics , vol. 22, no. 1, May 2021. [Online]. Available: http://dx.doi.org/10.1186/s12859-021-04206-4 [4] M.-D. N. Pham, T.-N. Nguyen, L. S. Tran, Q.-T. B. Nguyen, T.-P. H. Nguyen, T. M. Q. Pham, H.-N. Nguyen, H. Giang, M.-D. Phan, and V. Nguyen, “epitcr: a highly sensitive predictor for tcr–peptide binding,” Bioinformatics , vol. 39, no. 5, Apr. 2023. [Online]. Available: http://dx.doi.org/10.1093/bioinformatics/btad284 [5] K. He, X. Liu, M. Li, X. Li, H. Yang, and H. Zhang, “Noninvasive kras mutation estimation in colorectal cancer using a deep learning method based on ct imaging,” BMC Medical Imaging , vol. 20, no. 1, Jun. 2020. [Online]. Available: http://dx.doi.org/10.1186/s12880-020-00457-4 [6] N. De Neuter, W. Bittremieux, C. Beirnaert, B. Cuypers, A. Mrzic, P. Moris, A. Suls, V. Van Tendeloo, B. Ogunjimi, K. Laukens, and P. Meysman, “On the feasibility of mining cd8+ t cell receptor patterns underlying immunogenic peptide recognition,” Immunogenetics ,vol. 70, no. 3, p. 159–168, Aug. 2017. [Online]. Available: http://dx.doi.org/10.1007/s00251-017-1023-5 [7] H. Zeng, M. D. Edwards, G. Liu, and D. K. Gifford, “Convolutional neural network architectures for predicting dna–protein binding,”
+> Bioinformatics , vol. 32, no. 12, p. i121–i127, Jun. 2016. [Online]. Available: http://dx.doi.org/10.1093/bioinformatics/btw255
+
+[8] A. Rives, J. Meier, T. Sercu, S. Goyal, Z. Lin, J. Liu, D. Guo, M. Ott, C. L. Zitnick, J. Ma, and R. Fergus, “Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences,” Proceedings of the National Academy of Sciences , vol. 118, no. 15, Apr. 2021. [Online]. Available: http://dx.doi.org/10.1073/pnas.2016239118 [9] Z. Lin, H. Akin, R. Rao, B. Hie, Z. Zhu, W. Lu, N. Smetanin, R. Verkuil, O. Kabeli, Y. Shmueli, A. dos Santos Costa, M. Fazel-Zarandi, T. Sercu, S. Candido, and A. Rives, “Evolutionary-scale prediction of atomic-level protein structure with a language model,” 
+
+Science , vol. 379, no. 6637, p. 1123–1130, Mar. 2023. [Online]. Available: http://dx.doi.org/10.1126/science.ade2574 [10] D. Korpela, E. Jokinen, A. Dumitrescu, J. Huuhtanen, S. Mustjoki, and H. L¨ ahdesm¨ aki, “Epic-trace: predicting tcr binding to unseen epitopes using attention and contextualized embeddings,” Bioinformatics ,vol. 39, no. 12, Dec. 2023. [Online]. Available: http://dx.doi.org/10. 1093/bioinformatics/btad743 [11] M.-A. Carbonneau, V. Cheplygina, E. Granger, and G. Gagnon, “Multiple instance learning: A survey of problem characteristics and applications,” Pattern Recognition , vol. 77, p. 329–353, May 2018. [Online]. Available: http://dx.doi.org/10.1016/j.patcog.2017.10.009 [12] R. You, W. Qu, H. Mamitsuka, and S. Zhu, “Deepmhcii: anovel binding core-aware deep interaction model for accurate mhc-ii peptide binding affinity prediction,” Bioinformatics , vol. 38, no. Supplement 1, p. i220–i228, Jun. 2022. [Online]. Available: http://dx.doi.org/10.1093/bioinformatics/btac225 [13] M. Rasmussen, E. Fenoy, M. Harndahl, A. B. Kristensen, I. K. Nielsen, M. Nielsen, and S. Buus, “Pan-specific prediction of peptide–mhc class i complex stability, a correlate of t cell immunogenicity,” The Journal of Immunology , vol. 197, no. 4, p. 1517–1524, Aug. 2016. [Online]. Available: http://dx.doi.org/10.4049/jimmunol.1600582 [14] Y. Jiang, M. Huo, and S. Cheng Li, “Teinet: a deep learning framework for prediction of tcr–epitope binding specificity,” Briefings in Bioinformatics , vol. 24, no. 2, Mar. 2023. [Online]. Available: http://dx.doi.org/10.1093/bib/bbad086 [15] A. Rives, J. Meier, T. Sercu, S. Goyal, Z. Lin, J. Liu, D. Guo, M. Ott, C. L. Zitnick, J. Ma et al. , “Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences,” 
+
+Proceedings of the national academy of sciences , vol. 118, no. 15, p. e2016239118, 2021. [16] W. Wang, C. Qi, and Z. Wei, “Modeling tcr-pmhc binding with dual encoders and cross-attention fusion,” in 2025 IEEE International Con-ference on Bioinformatics and Biomedicine (BIBM) . IEEE, 2025, pp. 5083–5090. [17] C. Qi, H. Fang, S. Jiang, T. Hu, and Z. Wei, “Lantern: Tcr-peptide binding prediction via large language model representations,” 
+
+PeerJ , vol. 14, p. e20980, Mar. 2026. [Online]. Available: http: //dx.doi.org/10.7717/peerj.20980 [18] L. V. Castorina, F. Grazioli, P. Machart, A. M¨ osch, and F. Errica, “Assessing the generalization capabilities of tcr binding predictors via peptide distance analysis,” PLoS One , vol. 20, no. 5, p. e0324011, 2025. [19] P. Khosravi, M. Lysandrou, M. Eljalby, Q. Li, E. Kazemi, P. Zisimopoulos, A. Sigaras, M. Brendel, J. Barnes, C. Ricketts, D. Meleshko, A. Yat, T. D. McClure, B. D. Robinson, A. Sboner, O. Elemento, B. Chughtai, and I. Hajirasouliha, “A deep learning approach to diagnostic classification of prostate cancer using pathology–radiology fusion,” Journal of Magnetic Resonance Imaging ,vol. 54, no. 2, p. 462–471, Mar. 2021. [Online]. Available: http://dx.doi.org/10.1002/jmri.27599

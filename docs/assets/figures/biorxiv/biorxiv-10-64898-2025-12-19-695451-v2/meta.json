@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2025-12-19-695451-v2/fig-001.webp",
+      "caption": "Figure 1. a) General overview of AF3 original workflow and our AF3 variant workflow, along with running 74 time of the corresponding AF3 MSA and inference phases. The original AF3 uses 4 databases to build the 75 MSA input while AF3 variant uses a much smaller database named UniRef90-TCR or UniRef90-Ab. b) 76 Process used to build the reduced Uniref90-TCR/Ab databases, by sequentially generating MSAs for 77 individual TCRs using JackHMMER and the UniRef90 database, and aggregating the resulting sequences. 78",
+      "page": 4,
+      "index": 1,
+      "width": 990,
+      "height": 825
+    }
+  ]
+}
