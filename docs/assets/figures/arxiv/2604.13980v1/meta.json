@@ -1,0 +1,110 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-001.webp",
+      "caption": "Figure 2: Hypervolume vs. iterations (mean ± s.e., 10 seeds) for CDR1–3 under 2, 3, and 4 objectives. BOAT variants (q indicates batch acquisition functions) outperforms GA-sum and NSGA-II. Red dashed lines show ground-truth hypervolume where available.",
+      "page": 6,
+      "index": 1,
+      "width": 469,
+      "height": 441
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-002.webp",
+      "caption": "Figure 8: Scatter plots of hypervolume versus Shannon entropy for CDR1 and CDR2 optimization. Each point represents the diversity and multi-objective performance of a population at a given optimization step, showing results for all seeds, methods, and every 100 iterations. Initial solutions are highlighted in gold.",
+      "page": 15,
+      "index": 2,
+      "width": 677,
+      "height": 337
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-003.webp",
+      "caption": "Figure 15: Multi-seed comparison of BOAT and LaMBO showing final Pareto fronts for BOAT-EHVI, BOATqEHVI, BOAT-qNEHVI, and all LaMBO designs across 5 optimization runs. While LaMBO got to optimize the 2 objectives for affinity and expression, the BOAT variants additionally optimized for naturalness (ESM-2 likelihood). As the hypervolumes are fully comparable across seeds, we sorted them by descending terminal hypervolume for each method.",
+      "page": 21,
+      "index": 3,
+      "width": 1014,
+      "height": 220
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-004.webp",
+      "caption": "Figure 1: Illustration of the BOAT loop for lead optimization (LO). LO campaigns typically consist of a few rounds of experimental testing of the order of a hundred sequences in the wetlab, where previous experiments inform the sequence design for the next iteration of the wetlab loop. The BOAT loop can be thought of as an inner loop in a single sequence design step of the wetlab loop, leveraging sophisticated tools used for computationally assessing sequences. The multi-objective optimization loop eliminates the common practice of generating a large pool of sequences and filtering them down by sequentially passing them through the different oracles, which is computationally inefficient and unaware of Pareto trade-offs. The oracles used depend on the requirements of the LO campaign, and can be exchanged flexibly. See Section 2 for details on the internal building blocks of BOAT.",
+      "page": 2,
+      "index": 4,
+      "width": 473,
+      "height": 437
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-005.webp",
+      "caption": "Figure 3: Discovered vs. ground truth Pareto fronts for 2-objective CDR optimization with 5 mutations. Each panel shows the best-performing seed for GA methods (left) and BOAT (right). We can see that even the most successful GA runs fall behind BOAT.",
+      "page": 7,
+      "index": 5,
+      "width": 419,
+      "height": 744
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-006.webp",
+      "caption": "Figure 17: Multi-seed comparison of BOAT and LaMBO showing final Pareto fronts for BOAT-EHVI, BOATqEHVI, BOAT-qNEHVI, and all LaMBO designs across 5 optimization runs, where both LaMBO and BOAT got to optimize the two objectives of affinity and expression predicted by LaMBO’s discriminative head. As the hypervolumes are fully comparable across seeds, we sorted them by descending terminal hypervolume for each method.",
+      "page": 22,
+      "index": 6,
+      "width": 1016,
+      "height": 219
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-007.webp",
+      "caption": "Figure 12: Plot comparing Pareto front after 300 generated sequences (200 oracle calls after 100 initial sequences) by seed across different conditions for each CDR. All seeds are shown. Early in the algorithm (especially for CDR3), BOAT is able to explore much closer to the ground truth Pareto front compared to GAs.",
+      "page": 18,
+      "index": 7,
+      "width": 864,
+      "height": 1248
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-008.webp",
+      "caption": "Figure 5: (a) Scatter plot of hypervolume versus Shannon entropy for all seeds, methods, and every 100 iterations for CDR3. Initial solutions are highlighted in gold. Each point represents the diversity and multiobjective performance of a population at a given optimization step. (b) Evolution of Shannon entropy over optimization iterations for CDR3. Results averaged over 10 seeds with standard error bands.",
+      "page": 8,
+      "index": 8,
+      "width": 489,
+      "height": 253
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-009.webp",
+      "caption": "Figure 13: Plots for experiments when ablating batch size using the qEHVI acquisition function for CDR3 with 2 objectives and 5 maximum mutations, using batch sizes 2, 4, 8, 10. Other experimental details are kept the same as before. For (b), as before, each point represents the diversity and multi-objective performance of a population at a given optimization step, showing results for all seeds and batch sizes, and every 100 iterations.",
+      "page": 19,
+      "index": 9,
+      "width": 876,
+      "height": 428
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-010.webp",
+      "caption": "Figure 11: Plot comparing Pareto front by seed across different conditions for each CDR. All seeds are shown. It is clear especially in CDR3 runs that GAs tend to explore smaller Pareto fronts.",
+      "page": 17,
+      "index": 10,
+      "width": 864,
+      "height": 1246
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-011.webp",
+      "caption": "Figure 14: Plot comparing Pareto front by seed across different conditions for each CDR. All seeds are shown. Similarly to the 5 mutations example, GAs visually do not explore as much of the ground truth Pareto front compared to BOAT.",
+      "page": 20,
+      "index": 11,
+      "width": 864,
+      "height": 1248
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-012.webp",
+      "caption": "Figure 9: Evolution of Shannon entropy over optimization iterations for CDR1, CDR2, and CDR3 regions. Results averaged over 10 seeds with standard error bands, showing how population diversity changes throughout the optimization process across all three CDR regions. Note BOAT-qEHVI performs almost exactly in line with BOAT-qNEHVI.",
+      "page": 16,
+      "index": 12,
+      "width": 1016,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13980v1/fig-013.webp",
+      "caption": "Figure 10: Plots comparing the hypervolume of the Pareto front by iteration of the BO algorithm for different encodings considered in Section 4.1.",
+      "page": 16,
+      "index": 13,
+      "width": 982,
+      "height": 355
+    }
+  ]
+}

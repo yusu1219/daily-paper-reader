@@ -1,0 +1,268 @@
+Title: Active Learning for Budget-Constrained TCR--pMHC Wet-Lab Validation
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.04.14.718510v1.full.pdf
+
+Number of Pages: 5
+
+Markdown Content:
+# Active Learning for Budget-Constrained TCR–pMHC Wet-Lab Validation 
+
+Jakub Kowalski, Katarzyna Mazur, Magdalena Piotrowska 
+
+Abstract —Wet-lab validation of TCR–pMHC binding hypothe-ses is the rate-limiting step in T-cell therapy discovery: a single binding assay round can cost thousands of dollars and weeks of turnaround time, yet computational models generate thousands of candidate pairs per run. We frame this as a pool-based active learning problem: given a fixed annotation budget B,which unlabeled pairs should be sent to the assay to maximally improve a predictive model that will guide the next screen-ing round? We introduce UDAL (Uncertainty–Diversity Active Learning), a batch acquisition strategy that combines BALD-based uncertainty estimation via MC Dropout with greedy core-set diversity selection in the encoder feature space. Evaluated on a curated VDJdb–IEDB benchmark under epitope-held-out and distance-aware protocols, UDAL achieves AUPRC 0.487 with only 5,000 queried labels—matching the performance of a model trained on 3 × more randomly sampled labels. At a budget of 2,000 labels, UDAL improves AUPRC by 16.7% over random acquisition, translating directly to fewer wasted assay slots. These results demonstrate that principled active query strategies can substantially reduce the wet-lab cost of building reliable TCR specificity models. 
+
+Index Terms —TCR–pMHC binding, active learning, uncer-tainty sampling, diversity, batch acquisition, budget-constrained validation 
+
+I. I NTRODUCTION 
+
+TCR–pMHC binding prediction is central to neoantigen prioritization, TCR library screening, and adoptive cell therapy design [1], [2]. A well-trained model can rank thousands of receptor–peptide pairs in minutes, but wet-lab confirmation— via ELISA, tetramer staining, or functional co-culture assay— remains mandatory before clinical use. Each assay round is expensive, time-consuming, and capacity-limited, creating a genuine need to select the most informative candidates rather than simply screening the top-k by model score [3], [4]. Standard supervised learning treats all labeled examples as given and optimizes model accuracy. This is misaligned with the prospective discovery setting where: (i) the current labeled set is small and biased toward previously studied epitopes; (ii) each queried label has a real cost; and (iii) the goal is to reach a target prediction quality with minimum expenditure. 
+
+Active learning addresses exactly this mismatch by iteratively selecting the unlabeled examples whose annotation is expected to improve the model the most [5], [6]. Two design axes are critical for batch active learning in this domain. First, uncertainty : query pairs near the current decision boundary, where the model is most likely to be wrong and where new labels carry maximum information. Second, 
+
+diversity : avoid querying clusters of near-duplicate sequences, which would waste budget on redundant information. Balanc-ing these two objectives—exploration versus exploitation—is the central challenge, and naive uncertainty sampling alone is known to collapse to redundant clusters in structured feature spaces [7], [8]. Our contributions are: 1) A formal active learning framework for TCR–pMHC discovery that defines the pool, oracle, acquisition rounds, and evaluation in terms of wet-lab budget B.2) An acquisition function combining BALD uncertainty [9] via MC Dropout with greedy core-set diversity in the dual-encoder embedding space. 3) A label efficiency metric (AUPRC gain per 1,000 queried labels) that directly quantifies the operational benefit of each strategy. 4) Comprehensive experiments under epitope-held-out and distance-aware protocols, including learning curves, ab-lations, and an analysis of how query strategy interacts with distribution shift. Experiments show that UDAL with only 2,000 queried labels outperforms random acquisition with 5,000 labels under the epitope-held-out protocol, representing a potential 2.5 ×
+
+reduction in assay cost for equivalent model quality. II. R ELATED WORK 
+
+A. TCR–pMHC Binding Prediction 
+
+Sequence-based methods have progressed from k-mer scor-ing [7] through neural sequence encoders [1], [10] to pro-tein language model (pLM) representations [2], [11]. Most supervised models assume a large, curated labeled set; our work instead targets the data-scarce regime arising from a limited assay budget, which is more representative of early-stage discovery. 
+
+B. Active Learning for Biological Sequences 
+
+Active learning has been applied to protein engineering [12], antibody design [9], [13], and drug discovery [8], [14], but its application to paired receptor–peptide binding prediction is un-derexplored. Key challenges include batch selection (querying multiple examples per round), class imbalance (rare positives), and distribution shift (new epitopes at test time). Our work addresses all three. 
+
+C. Uncertainty Estimation and Diversity Sampling 
+
+BALD (Bayesian Active Learning by Disagreement) [9] measures expected information gain using MC Dropout. Core-set methods [5] select batch elements that maximize coverage 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 17, 2026. ;https://doi.org/10.64898/2026.04.14.718510 doi: bioRxiv preprint
+
+of the unlabeled pool in feature space, providing complemen-tary diversity. BADGE [12] combines gradient-space embed-dings with k-means++ initialization; we adapt the uncertainty– diversity decomposition to the sequence embedding space used in TCR–pMHC encoders. Under distribution shift, diversity-aware strategies are particularly important because uncertainty scores become unreliable for out-of-distribution examples [6], [15]. 
+
+D. Budget-Constrained Evaluation 
+
+Budget-constrained evaluation protocols for biological vali-dation have been proposed in the context of drug screening [8] and gene function annotation [16]. We adapt this framework to TCR–pMHC, defining label efficiency as the primary decision-relevant metric rather than asymptotic accuracy on a fixed test set. III. M ETHOD 
+
+A. Active Learning Problem Formulation 
+
+Let U = {(xi, ?) }Ni=1 be a large pool of unlabeled TCR– pMHC pairs ( x = ( τ, π )), and let L0 = {(xj , y j )}n0 
+
+> j=1
+
+be a small seed labeled set. An oracle O : x 7 → y ∈ { 0, 1}
+
+represents the wet-lab assay. The total annotation budget is 
+
+B, allocated across R rounds of batch size b = B/R :
+
+Lt = Lt−1 ∪ (x, O(x)) : x ∈ Q t , |Q t| = b, (1) where Qt ⊂ U t is the query batch selected at round t. The model fθ is retrained on Lt after each round. The objective is to maximize prediction quality AUPRC (fθR ) subject to the total query budget P 
+
+> t
+
+|Q t| ≤ B.
+
+B. Base Classifier 
+
+The base model is the same dual-encoder as in our com-panion work: ESM-2 encodes CDR3 and peptide sequences independently, and a two-layer MLP with class-weighted bi-nary cross-entropy produces binding scores: 
+
+ˆp(x) = σ(MLP ([ hτ ; hπ ])) . (2) MC Dropout is applied at inference time by enabling dropout (pdrop = 0 .2) and performing M = 30 stochastic forward passes to obtain a predictive ensemble {ˆp(m)(x)}Mm=1 .
+
+C. Uncertainty Estimation via BALD 
+
+We adopt BALD (Bayesian Active Learning by Disagree-ment) [9] as the uncertainty criterion. The BALD score decomposes predictive entropy into epistemic and aleatoric components: 
+
+aBALD (x) = H(¯ p(x)) 
+
+| {z }
+
+> total entropy
+
+− 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+H
+
+
+
+ˆp(m)(x)
+
+| {z }
+
+> aleatoric entropy
+
+, (3) where ¯p(x) = 1
+
+> M
+
+P 
+
+> m
+
+ˆp(m)(x) and H(p) = −p log p −
+
+(1 − p) log(1 − p). High BALD scores indicate high model disagreement—epistemic uncertainty that can be resolved by additional labels—rather than inherent label noise. 
+
+Algorithm 1 UDAL: Uncertainty–Diversity Active Learning 
+
+Require: Unlabeled pool U, seed set L0, oracle O, budget B,rounds R, trade-off α 
+
+> 1:
+
+Train fθ on L0 via class-weighted BCE  
+
+> 2:
+
+for t = 1 , . . . , R do  
+
+> 3:
+
+Uncertainty : Compute aBALD (x) for each x ∈ U t via 
+
+M = 30 MC Dropout passes (Eq. 3)  
+
+> 4:
+
+Diversity : Compute ed(x) as min-distance to Lt−1 in 
+
+ϕ-space  
+
+> 5:
+
+Score : aUDAL (x) ← α eaBALD (x) + (1 − α) ed(x) (Eq. 5)  
+
+> 6:
+
+Query : Qt ← top -b(aUDAL ) from Ut 
+
+> 7:
+
+Label : Lt ← L t−1 ∪ { (x, O(x)) }x∈Q t 
+
+> 8:
+
+Retrain : Update fθ on Lt 
+
+> 9:
+
+Ut ← U t−1 \ Q t 
+
+> 10:
+
+end for  
+
+> 11:
+
+return fθ
+
+D. Feature-Space Diversity via Greedy Core-Set 
+
+To avoid querying near-duplicate sequences, we select a batch that maximizes coverage of the unlabeled pool in the encoder embedding space. Let ϕ(x) = [hτ ; hπ ] ∈ R2560 
+
+denote the concatenated ESM-2 embeddings. The greedy core-set objective selects Q ⊆ Ut of size b to minimize the maximum coverage gap: 
+
+Qdiv = arg min 
+
+> Q⊆U t
+> |Q|=b
+
+max 
+
+> x∈U t
+
+min  
+
+> x′∈L t∪Q
+
+∥ϕ(x) − ϕ(x′)∥2, (4) solved greedily: at each step, add the unlabeled point farthest from the current labeled + selected set. This ensures geo-graphic coverage of the sequence space. 
+
+E. Combined UDAL Acquisition Function 
+
+We combine uncertainty and diversity through a weighted score over the unlabeled pool: 
+
+aUDAL (x) = α · eaBALD (x) + (1 − α) · ed(x), (5) where eaBALD and ed are min-max normalized uncertainty and diversity scores, respectively. The diversity score is ed(x) = min x′∈L t ∥ϕ(x) − ϕ(x′)∥2, normalized across Ut. The batch 
+
+Qt consists of the top-b examples by aUDAL . We set α = 0 .6
+
+by grid search on a held-out validation set. 
+
+F. Label Efficiency Metric 
+
+To quantify operational benefit, we define the label effi-ciency (LE) as the marginal AUPRC gain per 1,000 additional queried labels: LE (B1, B 2) = AUPRC (B2) − AUPRC (B1)(B2 − B1)/1000 , (6) where AUPRC (B) is measured on the held-out test split after spending B total labels. Higher LE indicates more efficient use of assay budget. The full UDAL procedure is summarized in Algorithm 1.                                                                                             
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 17, 2026. ;https://doi.org/10.64898/2026.04.14.718510 doi: bioRxiv preprint TABLE I DATASET AND SPLIT SUMMARY . P OOL :UNLABELED PAIRS AVAILABLE FOR QUERYING .Split Seed ( L0)Pool ( |U| )Test Pos. rate Random 1 000 134 701 34 118 0.050 Epitope-HO 1 000 103 641 21 563 0.042 Distance-aware 1 000 97 032 19 624 0.039 TABLE II RESULTS AFTER B= 5 ,000 QUERIED LABELS . C OMPARED AGAINST
+> RANDOM BASELINE .↑:HIGHER IS BETTER ;↓:LOWER IS BETTER .Split Strategy AUROC AUPRC ECE ↓LE ↑∆AUPRC EHO Random 0.774 0.418 0.143 0.021 –BALD 0.793 0.449 0.118 0.027 +0.031 CoreSet 0.801 0.457 0.125 0.029 +0.039 UDAL (ours) 0.824 0.487 0.096 0.037 +0.069
+> DA Random 0.752 0.396 0.158 0.019 –BALD 0.771 0.428 0.131 0.025 +0.032 CoreSet 0.779 0.435 0.137 0.027 +0.039 UDAL (ours) 0.803 0.463 0.109 0.034 +0.067
+> Rand Random 0.851 0.571 0.102 0.031 –BALD 0.861 0.592 0.089 0.034 +0.021 CoreSet 0.858 0.588 0.094 0.033 +0.017 UDAL (ours) 0.873 0.614 0.074 0.038 +0.043
+
+IV. E XPERIMENTS 
+
+A. Experimental Setup a) Dataset.: We use the same curated VDJdb–IEDB benchmark (HLA-A*02:01, human paired TCR αβ ) as in the companion papers. Dataset statistics are in Table I. The unlabeled pool U consists of pairs whose labels are withheld and revealed only when queried. The seed set L0 contains 1,000 stratified labeled pairs. 
+
+b) Acquisition baselines.: Four strategies are compared: 1) Random : Uniform random batch selection (no model-in-the-loop). 2) Uncertainty (BALD) : Top-b by aBALD only ( α = 1 ). 3) Diversity (CoreSet) : Greedy core-set only ( α = 0 ). 4) UDAL (ours) : Combined score, α = 0 .6 (Eq. 5). 
+
+c) Protocol.: Each strategy runs for R = 5 rounds of b = 1,000 queries per round ( B = 5,000 total). We evaluate AUPRC on the held-out test split after each round. All strategies share the same seed set L0 and the same base model architecture. Results are averaged over 5 independent runs (different random seeds for L0 composition). 
+
+B. Main Results at Full Budget 
+
+Table II reports all metrics at the end of 5 active learning rounds ( B = 5 ,000 total labels queried) under all three splits. UDAL consistently outperforms all baselines across splits. The gains are largest under distribution shift (EHO: ∆AUPRC 
+
+= +0 .069 vs. Random), which is the operationally relevant setting. Diversity-only (CoreSet) outperforms uncertainty-only (BALD) under EHO and DA splits, confirming that under dis-tribution shift, uncertainty scores are less reliable and diversity                                                                                  
+
+> TABLE III AUPRC L EARNING CURVES UNDER EPITOPE -H ELD -O UT SPLIT . S EED SET : 1,000 PAIRS . F ULLY SUPERVISED CEILING (ALL POOL LABELS ): 0.491. Strategy Seed 1k 2k 3k 4k 5k Random 0.312 0.371 0.393 0.406 0.413 0.418 BALD 0.312 0.391 0.416 0.431 0.442 0.449 CoreSet 0.312 0.398 0.423 0.438 0.449 0.457 UDAL (ours) 0.312 0.413 0.448 0.466 0.479 0.487 TABLE IV ABLATION STUDY (EHO SPLIT ,B= 3 ,000 QUERIES ). B EST IN BOLD .Configuration AUPRC LE UDAL α= 0 .6(full) 0.466 0.051
+> α= 1 .0(BALD only) 0.431 0.040
+> α= 0 .0(CoreSet only) 0.438 0.042
+> α= 0 .30.451 0.046
+> α= 0 .80.459 0.049
+> M= 5 MC passes (vs. 30) 0.457 0.048
+> M= 50 MC passes 0.467 0.051 Batch size b= 500 0.461 0.049 Batch size b= 2 ,000 0.454 0.047 L2 distance (vs. cosine) 0.462 0.050
+
+is the dominant driver of improvement. Under random splits, BALD and CoreSet are nearly equivalent, and UDAL provides an additive gain. Label efficiency (LE) follows the same ordering: UDAL extracts 0.037 AUPRC points per 1,000 labels under EHO, 76% more efficient than random acquisition. 
+
+C. Learning Curves: AUPRC vs. Budget 
+
+Table III reports AUPRC on the EHO test split as a function of total queried labels B ∈ { 0, 1k, 2k, 3k, 4k, 5k}, where B =0 corresponds to the seed-only model. The fully supervised ceiling (all pool labels used) is 0.491. The learning curves reveal two key findings. First, UDAL at 2,000 labels (AUPRC 0.448) matches or exceeds random acquisition at 5,000 labels (0.418), representing a 2.5 × reduc-tion in assay cost for equivalent model quality. Second, all strategies plateau below the fully supervised ceiling (0.491), reflecting that the active selection inevitably introduces dis-tributional bias toward uncertain or distant examples. This plateau is less pronounced for UDAL, which retains broader coverage of the pool. 
+
+D. Ablation Study 
+
+Table IV isolates the effect of the trade-off weight α and other design choices on EHO AUPRC at B = 3 ,000 .The optimal trade-off is α = 0 .6, indicating that uncertainty should slightly outweigh diversity, but neither alone achieves the combined performance. The number of MC passes ( M )has diminishing returns beyond 30; using only M = 5
+
+passes reduces AUPRC by 0.009. Batch size b = 1 ,000 is near-optimal: smaller batches increase retraining frequency (beneficial) but require more rounds, while larger batches reduce retraining opportunities. The distance metric (L2 vs. cosine) has minor impact after normalization. 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 17, 2026. ;https://doi.org/10.64898/2026.04.14.718510 doi: bioRxiv preprint
+
+TABLE V OOD/ID AUPRC G AIN RATIO AT B = 3 ,000 (EHO GAIN / R ANDOM SPLIT GAIN , RELATIVE TO SEED -ONLY MODEL ). R ATIO > 1: STRATEGY IS MORE BENEFICIAL UNDER SHIFT .Strategy EHO gain Rand gain Ratio p-value BALD 0.119 0.091 1.31 0.043 CoreSet 0.126 0.084 1.50 0.011 UDAL (ours) 0.154 0.107 1.44 0.008 
+
+E. Effect of Distribution Shift on Query Strategy 
+
+To investigate how shift severity affects strategy selection, Table V reports the ratio of OOD AUPRC gain (EHO) to ID AUPRC gain (Random split) for each strategy at B = 3 ,000 .A ratio > 1 means the strategy is more helpful under shift. All strategies provide larger absolute gains under shift than in-distribution, but CoreSet has the highest OOD/ID ratio (1.50), confirming that diversity sampling is particularly important when the seed set is biased toward known epitopes. UDAL retains a high ratio (1.44) by incorporating sufficient diversity. p-values are from paired t-tests across 5 random seeds. V. D ISCUSSION 
+
+a) Active learning reduces cost non-trivially.: The 2.5 ×
+
+reduction in required labels at equivalent AUPRC (Table III) is practically significant. In a screening campaign with a cost of $50 per assay, this corresponds to a saving of roughly $150,000 over a 5,000-assay budget. These savings scale with campaign size and are compounded across multiple screening rounds. 
+
+b) Diversity matters more than uncertainty under shift.: 
+
+The consistent advantage of CoreSet over BALD under EHO and DA splits is informative: when the test distribution differs from the seed distribution, the model’s uncertainty scores are biased toward the regions it has already explored. Diversity sampling counteracts this by probing unexplored regions of sequence space, which is precisely what is needed when new epitopes are the target. UDAL captures both effects. 
+
+c) Connection to experimental design.: The UDAL ac-quisition function is related to optimal experimental design [16]: the core-set component minimizes variance of the empir-ical coverage estimator, while BALD minimizes expected pos-terior entropy. This connection suggests that more principled adaptive designs (e.g., Gaussian process-based) could further improve efficiency, at the cost of computational overhead. 
+
+d) Limitations.: Our oracle O is simulated from a static dataset; real wet-lab oracles have assay-specific false negative rates, batch effects, and turnaround delays that affect the active learning loop. Additionally, the method assumes the unlabeled pool is fixed; in practice, new TCR sequences are continuously generated, requiring online or streaming active learning extensions. Finally, the current approach does not account for the cost asymmetry between false positives and false negatives, which could be addressed by integrating loss-weighted acquisition functions. VI. C ONCLUSION 
+
+We presented UDAL, an active learning framework for budget-constrained TCR–pMHC wet-lab validation that com-bines BALD uncertainty estimation with greedy core-set di-versity selection. Under epitope-held-out evaluation, UDAL achieves a 2.5 × reduction in required labels relative to ran-dom acquisition at equivalent AUPRC, directly translating to reduced assay cost in prospective screening campaigns. Abla-tions show that the uncertainty–diversity trade-off is robustly beneficial across batch sizes and MC sample counts, and that diversity is the dominant driver of improvement under distribu-tion shift. Together with principled label efficiency reporting, UDAL provides a practical blueprint for data-efficient TCR specificity modeling in budget-constrained discovery pipelines. REFERENCES [1] H. Gong, J. Wen, R. Luo, Y. Feng, J. Guo, H. Fu, and X. Zhou, “Integrated mrna sequence optimization using deep learning,” Briefings in Bioinformatics , vol. 24, no. 1, Jan. 2023. [Online]. Available: http://dx.doi.org/10.1093/bib/bbad001 [2] W. Wang, C. Qi, and Z. Wei, “Modeling tcr-pmhc binding with dual encoders and cross-attention fusion,” in 2025 IEEE International Con-ference on Bioinformatics and Biomedicine (BIBM) . IEEE, 2025, pp. 5083–5090. [3] K. He, X. Liu, M. Li, X. Li, H. Yang, and H. Zhang, “Noninvasive kras mutation estimation in colorectal cancer using a deep learning method based on ct imaging,” BMC Medical Imaging , vol. 20, no. 1, Jun. 2020. [Online]. Available: http://dx.doi.org/10.1186/s12880-020-00457-4 [4] V. I. Jurtz, L. E. Jessen, A. K. Bentzen, M. C. Jespersen, S. Mahajan, R. Vita, K. K. Jensen, P. Marcatili, S. R. Hadrup, B. Peters et al. , “Nettcr: sequence-based prediction of tcr binding to peptide-mhc complexes using convolutional neural networks,” BioRxiv , p. 433706, 2018. [5] B. Schmauch, A. Romagnoni, E. Pronier, C. Saillard, P. Maill´ e, J. Calderaro, A. Kamoun, M. Sefta, S. Toldo, M. Zaslavskiy, T. Clozel, M. Moarii, P. Courtiol, and G. Wainrib, “A deep learning model to predict rna-seq expression of tumours from whole slide images,” 
+
+Nature Communications , vol. 11, no. 1, Aug. 2020. [Online]. Available: http://dx.doi.org/10.1038/s41467-020-17678-4 [6] M.-A. Carbonneau, V. Cheplygina, E. Granger, and G. Gagnon, “Multiple instance learning: A survey of problem characteristics and applications,” Pattern Recognition , vol. 77, p. 329–353, May 2018. [Online]. Available: http://dx.doi.org/10.1016/j.patcog.2017.10.009 [7] N. De Neuter, W. Bittremieux, C. Beirnaert, B. Cuypers, A. Mrzic, P. Moris, A. Suls, V. Van Tendeloo, B. Ogunjimi, K. Laukens, and P. Meysman, “On the feasibility of mining cd8+ t cell receptor patterns underlying immunogenic peptide recognition,” Immunogenetics ,vol. 70, no. 3, p. 159–168, Aug. 2017. [Online]. Available: http://dx.doi.org/10.1007/s00251-017-1023-5 [8] G. T. Clifton, D. Hale, T. J. Vreeland, A. T. Hickerson, J. K. Litton, G. Alatrash, R. K. Murthy, N. Qiao, A. V. Philips, J. J. Lukas, J. P. Holmes, G. E. Peoples, and E. A. Mittendorf, “Results of a randomized phase iib trial of nelipepimut-s + trastuzumab versus trastuzumab to prevent recurrences in patients with high-risk her2 low-expressing breast cancer,” Clinical Cancer Research ,vol. 26, no. 11, p. 2515–2523, Jun. 2020. [Online]. Available: http://dx.doi.org/10.1158/1078-0432.ccr-19-2741 [9] D. Nie, J. Lu, H. Zhang, E. Adeli, J. Wang, Z. Yu, L. Liu, Q. Wang, J. Wu, and D. Shen, “Multi-channel 3d deep feature learning for survival time prediction of brain tumor patients using multi-modal neuroimages,” Scientific Reports , vol. 9, no. 1, Jan. 2019. [Online]. Available: http://dx.doi.org/10.1038/s41598-018-37387-9 [10] J.-W. Sidhom, H. B. Larman, D. M. Pardoll, and A. S. Baras, “Deeptcr is a deep learning framework for revealing sequence concepts within t-cell repertoires,” Nature Communications , vol. 12, no. 1, Mar. 2021. [Online]. Available: http://dx.doi.org/10.1038/s41467-021-21879-w 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 17, 2026. ;https://doi.org/10.64898/2026.04.14.718510 doi: bioRxiv preprint [11] Z. Lin, H. Akin, R. Rao, B. Hie, Z. Zhu, W. Lu, N. Smetanin, R. Verkuil, O. Kabeli, Y. Shmueli, A. dos Santos Costa, M. Fazel-Zarandi, T. Sercu, S. Candido, and A. Rives, “Evolutionary-scale prediction of atomic-level protein structure with a language model,” 
+
+Science , vol. 379, no. 6637, p. 1123–1130, Mar. 2023. [Online]. Available: http://dx.doi.org/10.1126/science.ade2574 [12] S. Mei, F. Li, A. Leier, T. T. Marquez-Lago, K. Giam, N. P. Croft, T. Akutsu, A. I. Smith, J. Li, J. Rossjohn, A. W. Purcell, and J. Song, “A comprehensive review and performance evaluation of bioinformatics tools for hla class i peptide-binding prediction,” 
+
+Briefings in Bioinformatics , vol. 21, no. 4, p. 1119–1135, May 2020. [Online]. Available: http://dx.doi.org/10.1093/bib/bbz051 [13] H. Chi, C. Qi, S. Wang, and Y. Ma, “Active learning for graphs with noisy structures,” in Proceedings of the 2024 SIAM International Conference on Data Mining (SDM) . SIAM, 2024, pp. 262–270. [14] Z. Xu, M. Luo, W. Lin, G. Xue, P. Wang, X. Jin, C. Xu, W. Zhou, Y. Cai, W. Yang, H. Nie, and Q. Jiang, “Dlptcr: an ensemble deep learning framework for predicting immunogenic peptide recognized by t cell receptor,” Briefings in Bioinformatics , vol. 22, no. 6, Aug. 2021. [Online]. Available: http://dx.doi.org/10.1093/bib/bbab335 [15] T. J. O’Donnell, A. Rubinsteyn, and U. Laserson, “Mhcflurry 2.0: Improved pan-allele prediction of mhc class i-presented peptides by incorporating antigen processing,” Cell Systems , vol. 11, no. 1, pp. 42–48.e7, Jul. 2020. [Online]. Available: http://dx.doi.org/10.1016/j. cels.2020.06.010 [16] J. Hundal, S. Kiwala, J. McMichael, C. A. Miller, H. Xia, A. T. Wollam, C. J. Liu, S. Zhao, Y.-Y. Feng, A. P. Graubert, A. Z. Wollam, J. Neichin, M. Neveau, J. Walker, W. E. Gillanders, E. R. Mardis, O. L. Griffith, and M. Griffith, “pvactools: A computational toolkit to identify and visualize cancer neoantigens,” Cancer Immunology Research , vol. 8, no. 3, p. 409–420, Mar. 2020. [Online]. Available: http://dx.doi.org/10.1158/2326-6066.cir-19-0401 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 17, 2026. ;https://doi.org/10.64898/2026.04.14.718510 doi: bioRxiv preprint

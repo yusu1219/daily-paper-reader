@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-001.webp",
+      "caption": "Table 2 Ablation on Qwen2.5-Math-1.5B. GAL is important for complex reasoning (e.g., Olympiad) and DCR enhances performance by ensuring optimization stability, their synergy yields optimal results.",
+      "page": 6,
+      "index": 1,
+      "width": 975,
+      "height": 916
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-002.webp",
+      "caption": "Figure 1 Performance of Qwen2.5-Math-1.5B on Numina-Math. (a) Accuracy changes relative to the base model: SFT consistently degrades performance, highlighting catastrophic forgetting. (b) Accuracy across different training pipelines: the SFT+GRPO pipeline exhibits poor synergy, underperforming GRPO alone.",
+      "page": 2,
+      "index": 2,
+      "width": 986,
+      "height": 233
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-003.webp",
+      "caption": "Figure 4 Performance comparison on Qwen2.5-Math-1.5B (Pass@16). Bottom-right: Sat-Math training dynamics. SFT+GFT+GRPO achieves top performance via stable optimization, demonstrating GFT’s high compatibility and effective synergy between SFT and GRPO.",
+      "page": 7,
+      "index": 3,
+      "width": 986,
+      "height": 527
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-004.webp",
+      "caption": "Figure 3 Learning dynamics on MATH-lighteval. Removing DCR causes severe volatility, while removing GAL results in slow convergence and a lower ceiling.",
+      "page": 7,
+      "index": 4,
+      "width": 494,
+      "height": 306
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-005.webp",
+      "caption": "Figure 2 GFT comprises two components: (1) Group Advantage Learning, which computes standardized relative advantages (Ak) from hybrid response groups (expert demonstrations, teacher outputs, and rollout samples); and (2) Dynamic Coefficient Rectification, which bounds importance weights via per-token gradient clipping.",
+      "page": 3,
+      "index": 5,
+      "width": 986,
+      "height": 311
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-006.webp",
+      "caption": "Figure 5 KL divergence quantifies distributional drift from the base model. SFT exhibits the highest divergence, while GFT maintains a significantly lower level, effectively mitigating catastrophic forgetting.",
+      "page": 8,
+      "index": 6,
+      "width": 494,
+      "height": 342
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-007.webp",
+      "caption": "Table 4 Comparison of Pass@k (k = 128, 256) performance between Distillation, GRPO and GFT. GFT consistently achieves the highest Pass@k scores, effectively enhancing response diversity.",
+      "page": 9,
+      "index": 7,
+      "width": 494,
+      "height": 249
+    },
+    {
+      "url": "assets/figures/arxiv/2604.14258v1/fig-008.webp",
+      "caption": "Figure 6 Effect of the clipping threshold τ : larger τ rectifies more tokens. Accuracy follows an inverted U-shape; insufficient clipping is unstable, while excessive clipping reduces learning efficiency.",
+      "page": 9,
+      "index": 8,
+      "width": 494,
+      "height": 321
+    }
+  ]
+}

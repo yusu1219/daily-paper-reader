@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.09303v1/fig-001.webp",
+      "caption": "Fig. 7: Snapshots of the experiment for a quadrotor drone. Fig. 7a shows that at t = 35, the prediction indicates the quadrotor intends to fly in the positive x-direction but does not yet reflect an intention to avoid the no-fly zone or accurately predict its true goal. By t = 60, as shown in Fig. 7b, the predicted goal shifts into the correct region as the quadrotor begins its second turn. As more measurements are collected, the prediction continues to improve and eventually converges to the ground truth, as illustrated in Fig. 7c. The prediction loss is included in Fig. 7c.",
+      "page": 6,
+      "index": 1,
+      "width": 1052,
+      "height": 207
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09303v1/fig-002.webp",
+      "caption": "Fig. 3: Intention prediction for quadrotor. (No goal change)",
+      "page": 4,
+      "index": 2,
+      "width": 500,
+      "height": 270
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09303v1/fig-003.webp",
+      "caption": "Fig. 4: Online intention prediction for quadrotor. (Two goal switches. Vertical dashed lines in (a) indicate goal changes.)",
+      "page": 5,
+      "index": 3,
+      "width": 1054,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09303v1/fig-004.webp",
+      "caption": "Fig. 5: Online intention prediction with three goal switches, i.e. at t = 50, the system is at x̄∗ 50 and switches its goal from x∗ g,0 to x∗ g,50 (goal x∗ g,0, · · · , x∗ g,49 maintains the same).",
+      "page": 5,
+      "index": 4,
+      "width": 512,
+      "height": 299
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09303v1/fig-005.webp",
+      "caption": "Fig. 6: (a) Comparison of prediction loss over time between the proposed method and OCIL. ∆ denotes the time interval between goal switches. (b) Comparison of average prediction loss between the proposed method and OCIL.",
+      "page": 5,
+      "index": 5,
+      "width": 512,
+      "height": 282
+    }
+  ]
+}

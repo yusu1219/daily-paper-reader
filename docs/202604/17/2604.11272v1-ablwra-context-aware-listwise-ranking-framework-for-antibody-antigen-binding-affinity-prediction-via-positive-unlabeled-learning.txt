@@ -1,0 +1,913 @@
+Title: AbLWR:A Context-Aware Listwise Ranking Framework for Antibody-Antigen Binding Affinity Prediction via Positive-Unlabeled Learning
+
+URL Source: https://arxiv.org/pdf/2604.11272v1
+
+Published Time: Tue, 14 Apr 2026 02:36:50 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# AbLWR: A Context-Aware Listwise Ranking Framework for Antibody-Antigen Binding Affinity Prediction via Positive-Unlabeled Learning 
+
+Fan Xu 1 Zhi-an Huang 2 Haohuai He 1 Yidong Song 3 Wei Liu 4 Dongxu Zhang 4 Yao Hu 1 Kay Chen Tan 1
+
+## Abstract 
+
+Accurate prediction of antibody-antigen binding affinity is fundamental to therapeutic design, yet remains constrained by severe label sparsity and the complexity of antigenic variations. In this pa-per, we propose AbLWR (Antibody-antigen bind-ing affinity List-Wise Ranking), a novel frame-work that reformulates the conventional affin-ity regression task as a listwise ranking prob-lem. To mitigate label sparsity, AbLWR in-corporates a PU (Positive-Unlabeled) learning mechanism leveraging a dual-level contrastive ob-jective and meta-optimized label refinement to learn robust representations. Furthermore, we address antigenic variation by employing a ho-mologous antigen sampling strategy where Multi-Head Self-Attention (MHSA) explicitly models inter-sample relationships within training lists to capture subtle affinity nuances. Extensive experi-ments demonstrate that AbLWR significantly out-performs state-of-the-art baselines, improving the Precision@1 (P@1) by over 10 % in randomized cross-validation experiments. Notably, case stud-ies on Influenza and IL-33 validate its practical utility, demonstrating robust ranking consistency in distinguishing subtle viral mutations and effi-ciently prioritizing top-tier candidates for wet-lab screening. 
+
+## 1. Introduction 
+
+Antibodies are central to the adaptive immune response, neu-tralizing pathogens via specific antigen binding mediated by complementarity-determining regions (CDRs) (Jin et al., 
+
+> 1
+
+Department of Data Science and Artificial Intelligence, The Hong Kong Polytechnic University, Hong Kong SAR, China 
+
+> 2
+
+Department of Computer Science, City University of Hong Kong (Dongguan), Dongguan, China 3School of Computer Science and Engineering, Sun Yat-sen University, Guangzhou, Guangdong, China 4School of Public Health, Xiamen University, Xiamen, China. Correspondence to: Zhi-an Huang <huang.za@cityu-dg.edu.cn >, Kay Chen Tan <kctan@polyu.edu.hk >.
+
+Preprint. April 14, 2026. 
+
+2022; Kim et al., 2023). The potency and efficacy of these interactions are typically evaluated using quantitative met-rics, such as the dissociation constant ( Kd), half-maximal inhibitory or effective concentrations ( IC 50 /EC 50 ), and es-cape fractions. Currently, the rapid evolution of antigens poses a significant challenge to antibody effectiveness (Hie et al., 2021; Yang et al., 2023; Sun et al., 2025), creating a continually shifting antigenic landscape where emerging viral strains can evade the neutralizing effects of therapeu-tic antibodies (Zhang et al., 2021; Garcia-Beltran et al., 2021). Thus, developing methods to accurately identify and prioritize the most potent antibodies for specific, evolving antigens is of paramount importance. Conventionally, binding affinity metrics are quantified through wet-lab experiments, such as Surface Plasmon Resonance (SPR), Enzyme-Linked Immunosorbent Assays (ELISA), and pseudovirus neutralization assays (Wang et al., 2022). However, these procedures are resource-intensive and time-consuming, particularly when antigenic drift ne-cessitates multiple repeated experiments. Consequently, significant computational efforts have been directed toward binding affinity prediction. Existing methodologies can be broadly classified into four paradigms, spanning from tra-ditional physics-based approaches to modern data-driven deep learning pipelines (sequence-, structure-, and complex-based) (Frey et al., 2025). Sequence-based models lever-age protein language models (PLMs) to capture antibody-specific features directly from primary sequences (Ruffolo et al., 2021; Ullanat et al., 2026). To exploit geometric priors, structure-based methods (Nguyen et al., 2021; Liu et al., 2025) integrate structural information, often utiliz-ing predicted coordinates from the advanced structure pre-diction tools (Abramson et al., 2024; Ruffolo et al., 2023; Wohlwend et al., 2025). Targeting the bound state, complex-based approaches explicitly model the 3D conformation of the bound state (Michalewicz et al., 2024). Distinct from these learning-based frameworks, traditional methods rely on empirical force fields and physics-based energy functions for stability estimation (Schymkowitz et al., 2005). Despite these advancements, the predictive performance remains limited by two critical bottlenecks. First, existing models, which predominantly rely on point-wise regression, 1   
+
+> arXiv:2604.11272v1 [cs.LG] 13 Apr 2026 Affinity = -5
+> Affinity = -1
+> Affinity = 5
+> Antigen Antibody
+> (a) (b)
+> (c) Figure 1. Key challenges in Ab-Ag binding affinity prediction.
+> (a) Distinct affinity profiles of multiple antibodies binding to the same antigen. (b) The large reservoir of unlabeled data remains largely unexploited by existing supervised paradigms, compared with the immense volume of antibody and antigen sequences. (c) Analysis of existing binding affinity data from public datasets (refer to Appendix Section A.1 for data collection details) reveals that most antigens are associated with different antibody candidates, whereas individual antibodies typically bind to a single specific antigen.
+
+struggle to discriminate affinity levels among highly homol-ogous Antibody-Antigen (Ab-Ag) pairs (Mason et al., 2021). As illustrated in Figure 1 (a) and (c), multiple antibodies can bind to the identical antigen yet exhibit distinct affinity profiles. Treating these samples in isolation often fails to capture such subtle discrepancies in their relative binding strength. While pairwise ranking approaches (Liu et al., 2025) attempt to mitigate this, they are restricted to local comparisons, lacking the global context required to accu-rately prioritize top candidates. Second, the field suffers from severe label sparsity. While sequence data is immense, experimentally verified affinity labels are scarce (Figure 1 (b)) (Dunbar et al., 2014; Jankauskait ˙e et al., 2019). Cru-cially, current fully supervised approaches largely overlook the vast potential of unlabeled Ab-Ag pairs, leaving a rich source of structural information unexploited. Thus, we propose AbLWR, a novel two-stage framework that reformulates binding affinity prediction as a listwise ranking task. Rather than regressing absolute values, AbLWR aims to learn the relative order of Ab-Ag pairs based on binding strength. In the initial pre-training stage, we leverage Positive-Unlabeled (PU) learning to harness the abundance of unlabeled data for learning intrinsic struc-tural representations. By treating experimentally verified pairs as positives and unverified pairs as unlabeled data, this module trains a classifier to stratify binding affinities into coarse-grained levels. In the subsequent ranking stage, we construct training lists comprising Ab-Ag pairs asso-ciated with identical or homologous antigens. To capture subtle affinity nuances, we develop a context-aware ranking module incorporating Multi-Head Self-Attention (MHSA) mechanism, which explicitly models the inter-dependencies among candidate pairs. Our contributions are summarized as follows: • We propose AbLWR, the first attempt to reformulate affinity prediction from point-wise regression to list-wise ranking. This shift aligns the optimization objec-tive with candidate prioritization, capturing the relative affinity manifold more effectively than regression base-lines. • We introduce a semi-supervised PU learning strategy to tackle label sparsity. By distilling interaction pri-ors from unlabeled Ab-Ag pairs, this approach yields robust representations that generalize well beyond lim-ited experimental data. • We devise a context-aware architecture incorporat-ing MHSA module to model the global dependencies among candidate pairs. This mechanism enables the model to perform contrastive reasoning, directly distin-guishing subtle residue variations across homologous sequences. • Extensive evaluations on independent testing sets and task-specific splits demonstrate that AbLWR achieves state-of-the-art (SOTA) performance. Our results high-light the framework’s superior ability to identify high-affinity variants in lead optimization scenarios. 
+
+## 2. Related Work 
+
+2.1. Binding Affinity Prediction 
+
+Binding affinity is a critical determinant of therapeutic effi-cacy, governed by intricate physicochemical factors (Akbar et al., 2022). Historically, prediction relied on physics-based simulations. Tools like Rosetta (Chaudhury et al., 2010) and FoldX (Schymkowitz et al., 2005) employ empirical force fields to estimate Gibbs free energy changes ( ∆∆ G) from the bound complex. While interpretable, these methods are computationally intensive and sensitive to structural noise. The expansion of datasets like SAbDab (Dunbar et al., 2014) and SKEMPI (Jankauskait ˙e et al., 2019) has accelerated a shift toward data-driven approaches. In this review, we cat-egorize these deep learning methodologies based on their input modalities into sequence-, structure-, and complex-based methods. 2Sequence-based methods. These approaches model affinity directly from amino acid sequences. Early efforts utilized 1D convolutional neural networks (CNNs) or recurrent neu-ral networks (RNNs) to extract local motifs (Liberis et al., 2018; Mason et al., 2021; Huang et al., 2022). Recently, PLMs have become dominant: general-purpose models like ESM-1b (Rives et al., 2021) and antibody-specific ones like AntiBERTy (Ruffolo et al., 2021) and MINT (Ullanat et al., 2026) leverage Masked Language Modeling to generate embeddings encapsulating evolutionary semantics. These representations are widely used for regression tasks (Gao et al., 2023). However, these methods inherently lack ex-plicit spatial context, limiting their efficacy in capturing long-range interactions and discontinuous epitopes. 
+
+Structure-based methods. To address the limitations of sequence-only models, structure-based methods incorporate geometric data to enhance accuracy, typically deriving infor-mation from separate antibody or antigen structures. These approaches often employ geometric deep learning architec-tures to capture local spatial features, such as 3D-CNNs (Wang et al., 2020) and graph neural networks (GNNs) (Bandara et al., 2025). Furthermore, the integration of ad-vanced structure predictors like AlphaFold-3 (Abramson et al., 2024), IgFold (Ruffolo et al., 2023), and Boltz-1 (Wohlwend et al., 2025) enables these models to utilize high-quality predicted structures. 
+
+Complex-based methods. Deep learning complex-based methods operate directly on the 3D conformation of the bound state to capture interaction details. Recently, emerg-ing methods like ANTIPASTI (Michalewicz et al., 2024) have been proposed to interpret complex stability. De-spite their potential precision, these data-driven methods de-pend heavily on high-quality co-crystal structures or docked poses, which are often scarce and difficult to obtain for novel variants. In spite of these advances, current data-driven approaches are mainly constrained by the formulation of affinity pre-diction as a direct regression problem. This often fails to discriminate between homologous variants with subtle mu-tations. Our work addresses this by shifting the paradigm to a listwise ranking task, explicitly modeling the relative order of candidates. 
+
+2.2. PU Learning 
+
+Standard supervised learning relies on fully labeled datasets containing both positive and negative instances. However, in many biochemical scenarios, obtaining confirmed negative samples is experimentally expensive or infeasible, resulting in datasets composed solely of verified positives and a large pool of unlabeled data. PU learning addresses this challenge by training a classifier using only the positive and unlabeled sets (Bekker & Davis, 2020). Existing PU learning methods generally fall into two cate-gories: sample selection and cost-sensitive learning. Sample selection approaches first identify reliable negative samples from the unlabeled set. Early methods relied on heuris-tics (Chaudhari & Shevade, 2012) or auxiliary models (Luo et al., 2021; Hu et al., 2021; Li et al., 2022), while recent advances have incorporated recursive sampling strategies (Xinrui et al., 2023) and consistency regularization (Wang et al., 2024) to improve the robustness of negative identifi-cation. Although intuitive, these methods heavily depend on the quality of the initial selection and have the risk of discarding informative hard-negative samples. In contrast, cost-sensitive learning methods treat unlabeled data as a mixture of positives and negatives, formulating an unbiased risk estimator to train the model directly. Following the foun-dational convex formulations (Du Plessis et al., 2015) and non-negative PU losses (Kiryo et al., 2017), recent research has focused on relaxing the strict assumptions of known class priors and random data selection (Long et al., 2024; Elkan & Noto, 2008). Notably, novel frameworks have been proposed to handle arbitrary positive shifts (Wang et al., 2023), extreme class imbalance (Fu et al., 2024), and prior-free estimation via graph cuts (Zhao et al., 2023), extending PU learning to more complex and realistic scenarios. Moti-vated by these advances, we leverage the capability of PU learning to mine latent interaction patterns from massive un-labeled data, thereby addressing the label sparsity in affinity prediction. 
+
+## 3. Methods 
+
+This section outlines the methodology of AbLWR (see in Figure 2). We begin by establishing the mathematical nota-tions and problem definition in Section 3.1. Subsequently, Section 3.2 details the model architecture. Finally, training details including the learning objectives and the datasets are formulated in Section 3.3. 
+
+3.1. Problem Definition 
+
+For a given antigen, we represent its primary sequence as 
+
+SAg = ( b1, . . . , b LAg ), where LAg denotes the sequence length. For the antibody, we focus exclusively on the binding interface, representing it by its six CDRs with length LAb : SAb = ( a1, . . . , a LAb ). To incorporate geo-metric constraints, we leverage pre-trained structure pre-diction models: IgFold (Ruffolo et al., 2023) for antibod-ies and ESMFold (Lin et al., 2023) for antigens. The resulting 3D structures are represented as point clouds 
+
+XAb = {x1, . . . , xLAb } and XAg = {x1, . . . , xLAg }, where 
+
+xj ∈ RC×3 denotes the coordinates of C atoms in the j-th residue. Formally, we define a single Ab-Ag pair instance as the tuple: X ≜ (SAb , SAg , XAb , XAg ).We frame the binding affinity prediction problem as a 3Discrete 
+
+> Pseudo Label
+> Discrete Ground
+> Truth Label
+> Ab-Ag
+> Features
+> Forward
+> Backward
+> Labeled
+> Ab-Ag Pair
+> Graph
+> Augmentation
+> Unlabeled
+> Ab-Ag Pair
+
+(a) PU Pre-training  
+
+> Coarse Grained
+> Classification
+> Ag GNNs
+> Ab GNNs
+
+(i) S pred (ii) S cluster 
+
+(iii) S KNN 
+
+LIns + LClus 
+
+> Meta
+> Learning
+> Discrete
+> Pseudo Label
+> Update
+> Threshold
+> Ab-Ag
+> Seed
+> Pair
+> Homologous Antigen
+> Sampling
+
+# ... 
+
+(b) List Sampling 
+
+# ... 
+
+# ... 
+
+# ... 
+
+# ... 
+
+> Normalization
+
+LListMLE 
+
+# ... 
+
+> Continuous Ground
+> Truth Label
+
+LCE 
+
+> High Medium Low
+> ...
+> ...
+
+(c) MHSA Ranking 
+
+> × N r
+
+# ... 
+
+> …
+> …
+
+⊕ …
+
+𝒉 !"
+
+𝒉 !# 
+
+𝒆 
+
+𝒆′ 
+
+𝒆 $
+
+𝒆′′ 
+
+𝒆 
+
+𝜒 %
+
+𝜒 &
+
+𝜒 '        
+
+> 𝒁 𝟏
+> 𝒍 #𝟏 𝒁 𝟐
+> 𝒍 #𝟏 𝒁 𝑲
+> 𝒍 #𝟏
+> 𝑯 𝟏 𝑯 𝟐 𝑯 𝑴
+> 𝒁 𝟏
+> 𝒍 𝒁 𝟐
+> 𝒍 𝒁 𝑲
+> 𝒍
+> 𝒓 𝟏 𝒓 𝟐 𝒓 𝑲
+
+Figure 2. The overall framework of AbLWR. The architecture comprises three key components: (a) PU Pre-training: Dual GNN encoders learn robust representations from the combined dataset ( D) by jointly optimizing a composite contrastive objective ( LIns + LClus )and a cross entropy loss ( LCE ) with meta-reweighted pseudo-labels. (b) List Sampling: A homologous sampling strategy constructs informative training lists T based on antigen sequence similarity ( δseq ) and affinity margins ( ycutoff ). (c) MHSA Ranking: The sampled lists are processed by MHSA mechanism to capture intra-list interactions via self-attention, yielding the final affinity ranking scores r.
+
+listwise ranking task. Let T = {X 1, . . . , XK } denote a query list comprising K Ab-Ag pairs (where K = 5 ), and 
+
+y = [ y1, . . . , y K ]⊤ be the corresponding ground-truth bind-ing affinities. Our goal is to learn a scoring function f :
+
+T → RK that predicts ranking scores r = [ r1, . . . , r K ]⊤
+
+such that the ranking order of r is consistent with y.
+
+3.2. Model Architecture Ab-Ag GNN Encoders We further model the Ab-Ag pair 
+
+X as residue-level molecular graphs, GAb = ( NAb , EAb ) and 
+
+GAg = ( NAg , EAg ). Edges (u, v ) ∈ E are established based on the coordinates X if the Euclidean distance between any non-hydrogen atoms in residues u and v is less than 4.5 ˚A(Pittala & Bailey-Kellogg, 2020) . Initial node features H(0) 
+
+are derived by encoding the sequences S with PLMs: IgFold for antibodies and ESM-2 for antigens. To independently model the distinct structural topologies of the antibody and antigen, we employ dual Graph Convolu-tional Network (GCN) encoders, ϕAb and ϕAg (Kipf, 2016). Both encoders utilize a two-layer architecture to project het-erogeneous features into a shared latent space Rdout (where 
+
+dout = 64 ), yielding refined node representations HAb and 
+
+HAg . These residue-level features are aggregated into global graph representations, hAb and hAg , via global mean pool-ing. The final embedding for the pair X is formed by con-catenating these vectors: e = [ hAb ∥ hAg ] ∈ R2dout .4PU Pre-training To enhance representation learning, we employ a PU pre-training strategy (Figure 2 (a)) on the com-bined dataset D = DL ∪ D U , where DL and DU denote the labeled and unlabeled Ab-Ag pairs, respectively. As a prerequisite, we also generate two augmented views via stochastic graph perturbations: a weakly augmented rep-resentation e′ and a strongly augmented representation e′′ 
+
+(see Appendix Section B for details). Given the continu-ous affinity y ∈ R, we first discretize it into a categorical label ycls ∈ {− 1, 0, 1}, representing high, medium, and low affinity levels, respectively. To facilitate a unified training objective, we define a target variable ˜ycls for each Ab-Ag pair. For labeled data ( X ∈ D L), we set ˜ycls = ycls , us-ing the ground truth; for unlabeled data ( X ∈ D U ), ˜ycls is the pseudo-label initialized as 0 and refined by the model’s prediction. We optimize a multi-task objective on the combined dataset, integrating supervised classification with self-supervised contrastive learning. The classification objective utilizes the weakly augmented view e′ 
+
+> i
+
+and a classifier fcls to pre-dict the affinity class probabilities ˆycls i = fcls (e′
+
+> i
+
+) and the cross-entropy loss ( LCE ) is used to minimize the discrep-ancy between predictions and the targets. Simultaneously, we minimize an instance-level contrastive loss to align the weak and strong views: 
+
+LIns = − 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+log ee′ 
+
+> i·e′′
+> i/τ
+
+Ωi
+
+,
+
+where Ωi = X 
+
+> j̸=i
+
+
+
+ee′  
+
+> i·e′′
+> j/τ
+
++ ee′  
+
+> i·e′
+> j/τ
+
+
+
+.
+
+(1) Following a warm-up period, we refine the representation space to group pairs with similar binding patterns by incor-porating a cluster-aware loss LClus . For each query e′
+
+> i
+
+, we construct a robust positive set Pi by integrating the strategies of consensus verification and geometric preservation (refer to Section C.1 for details) (Long et al., 2024). This loss encourages the query to align with its semantic neighbors: 
+
+LClus = − 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+1
+
+|P i|
+
+X
+
+> p∈P i
+
+log ee′
+
+> i·p/τ
+
+Ωi
+
+. (2) Subsequently, we adopt a meta-learning strategy (Ren et al., 2018) to refine the initial pseudo-labels assigned to DU . Let 
+
+BL and BU denote the indices of labeled and unlabeled data, respectively. We construct the unified target matrix ˜Ycls ∈
+
+RB×Nc (where Nc = 3 ) by stacking the current targets 
+
+{˜ycls  
+
+> i
+
+}Bi=1 . We then introduce a learnable perturbation matrix 
+
+∆ ∈ RB×Nc to generate soft targets via ˜Ycls + ∆. The optimization proceeds in a bi-level manner. We first perform a virtual gradient step on the model parameters using the soft targets, and then seek the optimal perturbation ∆∗ that minimizes the loss on a clean validation batch Dval  
+
+> L
+
+. Guided by this optimization, we derive refined discrete pseudo-labels ˜Ymeta cls . Finally, to stabilize training, we update the targets using an exponential moving average (EMA) with the momentum coefficient of β:
+
+˜Y(t+1)  
+
+> cls
+
+= β ˜Y(t) 
+
+> cls
+
++ (1 − β) ˜Ymeta cls . (3) The detailed derivation of the bi-level optimization is avail-able in Appendix Section C.2. 
+
+List Sampling Following pre-training, we fine-tune the model using a listwise ranking objective. To capture subtle affinity differences, we construct informative ranking lists 
+
+T = {X 1, . . . , XK } using a homologous antigen sampling strategy (illustrated in Figure 2 (b)). Formally, for a ran-domly sampled seed pair Xse with antigen sequence Sse Ag 
+
+and ground-truth affinity yse , we retrieve a candidate pool 
+
+Pse from labeled dataset DL. The pool is restricted to candi-dates that exhibit high antigen homology with the seed yet significant affinity divergence: 
+
+Pse =
+
+n
+
+Xi ∈ D L Sim (Si
+
+> Ag
+
+, Sse Ag ) ≥ δseq 
+
+∧ | yse − yi| > y cutoff 
+
+o
+
+,
+
+(4) where Sim (·) denotes sequence similarity, δseq is the ho-mology threshold, and ycutoff enforces a minimum margin to mitigate measurement noise. Finally, K − 1 pairs are selected from Pse and combined with Xse to form the list 
+
+T . Specific sampling configurations for different data splits and auxiliary strategies for global robustness are detailed in Appendix Section A.3. 
+
+MHSA Ranking To map the structural embeddings to scalar affinity ranking scores, we employ a ranking mod-ule based on MHSA mechanism. Specifically, we adopt the Induced Set Attention Block (ISAB) variant (Lee et al., 2019) to mediate the information flow, by introducing M
+
+learnable inducing points as a reference frame. Formally, we construct the input matrix ET ∈ RK×2dout by stacking the embeddings of the K pairs in the list T . These em-beddings are then processed through Nr layers of ISAB (see Appendix Section D for mathematical details). Finally, the context-aware features Z(L) ∈ RK×dr are projected to scalar scores via a linear layer: 
+
+r = Z(L)w + b, (5) where w ∈ Rdr and b ∈ R are learnable parameters, and 
+
+r ∈ RK represents the ranking scores for the K pairs. 
+
+3.3. Training Dataset and Split. We curated Ab-Ag pairs from eight public repositories, derived from the compilation by Liu 5Table 1. Performance comparison on the Random Split. We employ 5-fold cross-validation (mean ± std) for all methods. Due to computational costs, the methods of FoldX and ANTIPASTI (marked with ∗) were evaluated on a subsampled dataset (see Appendix Section A.2 for details). Accordingly, AbLWR ∗ reports our model’s performance on this specific subset to ensure a fair comparison. All metrics are in percentage (%) except for Kτ , and higher values indicate better performance. Best results are highlighted in bold .                                                                                                                                                  
+
+> Category Model FRA (%) Kτ PRA (%) PAU (%) P@1 (%)
+> Sequence-based MINT 1.11 ±0.09 0.07 ±0.00 53.33 ±0.16 53.33 ±0.16 23.12 ±0.62 AntiBERTy 5.09 ±0.19 0.35 ±0.01 67.59 ±0.43 67.59 ±0.43 39.96 ±2.45 Structure-based AbRank 5.63 ±2.78 0.31 ±0.11 65.40 ±5.61 65.40 ±5.61 39.64 ±5.65 GraphDTA 8.98 ±1.23 0.46 ±0.03 73.02 ±1.68 73.02 ±1.68 46.92 ±4.90 Complex-based ANTIPASTI ∗0.00 ±0.00 -0.07 ±0.07 46.24 ±3.69 46.24 ±3.69 17.96 ±4.42 Traditional LambdaMART 6.36 ±0.24 0.38 ±0.01 68.18 ±0.64 68.79 ±0.63 39.04 ±0.48 FoldX ∗2.04 ±1.44 0.01 ±0.09 50.24 ±4.36 50.27 ±4.35 17.14 ±2.74
+> Ours AbLWR 20.74 ±0.45 0.59 ±0.01 79.31 ±0.52 79.49 ±0.51 57.26 ±0.56 AbLWR ∗17.14 ±5.88 0.57 ±0.05 78.16 ±2.54 78.30 ±2.65 53.47 ±5.28
+
+et al. (Liu et al., 2025) (details in Appendix Section A.1). Each entry comprises paired variable heavy and light chains alongside their corresponding antigen sequences. Follow-ing the established protocol, binding affinity measurements were standardized to the equilibrium dissociation constant (Kd) and log-transformed ( log Kd) to address measurement heterogeneity. Subsequently, the dataset was subsampled to 60,620 pairs for training and evaluation. We employed three splitting strategies to rigorously assess model generalization: (1) standard Random Split with 5-fold cross-validation; (2) Ag-based Split to test performance across antigen types; and (3) Ab-based Split using CDR clustering to assess robust-ness against antibody variations. Detailed splitting protocols are provided in Appendix Section A.2. Additionally, our case studies utilize the influenza virus dataset from Momont et al. (Momont et al., 2023) and the human interleukin-33 (IL-33) dataset from Wang et al. (Wang et al., 2025) (see Appendix Section F). 
+
+Training Objectives. We adopt a two-stage optimization strategy. The pre-training phase minimizes a composite objective Lpre = LCE + LIns + LClus to learn robust repre-sentations. In the fine-tuning stage, we optimize the ranking performance using the ListMLE loss, which maximizes the likelihood of the correct permutation based on the Plackett-Luce model (Xia et al., 2008). Let π = [ π1, . . . , π K ] denote the permutation indices sorted by ground-truth affinity in descending order. The objective is defined as: 
+
+LListMLE = −
+
+> K
+
+X
+
+> i=1
+
+log exp( rπi )
+
+PKj=i exp  rπj
+
+!
+
+. (6) 
+
+## 4. Experiments 
+
+In this section, we present a comprehensive evaluation of AbLWR across diverse data splitting strategies. We begin with the standard Random Split in Section 4.1, followed by more challenging scenarios involving distinct clusters in Section 4.2. Furthermore, we conduct ablation studies to verify the contribution of AbLWR’s key components in Sec-tion 4.3. Finally, we demonstrate the practical applicability of AbLWR in real-world biological settings through case studies in Section 4.4. 
+
+4.1. Comparison with SOTA Methods under Random Split Baseline Models. We benchmark AbLWR against a com-prehensive suite of SOTA methods. We categorize these baselines into: (1) sequence-based: MINT (Ullanat et al., 2026) and AntiBERTy (Ruffolo et al., 2021); (2) structure-based: GraphDTA (Nguyen et al., 2021) and AbRank (Liu et al., 2025); (3) complex-based: ANTIPASTI (Michalewicz et al., 2024); and (4) traditional methods, including the physics-based FoldX (Schymkowitz et al., 2005) and the tree-based LambdaMART (Burges, 2010). Detailed training configurations are provided in Appendix Section E.1. 
+
+Evaluation Metrics. We employ five metrics to assess rank-ing performance: (1) Full Rank Accuracy (FRA), reflecting overall ranking quality; (2) Kendall’s τ (Kτ ), measuring the ordinal association between predicted and ground-truth values; (3) Pairwise Rank Accuracy (PRA) and (4) Pairwise AUC (PAU), quantifying the percentage of correctly ordered sample pairs; and (5) Precision@1 (P@1), measuring the accuracy of the highest-ranked prediction. 
+
+Experimental Results. Table 1 summarizes the quantitative comparison results on the Random Split setting. Our pro-posed method, AbLWR, consistently outperforms all com-peting baselines across all five evaluation metrics. Specif-ically, in terms of the challenging FRA metric, AbLWR achieves 20.74 %, establishing a significant lead over the second-best performing method, GraphDTA (8.98 %). Sim-ilarly, for the ranking correlation metric Kτ , our model attains 0.59, clearly surpassing the strongest baseline (0.46). 6It is worth noting that AbLWR also demonstrates superior stability, as evidenced by the relatively low standard devi-ations. Regarding the computationally intensive methods evaluated on the subsampled dataset, our corresponding model AbLWR ∗ maintains its dominance with an FRA of 17.14 %, significantly outperforming both complex-based and traditional baselines. 
+
+4.2. Generalization on Distinct Antigen and Antibody Clusters 
+
+Table 2 extends our evaluation to the Ag-based and Ab-based splits, designed to assess model robustness under severe distribution shifts. For consistency, we employ the same baseline methods and evaluation metrics as in Sec-tion 4.1. In the Ag-based scenario, AbLWR demonstrates strong performance with an FRA of 10.28 %, representing a significant lead over GraphDTA (6.02 %). This advan-tage is also evident in other ranking metrics, confirming the model’s robustness on distinct antigen distributions. The Ab-based splits (Cluster 5 and Cluster 1) impose a stricter test, leading to a universal decline in performance metrics. Nevertheless, AbLWR retains its primacy in iden-tifying the most potent binders. Specifically, our method maintains a clear advantage in FRA (5.66 % and 3.58 %) and P@1 (46.35 % and 39.21 %). This suggests that AbLWR is precise in prioritizing the top candidates, a critical trait for practical antibody discovery. Finally, comparisons on the subsampled dataset reinforce this trend, with AbLWR ∗
+
+significantly exceeding both FoldX and ANTIPASTI, partic-ularly in the challenging Ab-based clusters where traditional methods struggle. 
+
+4.3. Ablation Studies 
+
+To validate the effectiveness of the proposed components in AbLWR, we conducted a comprehensive ablation study focusing on two key aspects: homologous antigen sampling and model architecture. As detailed in Table 3, we compare the full model against four variants: (1) w/ AbRankSam-pling : replaces our sampling strategy with the one used in AbRank (Liu et al., 2025), which considers affinity di-vergence but neglects antigen homology; (2) w/o PU Init. :removes the PU initialization and relies solely on random initialization; (3) w/o Rank. ListMLE : reformulates the objective as an absolute affinity regression task using Mean Squared Error (MSE) loss instead of the ranking-based ListMLE; (4) w/o Rank. MHSA : substitutes the MHSA mechanisms with simple Multilayer Perceptrons (MLPs). The results in Table 3 demonstrate that all proposed com-ponents contribute significantly to the final performance. Most notably, replacing the ranking loss with MSE regres-sion ( w/o Rank. ListMLE ) causes the most significant per-formance degradation, with FRA falling from 21.28 % to 
+
+Table 2. Performance comparison on Ag-based and Ab-based Splits. The Ag-based split corresponds to the single most divergent cluster, while the Ab-based split comprises the two most distinct clusters.                                                                                                                                                       
+
+> Category Model FRA (%) Kτ PRA (%) PAU (%) P@1 (%) Ag-based Split
+> Sequence-based MINT 0.67 0.00 49.63 49.63 21.93 AntiBERTy 3.33 0.31 64.98 64.98 34.50 Structure-based AbRank 1.61 0.15 57.20 57.20 24.21 GraphDTA 6.02 0.42 70.96 70.96 41.59 Complex-based ANTIPASTI ∗0.00 -0.01 49.39 49.39 22.45 Traditional LambdaMART 2.56 0.22 60.67 60.73 28.32 FoldX ∗2.04 0.10 54.49 54.49 36.73
+> Ours AbLWR 10.28 0.51 75.25 75.62 50.10 AbLWR ∗12.24 0.54 76.53 77.03 59.18 Ab-based Split (Cluster 5)
+> Sequence-based MINT 0.82 -0.02 49.03 49.03 19.30 AntiBERTy 1.07 0.05 52.35 52.35 23.08 Structure-based AbRank 4.15 0.35 67.68 67.68 41.43 GraphDTA 1.34 0.08 53.75 53.75 24.12 Complex-based ANTIPASTI ∗0.00 0.02 50.82 50.82 20.41 Traditional LambdaMART 0.99 0.07 44.99 43.22 30.10 FoldX ∗0.00 0.04 51.84 51.84 16.33
+> Ours AbLWR 5.66 0.37 68.60 68.62 46.35 AbLWR ∗4.08 0.38 68.98 68.98 44.90 Ab-based Split (Cluster 1)
+> Sequence-based MINT 0.74 -0.03 48.56 48.56 18.86 AntiBERTy 1.06 0.02 51.08 51.08 24.43 Structure-based AbRank 2.53 0.25 62.33 62.33 38.23 GraphDTA 1.40 0.02 51.09 51.09 22.42 Complex-based ANTIPASTI ∗0.00 0.08 54.08 54.08 24.49 Traditional LambdaMART 1.25 0.09 53.37 54.48 23.59 FoldX ∗2.04 -0.04 47.76 47.76 18.37
+> Ours AbLWR 3.58 0.25 62.66 62.68 39.21 AbLWR ∗8.16 0.28 64.08 64.08 38.78
+
+3.29 %. This underscores that modeling relative order is far more effective than absolute regression for this task. Similarly, removing PU initialization ( w/o PU Init. ) leads to a sharp decline to 5.52 %, highlighting the critical role of our initialization strategy in leveraging unlabeled data. Furthermore, our homologous antigen sampling strategy outperforms the baseline sampling ( w/ AbRankSampling ) by a substantial margin (8.73 % in FRA), confirming the neces-sity of incorporating biological homology into the training process. 
+
+4.4. Case Studies on Influenza Viruses and Human Interleukin-33 
+
+To evaluate the practical effectiveness of AbLWR, we con-ducted case studies on the influenza virus and human IL-33. For the influenza study, we curated 15 Ab-Ag pairs involv-ing three antibodies and five antigens (detailed in Appendix Table 5) (Momont et al., 2023), which yielded 3,003 unique 
+
+K = 5 lists through exhaustive combination. Regarding the human IL-33 study, we analyzed the I7 antibody alongside 19 candidates derived from affinity maturation (Wang et al., 7Table 3. Ablation study on the test set. We evaluate the impact of different components and strategies.                               
+
+> Model FRA (%) Kτ PRA (%) PAU (%) P@1 (%) AbLWR (Ours) 21.28 0.60 79.96 80.14 57.73
+> Sampling Strategy
+> w/ AbRankSampling 12.55 0.52 75.73 75.90 52.92
+> Component Ablation
+> w/o PU Init. 5.52 0.34 66.08 66.25 41.67 w/o Rank. ListMLE 3.29 0.56 59.17 59.30 31.55 w/o Rank. MHSA 13.90 0.25 77.65 77.83 55.70
+
+2025), resulting in a total of 15,504 lists. The ranking per-formance ( Kτ ) is summarized in Appendix Table 6 and the detailed visualizations of high-correlation lists (Kendall’s 
+
+τ > 0.4) are provided in Appendix Figure 7. 
+
+Figure 3. Visualization of ranking predictions on 18 sampled lists. The heatmap displays the ground truth ranks mapped to the model’s predicted positions. Each row represents a test list colored by their ground truth rank, and columns Pred1–Pred5 denote the predicted order. The adjacent bar chart shows the corresponding 
+
+Kτ calculated for each list row. 
+
+We further analyzed the influenza virus dataset from two complementary perspectives. First, we evaluated ranking consistency across 18 test lists derived from the homolo-gous antigen sampling strategy. As shown in Figure 3, the heatmap demonstrates strong alignment: high-affinity pairs (green) are consistently ranked at the top, while low-affinity ones (red) are relegated to the bottom. This observation is supported by the adjacent bar chart, where the majority of tuples exhibit high Kτ scores. Second, we examine FNI17 antibody, which exhibits potent binding to Influenza B (IVB) but significantly reduced affinity for mutated Influenza A (IVA) strains emerging after 2015 (Powell & Pekosz, 2020; Wan et al., 2019). As shown in Figure 4 (a) and (b), AbLWR effectively discriminates between these viral types. Despite subtle sequence variations, the model correctly predicts the affinity drop in mutated strains, confirming its sensitivity to structural changes driven by viral evolution. (a) (b)  
+
+> (c) (d)
+
+Figure 4. Case studies on FNI17 antibody mechanism and can-didates screening for IL-33 antigen. (a) Comparison of ground truth ranks and predicted ranks. Lines connect the same strain across the two rankings. (b) Dual-axis plot showing the ground truth values and predicted scores for the corresponding viral strains. (c) Hit rate curve for identifying the top-1 binder to the IL-33 antigen. (d) Recall curve showing the percentage of top-3 IL-33 binders retrieved against the number of candidates screened. 
+
+Using the human IL-33 dataset, we demonstrate AbLWR’s efficiency in accelerating wet-lab screening. While identify-ing the optimal binder typically requires exhaustive testing of all 20 candidates, AbLWR significantly streamlines this process. In comparison to the representative data driven baselines, which struggle to surpass random selection in early rounds (Figure 4 (c)), AbLWR secures a hit immedi-ately upon the initial selection. Furthermore, it efficiently captures all three best binders within 14 screening rounds (Figure 4 (d)). These results demonstrate that AbLWR sub-stantially reduces experimental burden while maintaining high discovery success. 
+
+## 5. Conclusions 
+
+We proposed AbLWR, a list-wise framework that redefines binding affinity prediction as a ranking task. By integrating PU learning to mitigate label sparsity and a context-aware architecture to model inter-sample dependencies, AbLWR effectively captures relative binding strengths. Empirical results confirm its superiority over existing SOTA methods and the potential in experimental laboratory settings, such as wet-lab screening. Despite these promising results, the current list sampling strategy is decoupled from the training pipeline and the list size K is a static hyperparameter. In fu-ture work, we aim to integrate the sampling process directly 8into the learning loop and develop adaptive mechanisms to dynamically determine K based on data complexity. 
+
+## Impact Statement 
+
+This paper presents work whose goal is to advance the ap-plication of Machine Learning in computational biology. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+## References 
+
+Abramson, J., Adler, J., Dunger, J., Evans, R., Green, T., Pritzel, A., Ronneberger, O., Willmore, L., Ballard, A. J., Bambrick, J., et al. Accurate structure prediction of biomolecular interactions with alphafold 3. Nature , 630 (8016):493–500, 2024. Akbar, R., Bashour, H., Rawat, P., Robert, P. A., Smorod-ina, E., Cotet, T.-S., Flem-Karlsen, K., Frank, R., Mehta, B. B., Vu, M. H., et al. Progress and challenges for the machine learning-based design of fit-for-purpose mon-oclonal antibodies. In MAbs , volume 14, pp. 2008790. Taylor & Francis, 2022. Bandara, N., Premathilaka, D., Chandanayake, S., Het-tiarachchi, S., Varenthirarajah, V., Munasinghe, A., Mad-hawa, K., and Charles, S. Deep geometric framework to predict antibody-antigen binding affinity. Journal of Structural Biology , pp. 108257, 2025. Bekker, J. and Davis, J. Learning from positive and unla-beled data: A survey. Machine Learning , 109(4):719–760, 2020. Burges, C. J. From ranknet to lambdarank to lambdamart: An overview. Learning , 11(23-581):81, 2010. Chaudhari, S. and Shevade, S. Learning from positive and unlabelled examples using maximum margin clustering. In International Conference on Neural Information Pro-cessing , pp. 465–473. Springer, 2012. Chaudhury, S., Lyskov, S., and Gray, J. J. Pyrosetta: a script-based interface for implementing molecular modeling algorithms using rosetta. Bioinformatics , 26(5):689–691, 2010. Cox, M., Peacock, T. P., Harvey, W. T., Hughes, J., Wright, D. W., Consortium, C.-. G. U. C.-U., Willett, B. J., Thom-son, E., Gupta, R. K., Peacock, S. J., et al. Sars-cov-2 variant evasion of monoclonal antibodies based on in vitro studies. Nature Reviews Microbiology , 21(2):112–124, 2023. Du Plessis, M., Niu, G., and Sugiyama, M. Convex formu-lation for learning from positive and unlabeled data. In 
+
+Proceedings of the International Conference on Machine Learning , pp. 1386–1394. PMLR, 2015. 9Dunbar, J., Krawczyk, K., Leem, J., Baker, T., Fuchs, A., Georges, G., Shi, J., and Deane, C. M. Sabdab: the structural antibody database. Nucleic Acids Research , 42 (D1):D1140–D1146, 2014. Elkan, C. and Noto, K. Learning classifiers from only positive and unlabeled data. In Proceedings of the 14th ACM SIGKDD international conference on Knowledge discovery and data mining , pp. 213–220, 2008. Engelhart, E., Emerson, R., Shing, L., Lennartz, C., Guion, D., Kelley, M., Lin, C., Lopez, R., Younger, D., and Walsh, M. E. A dataset comprised of binding interac-tions for 104,972 antibodies against a sars-cov-2 peptide. 
+
+Scientific Data , 9(1):653, 2022. Frey, N., H ¨otzel, I., Stanton, S., Kelly, R., Alberstein, R., Makowski, E., Martinkus, K., Berenberg, D., Bevers III, J., Bryson, T., et al. Lab-in-the-loop therapeutic antibody design with deep learning. biorxiv, 2025. Fu, Z., Ma, H., Wang, F., Dou, J., Zhang, B., and Fang, Z. An integrated framework of positive-unlabeled and imbal-anced learning for landslide susceptibility mapping. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing , 2024. Gao, K., Wu, L., Zhu, J., Peng, T., Xia, Y., He, L., Xie, S., Qin, T., Liu, H., He, K., et al. Pre-training antibody language models for antigen-specific computational anti-body design. In Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining ,pp. 506–517, 2023. Garcia-Beltran, W. F., Lam, E. C., Denis, K. S., Nitido, A. D., Garcia, Z. H., Hauser, B. M., Feldman, J., Pavlovic, M. N., Gregory, D. J., Poznansky, M. C., et al. Multi-ple sars-cov-2 variants escape neutralization by vaccine-induced humoral immunity. Cell , 184(9):2372–2383, 2021. Goldstein, L., Chen, Y., Wu, J., Chaudhuri, S., Hsiao, Y., Schneider, K., Hoi, K., Lin, Z., Guerrero, S., Jaiswal, B., et al. Massively parallel singlecell b-cell receptor sequencing enables rapid discovery of diverse antigen-reactive antibodies. commun biol. 2019; 2: 304, 2019. Greaney, A. J., Starr, T. N., and Bloom, J. D. An antibody-escape estimator for mutations to the sars-cov-2 receptor-binding domain. Virus Evolution , 8(1):veac021, 2022. Hie, B., Zhong, E. D., Berger, B., and Bryson, B. Learning the language of viral evolution and escape. Science , 371 (6526):284–288, 2021. Hu, W., Le, R., Liu, B., Ji, F., Ma, J., Zhao, D., and Yan, R. Predictive adversarial learning from positive and un-labeled data. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 35, pp. 7806–7814, 2021. Hu, Y., Huang, Z.-A., Liu, R., Xue, X., Sun, X., Song, L., and Tan, K. C. Source free semi-supervised trans-fer learning for diagnosis of mental disorders on fmri scans. IEEE Transactions on Pattern Analysis and Ma-chine Intelligence , 45(11):13778–13795, 2023. doi: 10.1109/TPAMI.2023.3298332. Huang, Y., Zhang, Z., and Zhou, Y. Abagintpre: A deep learning method for predicting antibody-antigen interac-tions based on sequence information. Frontiers in Im-munology , 13:1053617, 2022. Jankauskait ˙e, J., Jim ´enez-Garc ´ıa, B., Dapk ¯unas, J., Fern ´andez-Recio, J., and Moal, I. H. Skempi 2.0: an updated benchmark of changes in protein–protein bind-ing energy, kinetics and thermodynamics upon mutation. 
+
+Bioinformatics , 35(3):462–469, 2019. Jin, S., Sun, Y., Liang, X., Gu, X., Ning, J., Xu, Y., Chen, S., and Pan, L. Emerging new therapeutic antibody deriva-tives for cancer treatment. Signal Transduction and Tar-geted Therapy , 7(1):39, 2022. Kim, J., McFee, M., Fang, Q., Abdin, O., and Kim, P. M. Computational and artificial intelligence-based methods for antibody development. Trends in Pharmacological Sciences , 44(3):175–189, 2023. Kipf, T. Semi-supervised classification with graph con-volutional networks. arXiv preprint arXiv:1609.02907 ,2016. Kiryo, R., Niu, G., Du Plessis, M. C., and Sugiyama, M. Positive-unlabeled learning with non-negative risk estima-tor. In Proceedings of the Advances in Neural Information Processing Systems , volume 30, 2017. Lee, J., Lee, Y., Kim, J., Kosiorek, A., Choi, S., and Teh, Y. W. Set transformer: A framework for attention-based permutation-invariant neural networks. In Proceedings of the International Conference on Machine Learning , pp. 3744–3753. PMLR, 2019. Li, C., Li, X., Feng, L., and Ouyang, J. Who is your right mixup partner in positive and unlabeled learning. In 
+
+Proceedings of the International Conference on Learning Representations , 2022. Liberis, E., Veli ˇckovi ´c, P., Sormanni, P., Vendruscolo, M., and Li `o, P. Parapred: antibody paratope prediction using convolutional and recurrent neural networks. Bioinfor-matics , 34(17):2944–2950, 2018. Lin, Z., Akin, H., Rao, R., Hie, B., Zhu, Z., Lu, W., Smetanin, N., Verkuil, R., Kabeli, O., Shmueli, Y., et al. Evolutionary-scale prediction of atomic-level protein structure with a language model. Science , 379(6637): 1123–1130, 2023. 10 Liu, C., Pelissier, A., Shao, Y., Denzler, L., Martin, A. C., Paige, B., and Mart ´ınez, M. R. Abrank: A benchmark dataset and metric-learning framework for antibody-antigen affinity ranking. arXiv preprint arXiv:2506.17857 , 2025. Long, L., Wang, H., Jiang, Z., Feng, L., Yao, C., Chen, G., and Zhao, J. Positive-unlabeled learning by latent group-aware meta disambiguation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 23138–23147, 2024. Luo, C., Zhao, P., Chen, C., Qiao, B., Du, C., Zhang, H., Wu, W., Cai, S., He, B., Rajmohan, S., et al. Pulns: Positive-unlabeled learning with effective negative sam-ple selector. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 35, pp. 8784–8792, 2021. Mason, D. M., Friedensohn, S., Weber, C. R., Jordi, C., Wag-ner, B., Meng, S. M., Ehling, R. A., Bonati, L., Dahinden, J., Gainza, P., et al. Optimization of therapeutic antibodies by predicting antigen specificity from antibody sequence via deep learning. Nature Biomedical Engineering , 5(6): 600–612, 2021. Michalewicz, K., Barahona, M., and Bravi, B. Antipasti: Interpretable prediction of antibody binding affinity ex-ploiting normal modes and deep learning. Structure , 32 (12):2422–2434, 2024. Momont, C., Dang, H. V., Zatta, F., Hauser, K., Wang, C., di Iulio, J., Minola, A., Czudnochowski, N., De Marco, A., Branch, K., et al. A pan-influenza antibody inhibiting neuraminidase via receptor mimicry. Nature , 618(7965): 590–597, 2023. Nguyen, T., Le, H., Quinn, T. P., Nguyen, T., Le, T. D., and Venkatesh, S. Graphdta: predicting drug–target binding affinity with graph neural networks. Bioinformatics , 37 (8):1140–1147, 2021. Pittala, S. and Bailey-Kellogg, C. Learning context-aware structural representations to predict antigen and antibody binding interfaces. Bioinformatics , 36(13):3996–4003, 2020. Powell, H. and Pekosz, A. Neuraminidase antigenic drift of h3n2 clade 3c. 2a viruses alters virus replication, en-zymatic activity and inhibitory antibody binding. PLoS Pathogens , 16(6):e1008411, 2020. Rawat, P., Sharma, D., Prabakaran, R., Ridha, F., Mohkhed-kar, M., Janakiraman, V., and Gromiha, M. M. Ab-cov: a curated database for binding affinity and neutralization profiles of coronavirus-related antibodies. Bioinformatics ,38(16):4051–4052, 2022. Ren, M., Zeng, W., Yang, B., and Urtasun, R. Learning to reweight examples for robust deep learning. In Pro-ceedings of the International Conference on Machine Learning , pp. 4334–4343. PMLR, 2018. Rives, A., Meier, J., Sercu, T., Goyal, S., Lin, Z., Liu, J., Guo, D., Ott, M., Zitnick, C. L., Ma, J., et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences. Proceedings of the National Academy of Sciences , 118(15):e2016239118, 2021. Ruffolo, J. A., Gray, J. J., and Sulam, J. Decipher-ing antibody affinity maturation with language mod-els and weakly supervised learning. arXiv preprint arXiv:2112.07782 , 2021. Ruffolo, J. A., Chu, L.-S., Mahajan, S. P., and Gray, J. J. Fast, accurate antibody structure prediction from deep learning on massive set of natural antibodies. Nature Communications , 14(1):2389, 2023. Schymkowitz, J., Borg, J., Stricher, F., Nys, R., Rousseau, F., and Serrano, L. The foldx web server: an online force field. Nucleic Acids Research , 33(suppl 2):W382–W388, 2005. Shanehsazzadeh, A., Bachas, S., McPartlon, M., Kasun, G., Sutton, J. M., Steiger, A. K., Shuai, R., Kohnert, C., Rakocevic, G., Gutierrez, J. M., et al. Unlocking de novo antibody design with generative artificial intelligence. 
+
+BioRxiv , pp. 2023–01, 2023. Sun, J., Sun, D., Yang, Q., Wang, D., Peng, J., Guo, H., Ding, X., Chen, Z., Yuan, B., Ivanenkov, Y. A., et al. A novel, covalent broad-spectrum inhibitor targeting human coronavirus mpro. Nature Communications , 16(1):1–20, 2025. Ullanat, V., Jing, B., Sledzieski, S., and Berger, B. Learn-ing the language of protein-protein interactions. Nature Communications , 2026. Wan, H., Gao, J., Yang, H., Yang, S., Harvey, R., Chen, Y.-Q., Zheng, N.-Y., Chang, J., Carney, P. J., Li, X., et al. The neuraminidase of a (h3n2) influenza viruses circulat-ing since 2016 is antigenically distinct from the a/hong kong/4801/2014 vaccine strain. Nature Microbiology , 4 (12):2216–2225, 2019. Wang, L., Du, C., Zhao, P., Luo, C., Zhu, Z., Qiao, B., Zhang, W., Lin, Q., Rajmohan, S., Zhang, D., et al. Con-trastive learning with negative sampling correction. arXiv preprint arXiv:2401.08690 , 2024. Wang, M., Cang, Z., and Wei, G.-W. A topology-based network tree for the prediction of protein–protein binding affinity changes following mutation. Nature Machine Intelligence , 2(2):116–123, 2020. 11 Wang, R., Wu, F., Shi, J., Song, Y., Kong, Y., Ma, J., He, B., Yan, Q., Ying, T., Zhao, P., et al. A generative foundation model for antibody design. BioRxiv , pp. 2025–09, 2025. Wang, X., Chen, H., Guo, T., and Wang, Y. Pue: Biased positive-unlabeled learning enhancement by causal infer-ence. In Proceedings of the Advances in Neural Informa-tion Processing Systems , volume 36, pp. 19783–19798, 2023. Wang, Z., Wang, G., Lu, H., Li, H., Tang, M., and Tong, A. Development of therapeutic antibodies for the treatment of diseases. Molecular Biomedicine , 3(1):35, 2022. Wohlwend, J., Corso, G., Passaro, S., Getz, N., Reveiz, M., Leidal, K., Swiderski, W., Atkinson, L., Portnoi, T., Chinn, I., et al. Boltz-1 democratizing biomolecular interaction modeling. BioRxiv , pp. 2024–11, 2025. Xia, F., Liu, T.-Y., Wang, J., Zhang, W., and Li, H. List-wise approach to learning to rank: theory and algorithm. In Proceedings of the 25th International Conference on Machine Learning , pp. 1192–1199, 2008. Xinrui, W., Wan, W., Geng, C., Li, S.-Y., and Chen, S. Beyond myopia: Learning from positive and unlabeled data through holistic predictive trends. In Proceedings of the Advances in Neural Information Processing Systems ,volume 36, pp. 67589–67602, 2023. Yan, Y., Tao, H., He, J., and Huang, S.-Y. The hdock server for integrated protein–protein docking. Nature Protocols ,15(5):1829–1852, 2020. Yang, K., Halima, A., and Chan, T. A. Antigen presentation in cancer—mechanisms and clinical implications for im-munotherapy. Nature Reviews Clinical Oncology , 20(9): 604–623, 2023. Yoon, H., Macke, J., West Jr, A. P., Foley, B., Bjorkman, P. J., Korber, B., and Yusim, K. Catnap: a tool to compile, analyze and tally neutralizing antibody panels. Nucleic Acids Research , 43(W1):W213–W219, 2015. Zhang, J., Xiao, T., Cai, Y., Lavine, C. L., Peng, H., Zhu, H., Anand, K., Tong, P., Gautam, A., Mayer, M. L., et al. Membrane fusion and immune evasion by the spike pro-tein of sars-cov-2 delta variant. Science , 374(6573):1353– 1360, 2021. Zhao, H., Wang, X., Li, J., and Zhong, Y. Class prior-free positive-unlabeled learning with taylor variational loss for hyperspectral remote sensing imagery. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pp. 16827–16836, 2023. 12 A. Details for Data Collection and Analysis 
+
+A.1. Data Collection 
+
+The distribution of Ab-Ag pairs across different data sources is available from Liu et al. (Liu et al., 2025). Brief descriptions are provided below: • RBD-escape (Greaney et al., 2022): Derived from Deep Mutational Scanning (DMS) experiments, this dataset quantifies how mutations in the SARS-CoV-2 Receptor Binding Domain (RBD) affect antibody binding. • CATNAP (Yoon et al., 2015): A database focused on HIV-1, compiling neutralizing antibody data against HIV-1 Envelope pseudoviruses. • AlphaSeq (Engelhart et al., 2022): Contains quantitative interaction measurements between designed antibody libraries and specific antigens, generated using the high-throughput AlphaSeq platform. • AbCoV (Rawat et al., 2022): A curated repository specifically for coronaviruses, aggregating binding data for antibodies and nanobodies against SARS-CoV-2, SARS-CoV-1, and MERS-CoV. • SKEMPI 2.0 (Jankauskait ˙e et al., 2019): A database of thermodynamic binding data ( ∆∆ G and Kd) derived from literature for protein complexes with known 3D structures. • AbSci (Shanehsazzadeh et al., 2023): Originates from wet-lab screening campaigns for de novo antibody design, providing binding scores for antibody variants against targets like HER2. • SAbDab (Dunbar et al., 2014): The Structural Antibody Database. We utilized the subset of Ab-Ag complexes that have experimentally measured binding affinities annotated in the database. • OVA-binders (Goldstein et al., 2019): Derived from a massively parallel screening study identifying antibody variants that bind to the model antigen Chicken Ovalbumin (OVA). From the initial collection of 342,356 Ab-Ag pairs, we excluded 1,059 entries that lacked binding affinity labels. Furthermore, to address inconsistent annotations, we identified duplicate pairs sharing identical sequences but differing in affinity values. Those with a log Kd discrepancy exceeding 1.0 were discarded. This filtering process resulted in 340,296 retained pairs, involving 4,750 antigens and 76,017 antibodies as shown in Figure 1 (c). Specific statistics information of the selected samples is presented in Figure 5, demonstrating the significant heterogeneity in binding affinity among different antibodies targeting the same antigen. Subsequently, following the protocol established by Liu et al. (Liu et al., 2025), we subsampled the dataset to mitigate bias from dominant antigen groups and verified the validity of all sequences. The final dataset comprises 62,620 Ab-Ag pairs. 
+
+A.2. Data Split 
+
+To comprehensively assess the model’s performance across different scenarios, we designed three distinct data splitting strategies, covering random partitioning and biological sequence segmentation. 
+
+Random Split. Five-fold cross-validation was employed to assess the model’s generalization on randomly split samples, where sequence similarity between training and test sets is not explicitly controlled. 
+
+Ag-based Split. To evaluate the model’s capability of generalizing to novel antigen targets (OOD, Out-of-Distribution generalization), we performed clustering on all antigen sequences (Figure 6 (a)). In real-world antibody engineering, models are often required to predict binding affinities for antigens that differ significantly from the training distribution, such as emerging viral variants or novel protein families (Cox et al., 2023). To rigorously simulate this distribution shift, we identified the most divergent cluster (Cluster 0), which exhibits the largest spectral distance from the remaining dataset. We allocated 70 % of samples from this cluster to the test set, merging the remaining 30 % with other clusters for training. This partition constructs a few-shot OOD scenario, where the model has limited exposure to the target domain. 
+
+Ab-based Split. To assess the model’s ability to prioritize high-affinity pairs among antibodies with distinct paratopes, we clustered antibody sequences based on their CDRs (Figure 6 (b)) and selected the two most divergent clusters (Cluster 5 and Cluster 1). Similar to the antigen split, 70 % of these distinct antibodies were reserved for testing. This split evaluates 13 (b) (a) Figure 5. Binding affinity statistics. (a) Affinity variance per antigen. (b) Affinity distribution for the top 10 most represented antigen groups. 
+
+whether the model can effectively screen for binders that possess low sequence identity to the majority of the training data, a critical requirement for discovering diverse therapeutic candidates. To facilitate comparison with baseline methods that require explicit binding state prediction, which are computationally intensive, we employed a subsampling strategy. Specifically, we constructed a subset by randomly sampling 50 lists from the original test set in each data split scenario. 
+
+A.3. Data Sampling 
+
+We tailor the sampling composition and hyperparameters to the specific objectives of each data split: • Random and Ag-based Splits: In these scenarios, the model is required to generalize to diverse antigen structures. Relying solely on homologous sampling could cause the model to degenerate into a set of disjoint local rankers. Therefore, we construct the training data using a balanced 1:1 mixture of homologous lists and heterogeneous lists. These heterogeneous lists, formed by pairs with distinct antigen sequences, force the model to look beyond specific antigen scaffolds and learn universal physicochemical interaction patterns that apply across different biological families. Here, we set the affinity margin threshold ycutoff = 0 .5.• Ab-based Split: For this split, we exclusively employ homologous antigen sampling and increase the threshold to 
+
+ycutoff = 1 .0. This design aligns with the antibody lead selection scenario, where the goal is to identify the most potent binders from a diverse pool of candidates targeting the specific antigen (as seen in Figure 1 (c)). In the complex antibody space, small affinity differences often arise from noisy or non-generalizable sequence variations. By enforcing a larger margin between all pairs, we provide the model with high-confidence ranking signals, ensuring it learns robust relationships that can transfer to unseen antibody clusters. 
+
+## B. Details for Ab-Ag GNN Encoders 
+
+B.1. Graph Construction and Feature Initialization 
+
+We independently model the antibody and antigen as graphs G = ( N , E), where nodes N represent amino acid residues. The edge set E is constructed based on spatial proximity derived from the 3D coordinates X. Specifically, an edge (u, v ) is established between residue u and residue v if the minimum Euclidean distance between any of their non-hydrogen atoms is less than a threshold of 4.5 ˚A(Pittala & Bailey-Kellogg, 2020). This is formally defined as: 
+
+(u, v ) ∈ E ⇐⇒ min 
+
+> c∈xu,c′∈xv
+
+∥c − c′∥2 < 4.5, (7) 14 (b) (a) Figure 6. Visualization of sequence clustering. (a) Antigen sequence clustering. Cluster 0 is identified as a divergent group distinct from the main distribution and is used to define the Ag-based split. (b) Antibody sequence clustering based on CDRs. Cluster 1 and Cluster 5 
+
+> exhibit significant deviation from the main trend and are selected for the Ab-based split. In both scenarios, these distinct clusters serve as the primary source for the test sets to evaluate model generalization capabilities.
+
+where xu and xv denote the sets of atomic coordinates for residues u and v, respectively. To capture rich semantic information, we initialize node features H(0) by encoding the primary sequences S using pre-trained PLMs. For the antibody, we utilize IgFold (Ruffolo et al., 2023) to encode the CDR sequences: 
+
+H(0)  
+
+> Ab
+
+= IgFold (SAb ) ∈ RLAb ×512 . (8) For the antigen, we employ ESM-2 (Lin et al., 2023) to encode the antigen sequence: 
+
+H(0)  
+
+> Ag
+
+= ESM-2 (SAg ) ∈ RLAg ×1280 . (9) 
+
+B.2. GNN Encoders 
+
+The graph encoders are implemented using the PyTorch Geometric library. As detailed in Equation (7), the adjacency matrix A is constructed based on a spatial distance threshold of 4.5 ˚A between residue centroids. We employ GCNConv 
+
+layers with symmetric normalization. Let ˜A denote the normalized adjacency matrix. The layer-wise propagation is defined as H(l+1) = σ( ˜AH (l)W(l)), where W(l) is the learnable weight matrix and σ(·) is the ReLU activation function. The architecture comprises two parallel branches, the antibody encoder and the antigen encoder, both utilizing a two-layer GCN to project high-dimensional features into a shared 64-dimensional latent space. 
+
+B.3. Graph Augmentation 
+
+To construct diverse views required for the PU learning framework, we employ weak and strong augmentations to introduce stochastic perturbations to both structure features and node features. 
+
+Weak Augmentation. The weak augmentation strategy focuses solely on minor structural perturbations to preserve the semantic integrity of the protein graph while introducing necessary variance. We apply random edge dropout, where edges are removed from the adjacency matrix with a low probability of 0.1. 
+
+Strong Augmentation. The strong augmentation strategy applies more aggressive perturbations to both structure and node features to prevent the model from overfitting to specific local patterns. Structural Perturbation: We apply random edge dropout with a higher probability of 0.3. Node Feature Masking: We randomly mask node features to force the model to rely on contextual information with the probability of 0.3. 15 Algorithm 1 Bi-Level Meta-Optimization 
+
+1: Input: Data Batch B = BL ∪ B U , Validation Data Dval  
+
+> L
+
+, Model Parameters θ, Targets ˜Y(t) 
+
+> cls
+
+, Hyperparams α, β .
+
+2: Virtual Update: Compute θ′ with current soft targets: 
+
+3: θ′ ← θ − α∇θ LCE (fcls (eθ′ ), ˜Y(t) 
+
+> cls
+
++ ∆)
+
+4: Meta-Optimization: Find ∆∗ minimizing validation loss: 
+
+5: ∆∗ ← arg min ∆ LCE (fcls (eθ′ ), ˜Yval cls )
+
+6: Update: Enforce ∆∗ 
+
+> i
+
+= 0 for i ∈ B L and update targets: 
+
+7: ˜Ymeta cls ← OneHot(arg max( ˜Y(t) 
+
+> cls
+
++ ∆∗)) 
+
+8: ˜Y(t+1)  
+
+> cls
+
+← β ˜Y(t) 
+
+> cls
+
++ (1 − β) ˜Ymeta cls 
+
+9: Output: ˜Y(t+1) 
+
+> cls
+
+## C. Details for PU Pre-training 
+
+C.1. Positive set Pi Construction 
+
+To construct a robust positive set Pi that mitigates the noise from individual views, we integrate strategies of consensus verification and geometric preservation. 
+
+Consensus Verification. This strategy relies on two complementary candidate sets derived from cluster alignment ( Scluster )and prediction consistency ( Spred ). First, we apply K-means clustering on the representations to assign a prototype ρi to each sample i and the cluster-based set is defined as S(i) 
+
+> cluster
+
+= {j | ρj = ρi, j ̸ = i}. Second, to ensure task alignment, the prediction consistency set groups samples with identical predicted affinity classes: S(i) 
+
+> pred
+
+= {j | arg max fcls (e′ 
+
+> j
+
+) = arg max fcls (e′
+
+> i
+
+), j ̸ = i}. Ultimately, only samples present in both sets are incorporated to ensure mutual verification. 
+
+Geometric Preservation To preserve local geometric structure, we select the k-nearest neighbors based on cosine similarity: 
+
+S(i) 
+
+> KNN
+
+= Top-k({j | j̸ = i}, e′ 
+
+> i
+
+· e′ 
+
+> j
+
+).Finally, the robust positive set is derived by taking the union of the verified consensus and the geometric preservation: 
+
+Pi = ( Scluster ∩ S pred ) ∪ S KNN .
+
+C.2. Bi-Level Meta-Optimization 
+
+The core objective of the meta-optimization is to learn an optimal label perturbation ∆ for the unlabeled data by leveraging a small, clean validation set Dval  
+
+> L
+
+. To strictly preserve experimental ground truth, we enforce ∆i = 0 for all i ∈ B L. Let 
+
+θ = {ϕAb , ϕ Ag , f cls } denote the joint parameters of the graph encoders and the classifier. First, we perform a virtual gradient step on the entire classification branch using the soft targets: 
+
+θ′(∆) = θ − α∇θ LCE (fcls (e′ 
+
+> θ
+
+), ˜Ycls + ∆), (10) where α is the meta-learning rate. Subsequently, we evaluate the virtually updated model θ′ on a clean validation batch Dval 
+
+> L
+
+(with the labels of ˜Yval cls ) to seek the optimal perturbation ∆∗ that minimizes the validation loss: 
+
+∆∗ = arg min  
+
+> ∆
+
+LCE (fcls (eθ′ ), ˜Yval cls ). (11) Here, eθ′ indicates the validation representations, computed using the updated encoder parameters within θ′. Guided by this optimization, we derive refined discrete pseudo-labels ˜Ymeta cls = OneHot(arg max( ˜Ycls + ∆∗)) . Finally, to stabilize training, we update the targets for the subsequent epoch using an Exponential Moving Average (EMA) with the momentum coefficient of β (Hu et al., 2023): 
+
+˜Y(t+1)  
+
+> cls
+
+= β ˜Y(t) 
+
+> cls
+
++ (1 − β) ˜Ymeta cls . (12) The complete bi-level meta-optimization procedure is summarized in Algorithm 1 and the pre-training phase is detailed in Algorithm 2. The selection for hyperparameters are summarized in Table 4. 16 Algorithm 2 PU Pre-training 
+
+1: Input: Total Dataset D = DL + DU , Validation Labeled Dataset Dval  
+
+> L
+
+, Encoders ϕAb , ϕ Ag , Classifier fcls , Warm-up epochs Twarm , Momentum β
+
+2: Initialize parameters θϕ, θ cls , pseudo-labels ˜Ycls , and cluster-aware loss LCluster ← 0
+
+3: for epoch t = 1 to MaxEpochs do 
+
+4: Sample mini-batch B = BL ∪ B U
+
+5: Generate multi-view representations e, e′, e′′ 
+
+6: LIns ← Instance Contrastive Loss (Eq. 2) 
+
+7: if t > T warm then 
+
+8: // Bi-Level Meta-Optimization 
+
+9: Refine ˜Ycls using Algorithm 1 
+
+10: // Cluster-aware Optimization 
+
+11: Identify positive set P via prototype alignment 
+
+12: LCluster ← Cluster-aware Loss (Eq. 3) 
+
+13: end if 
+
+14: LCE ← Cross-Entropy with targets ˜Ycls 
+
+15: Update θϕ, θ cls ← Optimizer (∇(LCE + LIns + LCluster )) 
+
+16: end for 
+
+17: Output: Pre-trained encoders ϕAb , ϕ Ag 
+
+Algorithm 3 MHSA Ranking 
+
+1: Input: Tuple set T (constructed via Homologous Sampling) 
+
+2: Input: Pre-trained Encoders ϕAb , ϕ Ag , Set Transformer frank 
+
+3: Hyperparameters: Learning rate η, Batch size B
+
+4: Initialize ranking module parameters θrank 
+
+5: for epoch t = 1 to MaxEpochs do 
+
+6: for each mini-batch of tuples {T } B do 
+
+7: // Forward pass 
+
+8: Extract embeddings ET for tuples via ϕAb , ϕ Ag 
+
+9: Predict ranking scores r = frank (ET )
+
+10: // Optimization 
+
+11: Compute LListMLE (Eq. 6) 
+
+12: Update θϕ, θ rank ← Optimizer (∇L ListMLE )
+
+13: end for 
+
+14: end for 
+
+## D. Details for Ranking Module 
+
+The Ranking Module first projects the input matrix ET ∈ RK×2dout to a hidden dimension dr , yielding the initial features 
+
+Z(0) ∈ RK×dr . Then, Nr layers of ISAB are applied with M learnable inducing points I ∈ RM ×dr for robust context modeling. The update rule for the l-th layer is defined as: 
+
+Hind = MHA( I, Z(l−1) , Z(l−1) ) + I,
+
+Z(l) = rFF(MHA( Z(l−1) , Hind , Hind ) + Z(l−1) ), (13) where MHA( ·) denotes Multi-Head Attention and rFF( ·) is a row-wise feed-forward network. The inducing points I serve as a global workspace that aggregates information from the input set Z(l−1) into Hind , and then distributes the refined context back to update the features (Lee et al., 2019). Detailed implementations of the ranking module and hyperparameter configurations are provided in Algorithm 3 and Table 4, respectively. 17 Table 4. Hyperparameter settings for AbLWR. The model is trained in two stages: PU Pre-training (left) and MHSA Ranking (right).                                         
+
+> PU Pre-training MHSA Ranking Parameter Value Parameter Value
+> Optimizer SGD Optimizer Adam Max Epochs 400 Max Epochs 50 Warm-up Epochs 20 Batch Size 16 Batch Size 64 Learning Rate 0.001 Learning Rate 0.001 Weight Decay 0.3 Meta LR 0.001 Inducing Points ( M)5Weight Decay 1×10 −4Attention Heads 4Momentum 0.9 Dropout Rate 0.2 Temperature ( τ)0.07 --
+> ρRange [0 .8,0.95] --
+
+## E. Training Details 
+
+E.1. Baseline Models 
+
+We benchmark AbLWR against seven representative baseline methods. Specifically, AbRank adopts a pairwise approach, explicitly learning to contrast the affinity of two Ab-Ag pairs. Conversely, GraphDTA, MINT, AntiBERTy, FoldX, ANTIPASTI, and LambdaMART functions are pointwise regression models, aiming to predict or simulate the absolute binding affinity values for independent Ab-Ag pair. • AbRank (Liu et al., 2025): A metric-learning framework for Ab-Ag affinity ranking. To adapt it for our specific evaluation, we retrained the model on the datasets provided by the authors, strictly removing any test set leakage (balanced-train-swapped.csv for Random Split, hard-ag-train-swapped.csv for Ag-based Split, and hard-ab-train-swapped.csv for Ab-based Split). We utilized the official implementation from GitHub 1 with the standard configuration file train-abrank.yaml for all experiments. • GraphDTA (Nguyen et al., 2021): A GNN-based model originally designed to represent molecular interactions as graphs for binding affinity prediction. In our experiments, we adjusted the maximum epochs to 50 and the batch size to 64 due to computational constraints, while keeping all other hyperparameters consistent with the original paper. We adopted the architecture directly from its official repository 2.• MINT (Ullanat et al., 2026): A PLM-based method designed to model protein interactions in a contextualized manner. We employed MINT as a feature extractor to obtain embeddings for Ab-Ag pairs, followed by a simple MLP to predict binding affinity. We used the pre-trained checkpoint bernett mlp.pth available on Hugging Face 3 with the configuration file esm2 t33 650M UR50D.json . The code was adapted from the official repository 4.• AntiBERTy (Ruffolo et al., 2021): An antibody-specific transformer pre-trained on 558M natural antibody sequences. Similar to our MINT setup, we utilized the AntiBERTyRunner library to extract embeddings for Ab-Ag pairs, which were then fed into an MLP for binding affinity prediction optimized by MSE loss. We set the hyperparameters (Max Epochs=50, Learning Rate= 1 × 10 −3) to match our proposed method where applicable. The implementation was based on the official repository 5.• LambdaMART (Burges, 2010): A classic Learning-to-Rank algorithm based on gradient boosted decision trees. We implemented the model using the LightGBM library with the lambdarank objective to directly optimize Mean Reciprocal Rank (MRR) and used AntiBERTy embeddings as input features. The model was trained for 100 boosting rounds with a learning rate of 1 × 10 −3, a maximum depth of 4, and L1/L2 regularization of 0.1. 
+
+> 1https://github.com/biochunan/AbRank-WALLE-Affinity
+> 2https://github.com/thinng/GraphDTA
+> 3https://huggingface.co/varunullanat2012/mint
+> 4https://github.com/VarunUllanat/mint
+> 5https://github.com/jeffreyruffolo/AntiBERTy
+
+18 • FoldX (Schymkowitz et al., 2005): A physics-based method that estimates protein stability ( ∆∆ G) based on 3D structural information. Since our dataset lacks experimental complex structures, we utilized HDOCK (Yan et al., 2020), a protein-protein docking web server, to generate the binding conformations for each Ab-Ag pair before computing 
+
+∆∆ G.• ANTIPASTI (Michalewicz et al., 2024): A CNN-based model that utilizes normal mode correlation maps derived from elastic network models to predict affinity. Similar to the FoldX setup, we prepared the binding modes using HDOCK prior to prediction. Our implementation followed the tutorial [Tutorial] Predicting affinity using ANTIPASTI.ipynb 
+
+provided in the official GitHub repository 6.
+
+E.2. Evaluation Metrics 
+
+In our experiments, we evaluate the performance on a test set consisting of N query lists. For the i-th list T (i), let 
+
+y(i) = [ y(i)1 , . . . , y (i) 
+
+> K
+
+]⊤ denote the ground-truth binding affinities, and r(i) = [ r(i)1 , . . . , r (i) 
+
+> K
+
+]⊤ denote the predicted ranking scores, where K = 5 . The metrics are calculated for each list and then averaged across the entire test set. The detailed definitions of the five metrics are as follows: • FRA: Measuring the percentage of lists where the predicted ranking order perfectly matches the ground-truth order. FRA = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+I
+
+
+
+rank (r(i)) = rank (y(i))
+
+
+
+where I(·) is the indicator function, and rank (v) returns the permutation indices that sort the vector v.• Kτ : Evaluating the ordinal association between the predicted score vector r and the ground-truth vector y.
+
+τ = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+CP (i) − DP (i)12 K(K − 1) 
+
+where CP and DP denote the number of concordant pairs and discordant pairs within the list, respectively. A value of 1 implies a perfect match, while -1 implies a perfectly reversed order. • PRA: Quantifiying the fraction of correctly ordered pairs within a list to measure the model’s ability to satisfy pairwise constraints. PRA = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+"
+
+1
+
+ K
+
+> 2
+
+
+
+> K−1
+
+X
+
+> u=1
+> K
+
+X
+
+> v=u+1
+
+I
+
+
+
+(r(i) 
+
+> u
+
+− r(i) 
+
+> v
+
+)( y(i) 
+
+> u
+
+− y(i) 
+
+> v
+
+) > 0
+
+#
+
+where  K
+
+> 2
+
+ denote the number of possible unique pairs within a list of size K. • PAU: Quantifying the fraction of correctly ordered pairs within each list to measure the model’s ability to satisfy pairwise constraints by reformulating the ranking problem as a binary classification task, and computing the Area Under the ROC Curve (AUC) over predicted score and ground-truth preferences. • P@1: Measuring the proportion of lists where the highest-affinity candidate is correctly identified as the top-1 prediction, reflecting the model’s practical utility in antibody discovery. P@1 = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+I
+
+
+
+arg min( r(i)) = arg min( y(i))
+
+
+
+## F. Details for Case Studies 
+
+F.1. Influenza Viruses 
+
+To validate the practical utility of AbLWR in distinguishing antibody efficacy across evolving viral strains, we selected three monoclonal antibodies (mAbs)—FNI9, FNI19, and FNI17—which have demonstrated broad-spectrum binding against a 
+
+> 6https://github.com/kevinmicha/ANTIPASTI
+
+19 Table 5. In vitro neutralization IC 50 values ( μg/mL) and corresponding PDB codes. Data are adapted from Momont et al. (Momont et al., 2023). Lower IC 50 values indicate higher potency. Entries marked as ‘ > 50 ’ highlight the loss of neutralization efficacy (immune escape). ‘–’ denotes that the crystal structure is unavailable.                                                                          
+
+> In vitro neutralization IC 50 (μg/mL) FNI9 FNI17 FNI19 Strain Abbr. Group IC 50 PDB IC 50 PDB IC 50 PDB A/Darwin/6/2021 A/DW/2021 H3N2 1.128 –>50 –2.790 –A/HongKong/2671/2019 A/HK/2019 H3N2 0.073 8G3P 5.068 –0.190 8G40 A/Singapore/INFIMH-16-0019/2016 A/SA/2016 H3N2 0.162 –>50 –0.916 –B/Massachusetts/2/2012 B/MA/2012 Yamagata 0.204 –0.125 –0.472 8G3Z B/Phuket/3073/2013 B/PK/2013 Yamagata 0.193 –0.117 –0.222 –
+> Table 6. Quantitative evaluation of ranking fidelity for AbLWR on influenza virus and human IL-33 datasets. The values represent the percentage of test cases where the Kτ exceeds the specified thresholds ( 0.2,0.4,0.6).
+> Metric Influenza Virus Human IL-33
+> Kendall’s τ > 0.267.83% 45.32% Kendall’s τ > 0.443.32% 27.43% Kendall’s τ > 0.618.02% 13.26%
+
+diverse panel of neuraminidases (NAs) from seasonal and zoonotic influenza A (IAV) and B (IBV) viruses (Momont et al., 2023). Among these, FNI17 presents a particularly instructive challenge: while it effectively neutralizes historical H3N2 strains, its potency is markedly reduced against variants emerging after 2015 due to antigenic drift. In our analysis, we constructed a specific evaluation set comprising 15 Ab-Ag pairs (involving three antibodies and five antigens, as detailed in Table 5). By exhaustively combining these pairs, we included 3,003 unique lists to rigorously test the ranking capabilities of our model. Detailed quantitative results on ranking fidelity are provided in Table 6 and Figure 7, which summarizes the success rates of AbLWR across different Kendall’s τ cutoffs. Then, we adopted the same sampling methodology employed for the Ab-based Split (as detailed in Section A.3 with 
+
+ycutoff = 0 .1) to construct the evaluation lists presented in Figure 3 (AbLWR) and Figure 8 (representative data driven baselines). As shown in Figure 8, among these baselines, only AbRank demonstrates a meaningful positive correlation with an average Kendall’s τ of 0.42. Conversely, the other three models—AntiBERTy, GraphDTA, and ANTIPASTI—struggle to distinguish candidates within this narrow affinity range. In comparison, our proposed AbLWR outperforms all baselines, achieving the highest average Kendall’s τ of 0.47. Visually, the heatmap for AbLWR demonstrates a more distinct boundary between high- and low-affinity candidates compared to AbRank. We further compared the ranking performance on the FNI17 antibody mechanism, as visualized in Figure 9. Consistent with the results on the sampled lists, AntiBERTy, GraphDTA, and ANTIPASTI failed to capture the correct ranking relationship (lines crossing significantly in Figure 9 (a), (c), (d)). While AbRank (Figure 9 (b)) captures the general ranking trend, this global alignment masks a critical deficiency in practical screening scenarios. As shown in Figure 4 (a), AbLWR successfully identified and correctly ordered the top-2 high-affinity strains, placing the ground truth Rank 1 (B/PK/2013) and Rank 2 (B/MA/2012) candidates in their exact predicted positions. In contrast, AbRank failed to distinguish the precise order of these top-tier binders. This demonstrates that our method possesses superior sensitivity in the high-affinity region, which is the most decisive factor for prioritizing lead candidates in antibody discovery. 
+
+F.2. Human IL-33 
+
+To further evaluate the generalization capability of AbLWR, particularly on antibody architectures distinct from the training distribution, we conducted an additional case study on human Interleukin-33 (IL-33). We utilized the dataset from Wang et al.(Wang et al., 2025), which describes the optimization of antibody I7 against human IL-33. Crucially, I7 is a single-chain antibody, representing a significant structural deviation from the paired-chain antibodies typically found in standard training datasets. The dataset consists of 20 antibody variants (the wild type and 19 generated variants) with experimentally measured binding affinities (see Table 7). To derive a global ranking for the 20 candidates, we aggregated local predictions from our list-wise model and averaged across all occurrences. The final ranking was determined by sorting these mean scores. 20 (a) Influenza Viruses 
+
+(b) Human Interleukin -33 Figure 7. Detailed visualization of ranking performance on (a) influenza viruses and (b) human IL-33. The comparison includes (left) Confusion Matrices between predicted and ground truth ranks, (middle) Distribution of Ground Truth Ranks for candidates predicted as Top-1, and (right) Boxplots showing the true affinity value distribution across predicted rank positions. 
+
+Table 7. Experimental EC 50 values (nM) of the I7 single-chain antibody and its variants against Human IL-33 (Wang et al., 2025). 
+
+The dataset comprises the wild-type (I7-WT) and 19 generated variants, where lower values indicate stronger binding affinity. 
+
+Cand. EC 50 Cand. EC 50 Cand. EC 50 Cand. EC 50 
+
+I7-WT 11.41 I7-M5 1898 I7-M10 1.712 I7-M15 705.3 I7-M1 2.561 I7-M6 462.2 I7-M11 4.16 I7-M16 1.402 I7-M2 37.15 I7-M7 2.898 I7-M12 16.2 I7-M17 1.326 I7-M3 148.1 I7-M8 5961 I7-M13 9.857 I7-M19 2.134 I7-M4 12.79 I7-M9 9.845 I7-M14 67.34 I7-M20 9.352 
+
+21 (b) AbRank 
+
+(c) GraphDTA 
+
+(a) AntiBERTy 
+
+(d) ANTIPASTI Figure 8. Visualization of ranking predictions on 18 sampled lists by four representative data driven baseline models. (a) AntiBERTy (sequence-based); (b) AbRank (structure-based pairwise ranking); (c) GraphDTA (structure-based); and (d) ANTIPASTI (complex-based). 
+
+22 (b) AbRank 
+
+(c) GraphDTA 
+
+(a) AntiBERTy 
+
+(d) ANTIPASTI Figure 9. Analysis of FNI17 antibody predictions by four baselines. Models: (a) AntiBERTy (sequence-based); (b) AbRank (structure-based pairwise ranking); (c) GraphDTA (structure-based); (d) ANTIPASTI (complex-based). 
+
+23

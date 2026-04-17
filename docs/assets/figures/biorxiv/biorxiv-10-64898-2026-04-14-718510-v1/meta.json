@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718510-v1/fig-001.webp",
+      "caption": "TABLE II RESULTS AFTER B = 5,000 QUERIED LABELS. COMPARED AGAINST RANDOM BASELINE. ↑: HIGHER IS BETTER; ↓: LOWER IS BETTER.",
+      "page": 3,
+      "index": 1,
+      "width": 504,
+      "height": 292
+    }
+  ]
+}

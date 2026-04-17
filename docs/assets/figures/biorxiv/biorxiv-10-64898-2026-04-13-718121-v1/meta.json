@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-13-718121-v1/fig-001.webp",
+      "caption": "Figure 1. Design and purification of SMART-MR1. A. Crystal structure of human MR1/β2m (PDB 6PUC) superimposed onto the crystal structure of human HLA-A*02:01/β2m (PDB 9SKO). Insets illustrate key interactions that stabilize the β2m interface with the α1/α2 domains of HLA-A*02:01/MR1. Polar and hydrophobic contacts are indicated by yellow and black dashes, respectively. B. AlphaFold model of SMART-MR1 using the α1/α2 domain of MR1 and the stabilizing domain of SMART MHC. The inset displays contacts between the stabilizing domain and the α1/α2 domain of MR1. The rigid linker connecting the two domains is colored black. C. Size exclusion chromatography (SEC) trace of SMART-MR1 refolded in the presence of 6-FP. D. Melting temperatures (Tm, °C) obtained from DSF of SMART-MR1 and hpMR1/bβ2m refolded in the presence of 6-FP. Data are mean ± s.d. for n = 3 technical replicates. Unpaired t-test was performed to obtain a P value of 0.6713, P > 0.05 (ns).",
+      "page": 17,
+      "index": 1,
+      "width": 976,
+      "height": 631
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-13-718121-v1/fig-002.webp",
+      "caption": "Figure 2. Ligand dependence of in vitro refolding and thermal stability of SMARTMR1 complexes. A. Chemical structures of ligands tested. B. Refolding yields (total mg protein) from SEC purification of SMART-MR1 refolded in the presence of ligands. C. Tm values obtained from DSF experiments of SMART-MR1 refolded in the presence of ligands. Data are mean ± s.d. for n = 3 technical replicates. D. Correlation plot of Tm versus refolding yield with the coefficient of determination from linear regression (R2) shown.",
+      "page": 18,
+      "index": 2,
+      "width": 976,
+      "height": 601
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-13-718121-v1/fig-003.webp",
+      "caption": "Figure 3. Solution biophysics of SMART-MR1. A. 2D 1H-15N TROSY of 650 μM SMART-MR1/6-FP recorded at a 1H field of 800 MHz at 25 °C. B. Competitive binding of TAMRA-labelled JYM20 to SMART-MR1/DCF as a function of increasing Ac-6-FP concentration, measured by fluorescence polarization. Data are mean ± s.d. for n = 3 technical replicates. One-way ANOVA was performed relative to conditions without Ac-6-FP, P < 0.0002(***), and P < 0.0001(****). C. ITC data titrating 200 μM A-F7 TCR into a sample containing 20 μM SMART-MR1/5-OP-RU. Black line is the fit of the isotherm with the KD and thermodynamic values determined using a 1-site binding model (n = 1).",
+      "page": 19,
+      "index": 3,
+      "width": 518,
+      "height": 681
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-13-718121-v1/fig-004.webp",
+      "caption": "Figure 4. Cryo-EM structure of SMART-MR1/5-OP-RU bound to A-F7 TCR. A. Cryo-EM structure of SMART-MR1/5-OP-RU superimposed onto the AlphaFold model of SMART-MR1 and the crystal structure of human MR1/hβ2m-5-OP-RU (PDB 6PUC). The inset shows the sidechain of W17 of SMART-MR1 and W60 of hβ2m. B. Conformation of 5-OP-RU in the SMART-MR1 Cryo-EM structure superimposed onto 5-OP-RU from the native MR1 crystal structure. C. Close up of 5-OP-RU within the ligand binding groove of native and SMART-MR1. Polar and hydrophobic contacts are indicated by yellow and black dashes, respectively. Residues are colored as in panel A. D. Cryo-EM structure of A-F7 TCR bound to the α1/α2 domain of SMART-MR1/5-OP-RU (cyan) superimposed onto the native MR1/5-OP-RU-A-F7 crystal structure (grey). The inset highlights key interactions between the TCR and the ligand as well as residues within the MR1 groove. E. Top view of CDR loop interactions with the surface of SMART-MR1/5-OP-RU. CDR loops are shown as tubes and are colored as in panel D.",
+      "page": 20,
+      "index": 4,
+      "width": 976,
+      "height": 691
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718511-v1/fig-001.webp",
+      "caption": "TABLE II DATASET AND SPLIT SUMMARY (ALL HLA SUPERTYPES COMBINED).",
+      "page": 3,
+      "index": 1,
+      "width": 529,
+      "height": 352
+    }
+  ]
+}

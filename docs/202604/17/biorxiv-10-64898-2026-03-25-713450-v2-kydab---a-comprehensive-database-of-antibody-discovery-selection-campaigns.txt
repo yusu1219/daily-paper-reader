@@ -1,0 +1,736 @@
+Title: KyDab - a comprehensive database of antibody discovery selection campaigns.
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.03.25.713450v2.full.pdf
+
+Number of Pages: 14
+
+Markdown Content:
+KyDab – a comprehensive database of antibody discovery selection campaigns. 1
+
+2
+
+Qingqing Zhou¹*†, Dawid Chomicz²†, David Melvin¹, Mark Griffiths¹, Sabrina Yahiya 1, Stephen T. Reece¹, 3
+
+Marguerite-Marie Le Pannerer 1, Konrad Krawczyk²* 4
+
+5
+
+¹ Kymab, a Sanofi Company, Babraham Research Campus, Cambridge, United Kingdom 6
+
+² R&D, NaturalAntibody, Szczecin, Poland 7
+
+8
+
+† These authors contributed equally to this work. 9
+
+* Corresponding authors. 10 
+
+11 
+
+Correspondence to: 12 
+
+Qingqing Zhou (Qing.Zhou@sanofi.com) Konrad Krawczyk (konrad@naturalantibody.com) 13 
+
+14 
+
+Abstract 15 
+
+Preclinical antibody discovery relies on progressive screening and down-selection of candidate 16 
+
+antibodies from large immune repertoires, yet this critical process is poorly represented in existing 17 
+
+public databases. Here we introduce KyDab (Kymouse Antibody Database), a well-curated database 18 
+
+of antibody discovery selection data generated using standardized workflows on the Kymouse 19 
+
+humanized mouse platform. The current release includes 11 Kymouse platform mice immunisation 20 
+
+studies covering 51 immunogens, more than 120,000 paired heavy–light chain sequences, and binding 21 
+
+measurements for a selected subset of experimentally characterized clones. By capturing full-funnel 22 
+
+selection data with consistent metadata and both positive and negative experimental outcomes, 23 
+
+KyDab provides a valuable data resource for the development and evaluation of artificial intelligence 24 
+
+models for antibody discovery. KyDab is accessible at https://kydab.naturalantibody.com/, and the 25 
+
+database will be continuously updated as new datasets become available. 26 
+
+27 
+
+28 
+
+Introduction 29 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+30 
+
+31 
+
+Monoclonal antibodies have emerged as the fastest-growing class of biopharmaceuticals, with over 32 
+
+150 antibodies approved by the FDA to date 1 . Due to their superior specificity, potency, and safety 33 
+
+profiles, antibody-based therapeutics are widely regarded as leading candidates for treating cancer, 34 
+
+immune-mediated disorders, and infectious diseases 2. In recent years, advances in artificial 35 
+
+intelligence have begun to reshape antibody drug discovery workflows. Approaches such as virtual 36 
+
+screening, affinity maturation, and generative design are increasingly integrated into early discovery, 37 
+
+offering opportunities to accelerate development timelines and reduce costs 3. These methods, 38 
+
+however, rely heavily on large, high-quality datasets with experimentally validated outcomes to 39 
+
+enable effective model training and benchmarking 4 .40 
+
+41 
+
+To support the growing data needs of AI development, several public resources curate large antibody 42 
+
+sequence datasets (e.g., Observed Antibody Space; 5 ) and structural annotations (e.g., SAbDab; 6 ). 43 
+
+While these databases provide broad coverage, they do not capture the real-world process of 44 
+
+therapeutic antibody discovery as practiced in an industrial setting. Modern discovery pipelines, 45 
+
+including phage display, yeast display and animal immunisation, typically generate large pools of 46 
+
+clones, followed by multiple stages of down-selection and affinity characterisation using assays such 47 
+
+as surface plasmon resonance (SPR). Existing specialised therapeutic antibody databases, such as 48 
+
+Thera-SAbDab 7 and IMGT/mAb-KG 8 , focus primarily on the relatively small set of mature, 49 
+
+clinically advanced antibodies. To our knowledge, no public resource currently provides full-funnel 50 
+
+datasets that reflect the practical selection and screening steps used in real-world antibody discovery 51 
+
+workflows. 52 
+
+53 
+
+Beyond these limitations in dataset representation, another critical gap concerns the scarcity and bias 54 
+
+of affinity-characterized antibodies 9 . This is largely due to several factors - manual curation is labor-55 
+
+intensive, affinity values are often presented only as figures or partial tables, and negative screening 56 
+
+data are rarely reported. Even in newer structural resources such as SAAINT-DB, which reviewed 57 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+nearly 10,000 PDB entries, only ~1,400 non-redundant antibody–antigen affinities were identified 10 .58 
+
+Broader protein interaction databases, including SKEMPI v2.0 11 , AbBind 12 , Affinity Benchmark 59 
+
+v5.5 13 and PDBbind v2020 14 , catalog tens of thousands of measurements, but fewer than 2,000 60 
+
+involve antibody–antigen complexes. Moreover, because many databases draw on overlapping 61 
+
+sources, the same affinity measurements are often repeatedly re-curated across databases rather than 62 
+
+newly contributed. This scarcity of affinity-resolved antibody data remains a major bottleneck for AI-63 
+
+driven discovery. 64 
+
+65 
+
+To begin addressing these challenges, we present KyDab (Kymouse Antibody Database), a 66 
+
+comprehensive database of antibody discovery selection datasets. KyDab provides systematically 67 
+
+curated antibody sequences with comprehensive metadata and, where available, experimentally 68 
+
+measured binding data. All datasets originate from Kymouse 15 , a state-of-the-art humanized mouse 69 
+
+platform used for therapeutic antibody discovery. Consistent single-cell processing and standardized 70 
+
+data analysis pipelines are applied to minimise technical variability and ensure comparability across 71 
+
+campaigns. The current release spans 11 immunisation studies, comprising 51 unique immunogens, 72 
+
+and 123,527 productive heavy–light chain pairs, with 1,657 clones associated with binding data. By 73 
+
+making such campaign data available, KyDab establishes a resource that acts as a real-world 74 
+
+benchmark for general-purpose antibody predictors. As such we expect that the database will foster 75 
+
+development of more robust algorithms that can be applied in production in therapeutic programs. 76 
+
+77 
+
+78 
+
+Materials and Methods 79 
+
+80 
+
+Antibody Sequence Data 81 
+
+All antibody sequences deposited in this portal were generated from the Kymouse platform 15 16 , a 82 
+
+well-established transgenic mouse system for producing antibodies with fully humanized variable 83 
+
+regions. Each dataset is accompanied by a dedicated landing page accessible from the KyDab portal 84 
+
+homepage, providing flexible download options as well as detailed information on immunisation, cell 85 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+sorting, and sequencing protocols for each study. Sequences were initially processed and analyzed 86 
+
+internally with an in-house bioinformatics pipeline, and subsequently re-annotated using RIOT 17 prior 87 
+
+to deposition in the portal to ensure consistent annotation across datasets and to avoid the release of 88 
+
+potentially commercially sensitive information. 89 
+
+90 
+
+Assay Data 91 
+
+Where available, following sequence analysis, a subset of clones were selected for expression and 92 
+
+affinity testing. The specific assays employed in each study are described in the corresponding 93 
+
+publications cited on the individual landing pages. 94 
+
+95 
+
+Datasets collection 96 
+
+Summary of datasets are provided in Table 1 .97 
+
+98 
+
+Table 1. Datasets available in the KyDab portal. 99 
+
+Studies Immunogens Binding Assay 
+
+Number of antibodies with binding measurements 
+
+Total Paired Antibody Sequences 
+
+Pertussis Pertussis toxin WT; Pertussis Toxin 
+
+R9K E129A mutant SPR 422 11290 
+
+Malaria CSP #1 CSP -based immunogens SPR 124 a 18146 
+
+Malaria CSP #2 CSP-based nanoparticle immunogens SPR 110 a 22427 
+
+Malaria CSP #3 CSP-based nanoparticle immunogens NA 0 6401 
+
+SARS-CoV-2 #1 Sarbecovirus/beta coronavirus-based 
+
+nanoparticles and soluble trimers NA 0 26379 
+
+SARS-CoV-2 #2 SARS-CoV-2 spike nanoparticles/trimer, RBD nanoparticle HTRF 249 9887 
+
+Acinetobacter 
+
+baumannii #1 OMV cocktail ELISA 256 7383 
+
+RSV #1 Pre-fusion hMPV/RSV F protein-based nanoparticles, trimers and cocktails NA 0 10751 
+
+RSV #2 Stabilised Pre-F protein, Post-F 
+
+protein, live/inactivated RSV NA 0 1099 
+
+Influenza #1 Stem-only HA immunogens and vaccine control NA 0 4106 
+
+Typhoid #1 Typhoid toxin E133A H160Q mutant SPR 496 5658 
+
+100 
+
+.CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint aBinding measurement data were generated by Antibody Dynamics. 101 
+
+102 
+
+Availability 103 
+
+104 
+
+The datasets are available for researchers through our portal : 105 
+
+https://kydab.naturalantibody.com/ 106 
+
+107 
+
+Results 108 
+
+Overview of the database 109 
+
+110 
+
+All datasets deposited in the portal are generated from mice derived from the Kymouse platform, a 111 
+
+transgenic mouse platform developed by Kymab for discovery of therapeutic human monoclonal 112 
+
+antibodies. These mice are genetically engineered to produce antibodies with variable heavy and light 113 
+
+chain regions (VH and VL) of entirely human origin. Over the past decade, this humanized mouse 114 
+
+platform has proven to be robust, stable, and versatile for therapeutic antibody discovery, with several 115 
+
+antibodies derived from this platform having advanced to clinical trials 18 19 .116 
+
+117 
+
+KyDab comprises 11 human antibody studies encompassing 51 unique immunogens generated from 118 
+
+the Kymouse platform, targeting a diverse array of viral, bacterial, and parasitic antigens 15 16 . In 119 
+
+general, immunogens were either selected from well-established commercial antigen products or 120 
+
+designed by structural biologists with expertise in pathogen-specific immunogenic structures. 121 
+
+Following immunisation with the respective immunogens, sera were collected and assessed for 122 
+
+reactivity using screening assays such as ELISA to evaluate immune responses. Mice demonstrating 123 
+
+positive immune responses were selected for further processing. 124 
+
+125 
+
+From each selected mouse, spleen, lymph node, and/or bone marrow cells were harvested and 126 
+
+subjected to flow cytometry-based single-cell sorting to isolate antigen-specific B cells for 127 
+
+downstream sequencing. The resulting paired VH-VL sequences underwent analysis and down-128 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+selection through an in-house bioinformatics pipeline that is similar to the Immcantation 129 
+
+framework 20 . Sequences were clustered into lineages based on inferred V and J gene usage and 130 
+
+CDR3 sequence identity, with representative clones from the more expanded lineages preferentially 131 
+
+selected. Additional selection criteria included somatic hypermutation frequency, evidence of 132 
+
+sequence convergence, developability assessments, and overall sequence diversity. The scale of clone 133 
+
+selection varied across studies according to specific research objectives. In most studies, selected 134 
+
+clones were recombinantly expressed and further characterized through in vitro affinity assays to 135 
+
+assess binding to their corresponding antigens, as illustrated in Figure 1 . The portal provides 136 
+
+comprehensive data including all paired antibody sequences, germline gene annotations, complete 137 
+
+metadata (mouse ID, tissue source, immunogen identity), and where available, affinity measurements 138 
+
+and antigen sequences in FASTA format. To ensure uniform representation of the data, we post-139 
+
+processed raw read files using RIOT 17 , a sequence annotation tool that translates nucleotide 140 
+
+sequences into amino acids and aligns them to the IMGT scheme. 141 
+
+142 
+
+For friendly user experience, KyDab also features simple structured summaries, interactive 143 
+
+visualisations, and flexible download options, enabling researchers to access and apply these data 144 
+
+with minimal need for additional engineering or background reading. 145 
+
+146 
+
+147 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+148 
+
+Figure 1. Overview of the KyDab data generation pipeline. All antibodies in KyDab were 149 
+
+generated from the Kymouse humanized immune mouse platform. Following immunisation, antigen-150 
+
+responsive mice were selected and lymphoid tissues were harvested for single-cell sorting and 151 
+
+sequencing. Resulting sequences were analyzed and down-selected to prioritise high-potential clones, 152 
+
+which were often recombinantly expressed and further characterised by in vitro affinity assays. Both 153 
+
+positive and negative binding data are made available on KyDab. 154 
+
+155 
+
+156 
+
+Repertoire diversity across datasets 157 
+
+To evaluate the diversity of the antibody repertoires, we performed sequence identity clustering on the 158 
+
+heavy and light chain variable regions with respect to IMGT variable region alignment. The raw 159 
+
+number of sequences and the resulting cluster counts for each dataset, chain type, and region are 160 
+
+detailed in Table 2 . This analysis focused on the complementarity-determining regions ( CDR1, 161 
+
+CDR2, CDR3 ) and the framework regions ( FW ) using sequence identity thresholds of 90%, 80%, 162 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+and 70%. To compare the heterogeneity of antibody responses, we calculated a normalized diversity 163 
+
+percentage (number of unique clusters / total sequences), which is plotted in Figure 2 . The results, as 164 
+
+visualized in Figure 2 , consistently demonstrate that the CDR3 region of the heavy chain is the most 165 
+
+diverse component of the antibody variable domain across all datasets and identity thresholds. For 166 
+
+instance, in the top panel of Figure 2 (90% identity threshold), 8 out of 11 datasets exhibit prominent 167 
+
+heavy chain CDR3 diversity, with percentages exceeding 50%, while the light chain regions, by 168 
+
+comparison, reflect their more limited contribution to general immune response variability by largely 169 
+
+remaining below a 40% diversity threshold across the datasets. In contrast, the FW regions 170 
+
+consistently show the lowest diversity ( Figure 2) , which is expected given their conserved structural 171 
+
+role. Furthermore, the data presented in Table 2 and visualized in Figure 2 reveal a wide spectrum of 172 
+
+diversity profiles among the datasets, reflecting the nature of the specific immune response. The effect 173 
+
+of the clustering strictness is also evident when comparing the panels of Figure 2 from top to bottom; 174 
+
+as the identity threshold is relaxed from 90% to 70%, the calculated diversity decreases across all 175 
+
+regions due to the merging of sequences into fewer, more heterogeneous clusters. This comparative 176 
+
+analysis highlights the varied complexity of antibody repertoires and confirms that our collection 177 
+
+encompasses a broad range of immune responses suitable for robust immunological investigation. 178 
+
+179 
+
+Table 2. Sequence and Cluster Counts for Antibody Repertoires. This table provides a detailed 180 
+
+breakdown of the total number of sequences (records) and the corresponding number of unique 181 
+
+sequence clusters for each IMGT region (cdr1, cdr2, cdr3, fw). Data are presented for both heavy and 182 
+
+light chains across all datasets, clustered at sequence identity thresholds of 70%, 80% and 90%. 183                                                                                     
+
+> IMGT region cdr1 cdr2 cdr3 fw
+> Identity threshold 70% 80% 90% 70% 80% 90% 70% 80% 90% 70% 80% 90%
+> Dataset chain type records
+> Acinetobacter baumannii #1
+> heavy 6144 326 529 782 180 305 490 2647 3613 4271 179 410 936
+> light 4711 251 298 556 154 155 155 664 1028 1531 196 453 1234
+> Malaria CSP #1
+> heavy 16643 1031 1824 2943 872 1515 2583 6097 8400 9970 425 1112 3115
+> light 16425 899 1180 2072 606 629 658 1517 2501 3905 489 1197 3473
+> Malaria CSP #2 heavy 21429 996 1738 2840 878 1535 2592 6498 9073 11251 384 919 2668
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+light 19845 903 1165 2032 618 645 684 1557 2480 3779 475 1083 2975 
+
+Malaria CSP #3 
+
+heavy 5884 467 843 1381 456 789 1284 2228 2855 3306 188 480 1281 
+
+light 5997 530 708 1226 371 389 417 758 1234 1890 224 507 1413 
+
+Pertussis 
+
+heavy 11290 1215 2203 3517 986 1760 3003 3165 4033 4798 367 1031 3080 
+
+light 11290 843 1156 2072 561 582 621 1134 1906 2983 278 748 2383 
+
+RSV #1 
+
+heavy 10368 589 1009 1558 432 747 1240 4315 6120 7295 182 507 1469 
+
+light 9697 548 751 1271 390 419 460 846 1327 2044 250 606 1730 
+
+RSV #2 
+
+heavy 1051 134 229 352 130 205 308 509 595 656 39 90 236 
+
+light 1011 129 165 263 124 129 134 242 339 467 59 117 262 
+
+SARS-CoV-2 #1 
+
+heavy 20189 1348 2422 3738 986 1699 2858 4500 6351 8080 557 1445 3728 
+
+light 25970 1048 1465 2762 431 437 440 1788 3177 5305 431 1188 3998 
+
+SARS-CoV-2 #2 
+
+heavy 6659 591 977 1417 314 529 875 810 1040 1359 228 563 1315 
+
+light 9830 492 649 1224 215 217 217 621 1091 1766 180 524 1688 
+
+Influenza #1 
+
+heavy 3949 493 807 1159 261 453 717 1744 2184 2409 120 345 975 
+
+light 3852 361 475 786 239 247 259 481 790 1189 161 380 1153 
+
+Typhi #1 
+
+heavy 4435 344 639 1063 416 717 1204 1959 2440 2772 90 195 709 
+
+light 5005 345 447 796 269 278 287 674 1124 1706 100 186 543 
+
+184 
+
+.CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint 185 
+
+Figure 2. Comparative Diversity of Antibody Regions Across Datasets. The diversity calculated as 186 
+
+the ratio of unique clusters to total chain sequences is shown for complementarity-determining 187 
+
+regions (CDR1, CDR2, CDR3) and framework regions (FW). The analysis is presented for 11 188 
+
+different antigen-specific datasets at three distinct sequence identity thresholds: 90% (top), 80% 189 
+
+(middle), and 70% (bottom). The results highlight the consistently higher diversity of the CDR3 190 
+
+region and the variable diversity profiles across the different datasets. 191 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+192 
+
+193 
+
+Discussion 194 
+
+195 
+
+Despite the rapid growth of public antibody databases, there is currently no centralized resource that 196 
+
+captures antibody discovery data to such a large scale. Most existing public resources of therapeutic 197 
+
+antibody primarily curate clinically successful antibodies from sparse origins, representing only a 198 
+
+small fraction of the total discovery funnel and seldom include negative or low-binding clones 7 21 .199 
+
+200 
+
+KyDab addresses this gap by providing a comprehensive antibody discovery dataset generated under 201 
+
+high quality standard and consistent workflows. All data were produced using a well-established 202 
+
+humanized mouse platform with standardized immunisation, single-cell sequencing, selection and 203 
+
+expression pipelines across multiple studies. This level of upstream consistency is rarely achieved in 204 
+
+public antibody resources. Importantly, the dataset reflects the full process of antibody down-205 
+
+selection, from large repertoires of paired VH–VL sequences to a defined high-potential subset 206 
+
+advanced to experimental testing. Such data are particularly valuable for AI applications aimed at 207 
+
+improving the success rate of experimental validation. In addition, the antigen diversity in KyDab also 208 
+
+provides a more challenging and realistic benchmark for evaluating model robustness across targets. 209 
+
+210 
+
+As with all antibody discovery workflows, the dataset reflects biases introduced by bioinformatics-211 
+
+guided down-selection. Sequences advanced to expression are enriched for expanded lineages, higher 212 
+
+somatic mutation levels and predicted developability, leading to an overrepresentation of true binders 213 
+
+and high-affinity antibodies. Nevertheless, KyDab includes both positive and negative experimental 214 
+
+outcomes. The availability of negative data is critical for proper model calibration and for evaluating 215 
+
+false-positive behavior in the presence of selection bias. 216 
+
+217 
+
+The long-term goal of AI-driven antibody discovery is to improve success rate, reduce cost and 218 
+
+development time by shifting key decision-making steps from experimental screening to 219 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+computational prediction. While AI has demonstrated impressive progress in antibody in silico 220 
+
+generation, its application to virtual screening and affinity prediction remains constrained by the lack 221 
+
+of large, high-quality antibody discovery datasets 3 . By releasing KyDab as an open resource, we aim 222 
+
+not only to support this next phase of AI-empowered antibody discovery, but also to demonstrate the 223 
+
+value of sharing structured, full-funnel discovery data. We hope this effort will encourage broader 224 
+
+data contributions from across the antibody discovery community, particularly from industrial 225 
+
+organisations, to enable the development of more robust and generalisable AI models through 226 
+
+collective progress. 227 
+
+228 
+
+Disclosure statement 229 
+
+Q.Z., D.M., M.G., S.Y., and M.-M.L.P. are current employees of Sanofi. S.T.R. was a Sanofi 230 
+
+employee within the past three years. D.C. and K.K. are current employees of NaturalAntibody. 231 
+
+232 
+
+Funding 233 
+
+This work was funded by the Gates Foundation, INV-040928. 234 
+
+235 
+
+Acknowledgments 236 
+
+The authors thank Donald Drake and Matthew Massett for manuscript review; Aaron Hanley and 237 
+
+Josefin Bartholdson-Scott for assistance with dataset preparation; Janet Tse and Juliette Goutorbe for 238 
+
+preparing the Terms and Conditions; Jemima Paterson, Andrew Phillips, Danai Koftori and Jean-239 
+
+Philippe Mametz for support with coordination and digital advice. 240 
+
+241 
+
+References 242 
+
+243 
+
+1. Strohl WR. Structure and function of therapeutic antibodies approved by the US FDA in 2024. 244 
+
+Antib Ther 2025; 8:197–237. 245 
+
+2. Chan AC, Martyn GD, Carter PJ. Fifty years of monoclonals: the past, present and future of 246 
+
+antibody therapeutics. Nat Rev Immunol 2025; 25:745–65. 247 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+3. Buchanan A, Bennett E, Croasdale-Wood R, Evers A, Fennell B, Furtmann N, Krawczyk K, 248 
+
+Kumar S, Langmead CJ, Shahsavarian M, et al. How to think about designing smart antibodies in the 249 
+
+age of genAI: integrating biology, technology, and experience. mAbs 2025; 17:2490790. 250 
+
+4. Mason DM, Reddy ST. Predicting adaptive immune receptor specificities by machine learning is a 251 
+
+data generation problem. Cell Syst 2024; 15:1190–7. 252 
+
+5. Kovaltsuk A, Leem J, Kelm S, Snowden J, Deane CM, Krawczyk K. Observed Antibody Space: A 253 
+
+Resource for Data Mining Next-Generation Sequencing of Antibody Repertoires. J Immunol 2018; 254 
+
+201:2502–9. 255 
+
+6. Dunbar J, Krawczyk K, Leem J, Baker T, Fuchs A, Georges G, Shi J, Deane CM. SAbDab: the 256 
+
+structural antibody database. Nucleic Acids Res 2014; 42:D1140–6. 257 
+
+7. Raybould MIJ, Marks C, Lewis AP, Shi J, Bujotzek A, Taddese B, Deane CM. Thera-SAbDab: the 258 
+
+Therapeutic Structural Antibody Database. Nucleic Acids Res 2019; 48:D383–8. 259 
+
+8. Sanou G, Manso T, Todorov K, Giudicelli V, Duroux P, Kossida S. IMGT/mAb-KG: the 260 
+
+knowledge graph for therapeutic monoclonal antibodies. Front Immunol 2024; 15:1393839. 261 
+
+9. Janusz B, Chomicz D, Demharter S, Arts M, Kanter J de, Wilke Y, Britze H, Wrobel S, Gawłowski 262 
+
+T, Dudzic P, et al. AbDesign: database of point mutants of antibodies with associated structures 263 
+
+reveals poor generalization of binding predictions from machine learning models. mAbs 2025; 264 
+
+17:2567319. 265 
+
+10. Huang X, Zhou J, Chen S, Xia X, Chen YE, Xu J. SAAINT-DB: a comprehensive structural 266 
+
+antibody database for antibody modeling and design. Acta Pharmacol Sin 2025; 46:3365–75. 267 
+
+11. Jankauskaitė J, Jiménez-García B, Dapkūnas J, Fernández-Recio J, Moal IH. SKEMPI 2.0: an 268 
+
+updated benchmark of changes in protein–protein binding energy, kinetics and thermodynamics upon 269 
+
+mutation. Bioinformatics 2018; 35:462–9. 270 
+
+12. Sirin S, Apgar JR, Bennett EM, Keating AE. AB ‐Bind: Antibody binding mutational database 271 
+
+for computational affinity predictions. Protein Sci 2016; 25:393–409. 272 
+
+13. Vreven T, Moal IH, Vangone A, Pierce BG, Kastritis PL, Torchala M, Chaleil R, Jiménez-García 273 
+
+B, Bates PA, Fernandez-Recio J, et al. Updates to the Integrated Protein–Protein Interaction 274 
+
+Benchmarks: Docking Benchmark Version 5 and Affinity Benchmark Version 2. J Mol Biol 2015; 275 
+
+427:3031–41. 276 
+
+14. Liu Z, Li Y, Han L, Li J, Liu J, Zhao Z, Nie W, Liu Y, Wang R. PDB-wide collection of binding 277 
+
+data: current status of the PDBbind database. Bioinformatics 2014; 31:405–12. 278 
+
+15. Lee E-C, Liang Q, Ali H, Bayliss L, Beasley A, Bloomfield-Gerdes T, Bonoli L, Brown R, 279 
+
+Campbell J, Carpenter A, et al. Complete humanization of the mouse immunoglobulin loci enables 280 
+
+efficient therapeutic antibody discovery. Nat Biotechnol 2014; 32:356–63. 281 
+
+16. Richardson E, Binter Š, Kosmac M, Ghraichy M, Niederhäusern V von, Kovaltsuk A, Galson JD, 282 
+
+Trück J, Kelly DF, Deane CM, et al. Characterisation of the immune repertoire of a humanised 283 
+
+transgenic mouse through immunophenotyping and high-throughput sequencing. eLife 2023; 284 
+
+12:e81629. 285 
+
+> .CC-BY 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2026.03.25.713450 doi: bioRxiv preprint
+
+17. Dudzic P, Janusz B, Satława T, Chomicz D, Gawłowski T, Grabowski R, Jóźwiak P, Tarkowski 286 
+
+M, Mycielski M, Wróbel S, et al. RIOT—Rapid Immunoglobulin Overview Tool—annotation of 287 
+
+nucleotide and amino acid immunoglobulin sequences using an open germline database. Brief 288 
+
+Bioinform 2024; 26:bbae632. 289 
+
+18. Tiraboschi G, Papp K, Bieber T, Weidinger S, Beck L, Lee C, O’Malley JT, Yen K, Bernigaud C, 290 
+
+Fabre D, et al. Population Pharmacokinetic and Pharmacodynamic Modeling for the Prediction of the 291 
+
+Extended Amlitelimab Phase 3 Dosing Regimen in Atopic Dermatitis. CPT: Pharmacomet Syst 292 
+
+Pharmacol 2025; 293 
+
+19. Patel MR, Naing A, III HAB, Lin C-C, Curigliano G, Thistlethwaite F, Minchom AR, Ascierto 294 
+
+PA, Braud FGD, Cecchini M, et al. A phase 1/2 open-label study of KY1044, an anti-ICOS antibody 295 
+
+with dual mechanism of action, as single agent and in combination with atezolizumab, in adult 296 
+
+patients with advanced malignancies. J Clin Oncol 2021; 39:2624–2624. 297 
+
+20. Heiden JAV, Yaari G, Uduman M, Stern JNH, O’Connor KC, Hafler DA, Vigneault F, Kleinstein 298 
+
+SH. pRESTO: a toolkit for processing high-throughput sequencing raw reads of lymphocyte receptor 299 
+
+repertoires. Bioinformatics 2014; 30:1930–2. 300 
+
+21. Abanades B, Olsen TH, Raybould MIJ, Aguilar-Sanjuan B, Wong WK, Georges G, Bujotzek A, 301 
+
+Deane CM. The Patent and Literature Antibody Database (PLAbDab): an evolving reference set of 302 
+
+functionally diverse, literature-annotated antibody sequences and structures. Nucleic Acids Res 2023; 303 
+
+52:D545–51. 304 
+
+305 
+
+306

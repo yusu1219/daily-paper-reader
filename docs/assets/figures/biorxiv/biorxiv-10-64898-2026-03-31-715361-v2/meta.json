@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715361-v2/fig-001.webp",
+      "caption": "Fig. 1: Overview of StriMap framework. (a) Biological context of T cell-mediated immune recognition. Cytotoxic T cells recognize target cells through the interaction between the T cell receptor (TCR) and peptide-HLA (pHLA) complexes presented on the surface of target cells. This tri-molecular interaction underlies antigen-specific immune surveillance and forms the biological basis of StriMap. (b) The architecture of the Sequence and Structure Feature Extractor (SSFE). Given a protein amino-acid sequence, SSFE integrates three complementary encoders: i) a physicochemical encoder that computes residue-level physicochemical features; ii) a sequence-based context encoder (e.g., ESM2 or ProtT5) that provides contextual sequence embeddings; and iii) a structural-derived geometric encoder (e.g., ESMFold) that generates 3D structural representations. Structural information is further processed through a multi-layer equivariant graph neural network (EGNN). All features are fused using gated cross-attention and layernormalization to produce a unified representation. (c) The bilinear attention network (BAN), which models pairwise interactions between two representations using learnable bilinear projections to generate multi-head attention maps. (d) Architecture of the peptide-HLA interaction predictor. Peptide and HLA sequences are independently encoded by SSFE and processed through transformer blocks, followed by gated cross-attention and BAN fusion. The fused representation is fed into a linear layer to produce an interaction score between 0-1. (e) Architecture of the TCR-peptide-HLA interaction predictor. TCR α/β chains, peptide, and HLA sequences are independently encoded by SSFE and then passed through a feature aggregator module that incorporates and leverages the embedding representations learned from",
+      "page": 25,
+      "index": 1,
+      "width": 970,
+      "height": 657
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715361-v2/fig-002.webp",
+      "caption": "Fig. 3: StriMap supports two clinically relevant tasks for T cell-based immunotherapy.",
+      "page": 29,
+      "index": 2,
+      "width": 947,
+      "height": 197
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715361-v2/fig-003.webp",
+      "caption": "Fig. 5: Experimental validation of AS-associated microbial mimicry peptides (a) Overview of discovery framework, in which StriMap prioritizes candidate disease-associated TCR-peptide-HLA interactions for experimental validation and iterative refinement. (b) Experimental workflow for validating interactions between the AS-associated TCR AS8.4 and candidate peptides. CD8⁺ Jurkat T cells were transduced to express the AS8.4 TCR and cocultured with HLA-B*27:05-expressing antigen-presenting cells (APCs) pulsed with candidate bacterial peptides. (c) Flow cytometry analysis of T cell activation following peptide stimulation. Activation was quantified by co-expression of CD69 (y-axis) and NFAT-driven ZsGreen reporter activity (xaxis). Three bacterial peptides induced robust T cell activation, comparable to the positive control, whereas negative and background controls showed minimal activation. Activated cells are enriched in the CD69⁺ZsGreen⁺ quadrant. (d) Metagenomic and metatranscriptomic profiling of bacterial peptide candidates across clinical cohorts. Heatmap shows the relative prevalence of peptide-associated features in healthy controls, infectious gastroenteritis, Crohn’s disease (CD), and ulcerative colitis (UC), following Z-score normalization. (e) Statistical comparison of peptide-associated features across diagnostic groups. A KruskalWallis test was performed across healthy, infectious gastroenteritis, UC, and CD cohorts. Features with significant group-level differences (p < 0.05) were further assessed using post hoc Dunn’s tests with multiple-comparison correction.",
+      "page": 32,
+      "index": 3,
+      "width": 969,
+      "height": 605
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715361-v2/fig-004.webp",
+      "caption": "Fig. 2: StriMap achieves robust prediction of pHLA presentation and TCR-pHLA recognition. (a) Summary of pHLA presentation prediction performance across multiple benchmark datasets curated from independent prior studies. Methods are evaluated under in-distribution (ID), distribution-shifted (DS), and out-of-distribution (OOD) settings as defined by the original publications. Circle size indicates relative performance, and color denotes the corresponding dataset. Rankings are determined based on overall performance, with lighter color intensity indicating higher rankings within the dataset; white denotes the top-ranked method. (b) Comparison of StriMap and deepAntigen performance (AUPRC) across individual HLA alleles on the Que et al. dataset (ID). Each point represents one HLA allele, with color indicating HLA class and size denoting the number of peptide samples. The dashed diagonal line indicates equal performance. (c) True discovery rate (TDR) as a function of ranking threshold on the TESLA neoantigen benchmark. StriMap is compared with deepAntigen under the same evaluation protocol. The dashed line indicates the baseline discovery rate.",
+      "page": 27,
+      "index": 4,
+      "width": 877,
+      "height": 785
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715361-v2/fig-005.webp",
+      "caption": "Fig. 4: Computational discovery of AS-associated bacterial mimicry peptides through cross-patient prediction. (a) AS-associated bacterial cohort and cross-patient few-shot prediction setup. We curated a literature-derived cohort of gut bacterial strains previously reported to be associated with ankylosing spondylitis (AS), spanning four major phyla: Bacillota, including Streptococcus spp., R. gnavus, etc.), Verrucomicrobiota (A. muciniphila), Bacteroidetes (P. copri, P. melaninogenica), and Proteobacteria (K. pneumoniae, E. coli, Parasutterella excrementihominis). To assess generalization to unseen patient TCRs, we implemented a crosspatient inference workflow in which TRBV9 TCR binding data from Patient 1 (AS3.1) and Patient 2 (AS4.1–AS4.4) were used as reference inputs to train the specificity model, and StriMap then predicted peptide-binding specificity for a query TRBV9 TCR from an independent Patient 3 (AS8.4), simulating a few-shot setting. (b) Large-scale in silico 9-mer peptide screening pipeline. The proteomes of the selected bacterial cohort, comprising 43,241 proteins, were retrieved and processed. A sliding window approach with a window size of k=9 and a stride of 1 amino acid was applied to generate a pool of approximately 13 million 9-mer peptides. The StriMap computational framework performs a dual-task prediction: Task 1 predicts the likelihood of HLA-B*27:05 presentation, and Task 2 predicts the recognition probability by specific TRBV9 TCRs (e.g., AS8.4). (c) Landscape of HLA-B27 high-affinity 9-mer peptides across the cohort. The bar chart illustrates the distribution and total count of predicted high-affinity 9-mer peptides for each bacterial strain. Strains such as K. pneumoniae and E. coli exhibit a high density of potential HLA-B27 binders, highlighting their significance in the molecular mimicry hypothesis. (d) Predicted reactivity scores for candidate bacterial peptides. Representative peptides from various phyla were ranked by their predicted reactivity scores against the target TCR. Highscoring candidates from Streptococcus spp. and A. muciniphila are compared against positive and negative controls, indicating potential cross-reactivity between bacterial antigens and ASassociated TCRs.",
+      "page": 31,
+      "index": 5,
+      "width": 953,
+      "height": 493
+    }
+  ]
+}

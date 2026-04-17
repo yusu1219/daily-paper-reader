@@ -1,0 +1,661 @@
+Title: Online Intention Prediction via Control-Informed Learning
+
+URL Source: https://arxiv.org/pdf/2604.09303v1
+
+Published Time: Mon, 13 Apr 2026 00:57:04 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Online Intention Prediction via Control-Informed Learning 
+
+Tianyu Zhou 1, Zihao Liang 2, Zehui Lu 1 and Shaoshuai Mou 1
+
+Abstract — This paper presents an online intention predic-tion framework for estimating the goal state of autonomous systems in real time, even when intention is time-varying, and system dynamics or objectives include unknown parameters. The problem is formulated as an inverse optimal control / inverse reinforcement learning task, with the intention treated as a parameter in the objective. A shifting horizon strategy discounts outdated information, while online control-informed learning enables efficient gradient computation and online parameter updates. Simulations under varying noise levels and hardware experiments on a quadrotor drone demonstrate that the proposed approach achieves accurate, adaptive intention prediction in complex environments. 
+
+I. I NTRODUCTION 
+
+Intention prediction refers to the process of inferring the future goals or desired outcomes of an autonomous agent or human based on its observed behavior or state trajectory [1], [2]. It is crucial in numerous applications, such as human-robot interaction and collaborative systems, where anticipating future actions allows systems to react more effectively and safely, potentially without communication. In this work, we focus on cases where an agent’s intention is represented as its goal state, so intention prediction is formulated as estimating the underlying goal state from observed trajectories. Approaches to intention prediction generally fall into two categories: physics-based and learning-based. Physics-based methods exploit dynamics or kinematics models to forecast trajectories with low computational cost but depend on accurate dynamics, which are often hard to obtain in real-world settings with disturbances or nonlinearities [3], [4]. Examples include single-trajectory models [5], Kalman filters [6], and Monte Carlo sampling [7]. Learning-based methods use data-driven models to capture nonlinear or unmodeled effects. Classic approaches include Gaussian processes, sup-port vector machines, hidden Markov models, and dynamic Bayesian networks [8]–[10], while recent work applies deep and generative models [11], [12]. These methods can gener-alize poorly outside the training distribution and often incur                    
+
+> This material is based upon work supported by the Office of Naval Research (ONR) and Saab, Inc. under the Threat and Situational Under-standing of Networked Online Machine Intelligence (TSUNOMI) program (grant no. N00014-23-C-1016). Any opinions, findings and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the ONR, the U.S. Government, or Saab, Inc.”
+> 1T. Zhou, Z. Lu and S. Mou are with the School of Aeronautics and Astronautics, Purdue University, IN 47907, USA
+
+{zhou1043, lu846, mous }@purdue.edu  
+
+> 2Z. Liang is an independent researcher
+
+danlzh@outlook.com 
+
+Fig. 1: A robot with an unknown intention was observed while executing its trajectory autonomously, during which the proposed algorithm predicted its intention in real time. high computational cost, limiting real-time use [3], [4]. Among learning-based approaches, imitation learning is a widely used framework for intention prediction. It includes both inverse reinforcement learning (IRL) and inverse op-timal control (IOC) [13], [14]. The goal is to recover an unknown reward or objective from demonstrations, often written as a weighted sum of features [15]–[17]. With system dynamics, the estimated objective is then minimized to predict future trajectories. Discrepancies between these predictions and observed behavior are then used to update the estimate, forming a loop that improves intention prediction over time [18], [19]. Despite notable advances in intention prediction, current methods do not adequately address scenarios where an au-tonomous system’s goal may change during execution. Most studies focus on predicting a single goal or selecting from a predefined and fixed set of candidate goals, which limits their applicability in adversarial or highly dynamic environments [12], [20]. Physics-based approaches are computationally efficient but depend on accurate models of dynamics and objectives, so they cannot cope well with unknown param-eters. Imitation learning-based methods can infer objectives from demonstrations but are typically designed for offline settings and cannot update estimates as new data arrive [21], [22]. Online prediction is essential, as a system’s goals and environment can change rapidly, requiring continuous updates for responsive prediction. Few existing approaches jointly handle changing goals and unknown parameters in both the objective and the dynamics while also performing online estimation, which are critical capabilities for accurate intention prediction in real-world applications. Methods such as Pontryagin Differentiable Programming (PDP) [23] and data-driven IOC [24] are formulated for offline learning and therefore do not support online estimation of objective or dynamics parameters. To address this limitation, Online 
+
+> arXiv:2604.09303v1 [cs.RO] 10 Apr 2026
+
+Control-Informed Learning (OCIL) combines physics-based models with learning-based components by leveraging opti-mal control principles and online state estimation to enable real-time goal inference from streaming observations [25], [26]. However, OCIL is primarily designed for single-goal settings and does not generalize well to scenarios involving changing or multiple goals. Our contributions are as follows. We formulate a new intention prediction problem that permits goals to change during execution (time-varying goals), motivated by the be-havior of adversarial or highly dynamic autonomous systems. Unlike prior work that presumes a fixed or discrete set of goals, our formulation estimates the goal in a continuous space and accommodates unknowns in both the objective function and the system dynamics, overcoming limitations of physics-based approaches that rely on precise models. To solve this problem, we: (i) cast intention prediction as an IOC/IRL problem, treating the goal state as a parameter in the objective rather than relying on a predefined goal set; (ii) propose a shifting horizon intention prediction strategy that discounts outdated information to better manage time-varying intention; and (iii) identify the goal online at each time step as new noisy measurements become available. 
+
+Notations. ∥·∥ denotes the Euclidean norm. For positive integers n and m, let In be the n × n identity matrix; 0n ∈
+
+Rn denotes a vector with all zeros; 0n×m denotes a n ×
+
+m matrix with all zeros. Let col {v1, . . . , va} ≜ [v′ 
+
+> 1
+
+. . . v′
+
+> a
+
+]′
+
+denote a column stack of elements v1, . . . , va. Let N (a, B)
+
+denote a multivariate Gaussian distribution, where a ∈ Rm
+
+is the mean and B ∈ Rm×m is the covariance matrix. For a vector v, v[a : b] slices a subvector from the a-th until b−th element, with both ends included; v[1] is the first element. II. P ROBLEM FORMULATION 
+
+This paper addresses the intention prediction problem by predicting the goal state of a class of autonomous systems whose behavior is governed by the minimization of a control objective function. The system is assumed to have unknown 
+
+time-varying goal states x∗ 
+
+> g,t
+
+∈ Rn for time index t =0, 1, . . . , T with T the final time. In other words, during trajectory execution, the system may switch from one goal to another goal state at unknown times. In addition, the system contains a set of unknown parameters that appear both in the control objective and in the system dynamics. Prior to any goal switching, the trajectory of the autonomous system is obtained by solving the following optimal control problem: 
+
+{x∗ 
+
+> 1: T
+
+, u∗ 
+
+> 0: T−1
+
+} = arg min   
+
+> x1: T,u0: T−1
+
+J, (1a) s.t. xt+1 = f (xt, ut, p∗), with x0 given , (1b) where J = PT −1 
+
+> t=0
+
+ω∗ 
+
+> r′
+
+cr(xt, ut, x∗
+
+> g,0
+
+) + ω∗
+
+> f
+> ′
+
+cf (xT , x∗
+
+> g,0
+
+).The state and control input are xt ∈ Rn and ut ∈ Rm;
+
+x∗ 
+
+> 1: T
+
+and u∗  
+
+> 0: T−1
+
+denote the column stacks of optimal states and control inputs. The unknown weight vectors ω∗ 
+
+> r
+
+∈ Rr
+
+and ω∗ 
+
+> f
+
+∈ Rq appear in the running and final cost feature functions cr : Rn × Rm × Rn 7 → Rr and cf : Rn × Rn 7 → Rq ,both assumed differentiable. The system dynamics (1b) are parameterized by an unknown constant vector p∗ ∈ Rp, with 
+
+f : Rn × Rm × Rp 7 → Rn twice differentiable. Each time the autonomous system switches its goal state, i.e., at time ¯t, the remaining trajectory from ¯t to the final time T is recomputed as 
+
+{x∗ 
+
+> ¯t+1: T
+
+, u∗ 
+
+> ¯t:T−1
+
+} = arg min   
+
+> x∗
+> ¯t+1: T,u∗
+> ¯t:T−1
+
+¯J, (2a) s.t. xt+1 = f (xt, ut, p∗), with x∗ 
+
+> ¯t
+
+as initial state , (2b) where ¯J = PT −1 
+
+> t=¯ t
+
+ω∗ 
+
+> r′
+
+cr(xt, ut, x∗
+
+> g,¯t
+
+) + ω∗
+
+> f
+> ′
+
+cf (xT , x∗
+
+> g,¯t
+
+). At each time t, a noisy observation ¯x∗ 
+
+> t
+
+= x∗ 
+
+> t
+
++ vt ∈ Rn is obtained, where vt ∼ N (0n, Rt) is zero-mean multivariate Gaussian measurement noise with covariance Rt ∈ Rn×n,assumed to be small. In the present work, we assume full-state measurements with small noise, which allows us to use the measurement to propagate the prediction. A direction for future work is to extend the framework to partial or non-linear output measurements under appropriate observability conditions. Let ˆxg,t ∈ Rn be the estimation of x∗ 
+
+> g,t
+
+at time t.Intention prediction is achieved by estimating this unknown goal state x∗ 
+
+> g,t
+
+from observations. With system (1), given its noisy observation ¯x∗ 
+
+> t
+
+at every time t, the problem of interest is to develop an online method that updates the estimation ˆxg,t , such that || ˆxg,t −
+
+x∗
+
+> g,t
+
+|| 2 → 0 as t → T .
+
+Remark 1. This problem differs from existing work in the literature in three key aspects. First, it explicitly considers an autonomous system with unknown parameters in both system dynamics and control objectives, which will be es-timated with intention in real-time. Second, it accounts for time-varying goal states, a factor that poses a significant challenge for existing intention prediction methods. Third, it estimates the goal directly in continuous space, while also addressing the more challenging case where no predefined, finite set of possible goals is available [12], [20], [27], [28]. 
+
+III. P ROPOSED ALGORITHM 
+
+This section presents the proposed Online Intention Pre-diction algorithm. To accommodate switching intentions, we first introduce a shifting horizon strategy that retains only a limited window of past observations, allowing the predictor to discount outdated information and adapt to goal changes. Within this horizon, the algorithm performs an online pa-rameter update, simultaneously estimating the unknown goal state and other system parameters. The required gradients for this update are computed using PDP [23], enabling efficient and accurate real-time estimation. 
+
+A. Shifting Horizon Intention Prediction 
+
+Online intention prediction is performed by forecasting the system’s future trajectory using estimated parameters online. Rather than optimizing over the entire history, i.e., start from Fig. 2: Strategy of shifting horizon in prediction. 
+
+x∗
+
+> 0
+
+, we restrict the computation to a recent horizon of the trajectory. This shifting horizon has two main advantages. First, for time-varying goals, older data can correspond to a different objective; limiting the window keeps the esti-mate aligned with the system’s current intention. Second, it improves robustness to noise and nonstationarity, as mea-surement noise and parameter drift accumulate over time; a sliding window mitigates these effects. To formalize this idea, we introduce a memory time Tm ≤
+
+T , which defines a memory buffer X = { ¯x∗ 
+
+> ˆt
+
+, . . . , ¯x∗ 
+
+> t
+
+} that stores the observations. The starting index of this buffer is 
+
+ˆt = max( t − Tm, 0) , (3) where t is the current time. Choosing Tm achieves a balance between stability , which means retaining enough data to filter noise, and adaptability , which means discarding obsolete information so the estimate tracks the current intention. At each time step t, the predicted trajectory is obtained by solving the following optimal control problem: 
+
+{ ˆxˆt+1: T , ˆuˆt:T −1} = arg min   
+
+> xˆt+1: T,uˆt:T−1
+
+ˆJ, (4a) s.t. xτ +1 = f (xτ , uτ , ˆpt), with ˆxˆt = ¯ x∗ 
+
+> ˆt
+
+, (4b) where ˆJ = PT −1  
+
+> τ=ˆ t
+
+ˆω′
+
+> r,t
+
+cr(xτ , uτ , ˆxg,t ) + ˆ ω′
+
+> f,t
+
+cf (xT , ˆxg,t ).Fig. 2 illustrates the process of shifting horizon strategy. At current time t, the predicted trajectory from (4) is propagated from a previously observed state ¯x∗ 
+
+> ˆt
+
+, located Tm steps earlier, using the current estimates of the goal state ˆxg,t and system parameters. If insufficient observations are available, i.e., when t < T m, the trajectory is instead propagated from the initial state x∗
+
+> 0
+
+. The discrepancy between the current observed state ¯x∗ 
+
+> t
+
+and the predicted state at time t, ˆxt, will be used to evaluate prediction performance, as described later. 
+
+Remark 2. Accurate intention prediction requires estimating the unknown parameters ω∗ 
+
+> r
+
+, ω∗ 
+
+> f
+
+and p∗. In an optimal con-trol system, these weights encode the agent’s objectives and trade-offs, directly shaping its trajectory. Recovering them is therefore essential: without identifying the parameters governing the cost and dynamics, the same trajectory could arise from different goals, making the intention ambiguous. 
+
+The goal state x∗ 
+
+> g,t
+
+is treated as an unknown parameter in the system. For notation simplicity, define time-varying parameters θ∗ 
+
+> t
+
+≜ col {p∗, ω∗ 
+
+> r
+
+, ω∗ 
+
+> f
+
+, x∗
+
+> g,t
+
+} ∈ Rs where s =
+
+p + r + q + n, and its estimation at time t to be ˆθt.
+
+B. Online Parameter Estimation 
+
+To obtain θ∗ 
+
+> t
+
+, the parameter estimation problem is con-verted into a state estimation problem, where the state of the new system is θ. The new system dynamics and measurement are defined as follows: 
+
+θt = θ∗ 
+
+> t
+
+(unknown) , (5a) 
+
+¯x∗ 
+
+> t
+
+= x∗ 
+
+> t
+
++ vt, (5b) where (5a) indicates the new dynamics and (5b) represents the new measurement. The timing and magnitude of parame-ter changes are unknown and must be inferred from observed changes in the system’s behavior. This inference is possible because the system’s trajectory is simultaneously reinitialized at the change point. The influence of the previous goal may persist for a short period after a change, but it gradually diminishes as the prediction horizon shifts. The performance of the estimation at time t > 0 is evaluated using the following residual function: 
+
+l( ˆ xt( ˆθt−1), ¯x∗ 
+
+> t
+
+) = ¯ x∗ 
+
+> t
+
+− ˆxt( ˆθt−1) ∈ Rn, (6) where ˆxt( ˆθt−1) denotes the estimated state at time t by solving (4) with the latest estimated parameter ˆθt−1. The online parameter estimation is achieved by implementing [25] with the following lemma: 
+
+Lemma 1. (Online Control-Informed Learning [25]) Let 
+
+Ht = dl( ˆ xt( ˆθt−1), ¯x∗  
+
+> t)
+> dˆθt−1
+
+∈ Rn×s be a uniformly bounded and full rank matrix for every θ, and introduce unknown diagonal matrices F t and Gt to model the measurement and prediction error [29]. If the following inequalities hold: 
+
+(Ft − Is)2 ≤ Rt(HtPt|t−1H′ 
+
+> t
+
++ Rt)−1, G′
+
+> t
+
+P −1
+
+> t|t−1
+
+Gt −
+
+P −1 
+
+> t|t−1
+
+≤ 0, then the parameter estimator: Predict: ˆθt|t−1 = ˆθt−1, Pt|t−1 = Pt−1, (7a) 
+
+Update: Kt = Pt|t−1H′
+
+> t
+
+(HtPt|t−1H′ 
+
+> t
+
++ Rt)−1, (7b) 
+
+Pt = ( Is − KtHt)Pt|t−1, (7c) 
+
+ˆθt = ˆθt|t−1 − Kt( ¯ x∗ 
+
+> t
+
+− ˆxt( ˆθt)) . (7d) 
+
+ensures the local asymptotic convergence of ˆθ to θ∗. The subscript t|t−1 represents the quantity that has not yet been updated at time t; Pt ∈ Rs×s is a positive-definite matrix that denotes the covariance of the estimation; Kt ∈ Rs×n
+
+denotes the optimal prediction gain. 
+
+Remark 3. Different from OCIL [25], which assumes fixed parameters, this paper considers time-varying parameters 
+
+θ∗ 
+
+> t
+
+. The shifting-horizon strategy improves the estimation of time-varying parameters, which OCIL cannot handle effectively, as demonstrated in the next section. 
+
+Everything in (7) is known except Ht. For notation simplicity, dl( ˆ xt( ˆθt−1))  
+
+> dˆθt−1
+
+is used to represent dl( ˆ xt( ˆθt−1), ¯x∗  
+
+> t)
+> dˆθt−1
+
+.Applying the chain rule, we have 
+
+Ht = dl( ˆ xt( ˆθt−1)) 
+
+d ˆθt−1
+
+= ∂l( ˆ xt( ˆθt−1)) 
+
+∂ ˆxt( ˆθt−1)
+
+∂ ˆxt( ˆθt−1)
+
+∂ ˆθt−1
+
+, (8) where ∂l( ˆ xt( ˆθt−1))   
+
+> ∂ˆxt( ˆθt−1)
+
+is a known gradient of the residual function with respect to the state at time t, evaluated at ˆθt−1;and ∂ ˆxt( ˆθt−1) 
+
+> ∂ˆθt−1
+
+is an unknown gradient of the state at time t
+
+with respect to θ, evaluated at ˆθt−1. [23] introduces a method to obtain the gradient ∂ ˆxt( ˆθt−1) 
+
+> ∂ˆθt−1
+
+, as provided in the following. 
+
+Lemma 2 (PDP [23]) . Given an arbitrary system from (4) ,its Hamiltonian is formulated as, Ht = ω′
+
+> r
+
+cr(xt, ut, xg) + 
+
+f (xt, ut, p)′λt+1 , HT = ω′ 
+
+> f
+
+cf (xT , xg), for all t =ˆt, · · · , T − 1, where λt ∈ Rn denotes the costate and xg
+
+denotes the goal at t. Let Hxx,t denote the second-order derivative of Ht with respect to x, and similar notations for 
+
+Huu,t , Hxu,t = H′
+
+> ux,t
+
+, Hxθ,t , Huθ,t , Hxx,T , and Hxθ,T .Let Ft, Gt, Et denote the first-order derivatives of dynamics. If Huu,t is invertible for all t = T − 1, · · · , ˆt, we have: 
+
+Vt = Ct + A′
+
+> t
+
+(I + Vt+1 Bt)−1Vt+1 At,
+
+Wt = A′
+
+> t
+
+(I + Vt+1 Bt)−1(Wt+1 + Vt+1 Mt) + Nt,
+
+with VT = Hxx,T and WT = Hxθ,T . Here, At = Ft −
+
+Gt(Huu,t )−1Hux,t , Bt = Gt(Huu,t )−1G′
+
+> t
+
+, Mt = Et −
+
+Gt(Huu,t )′Huθ,t , Ct = Hxx,t − Hxu,t (Huu,t )−1Hux,t ,
+
+Nt = Hxθ,t − Hxu,t (Huu,t )′Huθ,t are all known. Then,  
+
+> ∂x(θ)
+> ∂θ
+
+is obtained by recursively solving the following equa-tions from t = ˆ t to T − 1 with Xˆt(θ) = 0:
+
+Ut = −H−1
+
+> uu,t
+
+(Hux,t Xt + Huθ,t + G′
+
+> t
+
+(I + Vt+1 Bt)-1Γt),
+
+Xt+1 = FtXt + GtUt + Et,
+
+Γt ≜ Vt+1 AtXt + Vt+1 Mt + Wt+1 ,
+
+Xt ≜ ∂xt(θ) 
+
+> ∂θ
+
+∈ Rn×s, Ut ≜ ∂ut(θ) 
+
+> ∂θ
+
+∈ Rm×s.
+
+With the online update law (7) and gradient obtained from Lemma 2, the main algorithm is summarized as follows. 
+
+Algorithm 1: Online Intention Prediction  
+
+> 1
+
+Initialize: ˆxg,0, ˆx0, ˆθ0, P0, Rt, X = {x∗
+
+> 0
+
+}, T m 
+
+> 2
+
+for t = 1 , ..., T do  
+
+> 3
+
+ˆt = max( t − Tm, 0)  
+
+> 4
+
+Obtain new observation ¯x∗ 
+
+> t
+> 5
+
+Update memory X = { ¯x∗ 
+
+> ˆt
+
+, · · · , ¯x∗ 
+
+> t
+
+} 
+
+> 6
+
+Propagate ˆxˆt+1: T , ˆuˆt:T −1 by solving (4) w/ ˆθt−1 
+
+> 7
+
+Obtain Ht using Lemma 2 with ˆxt( ˆθt−1) 
+
+> 8
+
+Update ˆθt, Kt, Pt using (7)  
+
+> 9
+
+Extract ˆxg,t from ˆθt
+
+For each time index t = 1 , . . . , T , the propagation start time ˆt is determined, and the memory buffer X is updated with the new observation ¯x∗ 
+
+> t
+
+and ˆt. The predicted trajectory is then propagated by solving the optimal control problem (4) using the current parameter estimate and the propagation start state ¯x∗ 
+
+> ˆt
+
+. The gradient Ht is computed from Lemma 2 based on the estimated state ˆxt( ˆθt−1). After updating the parameters according to (7), the predicted goal ˆxg,t is obtained from the updated parameter vector ˆθt. 
+
+> (a) Prediction Loss (b) Position
+
+Fig. 3: Intention prediction for quadrotor. (No goal change) IV. N UMERICAL EXPERIMENTS 
+
+This section demonstrates the capability of the proposed online intention prediction framework with various experi-ments performed on a quadrotor drone. The detailed system dynamics are provided in [25]. The unknown parameters in system dynamics are the mass, moment of inertia, length of the wing, and torque coefficient. The system state vector is x ≜ col {pI , vI , qB/I , ωI } ∈ R13 where pI ∈ R3
+
+and vI ∈ R3 are the position and velocity vector of the drone; ωB ∈ R3 is the angular velocity vector of the drone; 
+
+qB/I ∈ R4 is the unit quaternion that describes the drone’s attitude with respect to the inertial frame. The control inputs 
+
+u ∈ R4 are the thrust from four propellers. The running cost and final cost are ω′
+
+> r
+
+cr(xt, ut, xg) = ω′
+
+> r
+
+|| ut|| 2 and 
+
+ω′ 
+
+> f
+
+cf (xT , xg) = ω′ 
+
+> f
+
+|| xT − xg|| 2, respectively. Experiments are conducted under various noise levels, with 100 random trials for each case. In all experiments, the goal state is randomly generated but kept fixed (no goal switching). The initial guesses for the system parameters are randomized within ±25% of their true values, and the system’s initial state is used as the initial prediction. Readers are referred to [25] for details of the covariance initialization. In this work, the covariance associated with the intention variable is initialized to a larger value than that of the other parameters. Fig. 3a presents the prediction loss against different levels of Gaussian noise, modeled as N (x∗ 
+
+> t
+
+, σ 2In). The solid lines indicate the average loss, and the shaded regions represent the range of three standard deviations. The prediction loss at each time index t is computed as ∥ ˆxg,t −x∗
+
+> g,t
+
+∥2. These results demonstrate fast and accurate prediction of the goal. Fig. 3b illustrates the predicted trajectory under a high noise level of 
+
+σ = 0 .5, highlighting the method’s robustness to significant measurement noise. The average prediction time on an Intel i9-14900K CPU was 60 ± 4 ms per update with a time step of 150 ms, demonstrating that the proposed algorithm is computationally efficient and suitable for real-time usage. Furthermore, examples of switching intention are demon-strated. Figure 4a shows the prediction loss over time when the intention switches twice. Distinct peaks appear at each goal switch, followed by a rapid decrease in loss after each (a) Prediction Loss (b) Trajectory at three representative time frames 
+
+Fig. 4: Online intention prediction for quadrotor. (Two goal switches. Vertical dashed lines in (a) indicate goal changes.) 
+
+Fig. 5: Online intention prediction with three goal switches, i.e. at t = 50 , the system is at ¯x∗ 
+
+> 50
+
+and switches its goal from 
+
+x∗ 
+
+> g,0
+
+to x∗ 
+
+> g,50
+
+(goal x∗
+
+> g,0
+
+, · · · , x∗ 
+
+> g,49
+
+maintains the same). change. For comparison, we also show the performance of OCIL without the proposed shifting-horizon strategy; in this case the loss fails to converge under switching goals. Figure 4b presents top-view snapshots of the trajectory at key time frames, illustrating the benefit of the shifting-horizon approach. OCIL cannot handle switching targets effectively because its predictions are heavily influenced by outdated observations under the previous goal. Fig. 5 shows a case with three goal switches. The proposed method accurately predicts each goal, whereas OCIL fails and produces poor trajectories because it cannot correctly handle a trajectory composed of segments from different objectives. Fig. 6a compares the prediction loss over time between the proposed method and OCIL for two scenarios with goal switches, using 20-step and 30-step intervals between successive goal changes. The proposed method achieves a smaller loss after each switch than OCIL, benefiting from the shifting-horizon strategy. Fig. 6b shows the average prediction loss across 100 random cases for each switching interval. These results demonstrate that the shifting-horizon strategy consistently yields smaller prediction losses. When 
+
+∆ is small, both the proposed method and OCIL struggle to reach a small prediction loss due to insufficient time for updating, yet the proposed method still maintains a significantly lower loss than OCIL.  
+
+> (a) (b)
+
+Fig. 6: (a) Comparison of prediction loss over time between the proposed method and OCIL. ∆ denotes the time interval between goal switches. (b) Comparison of average prediction loss between the proposed method and OCIL. V. H ARDWARE EXPERIMENTS 
+
+Hardware experiments on a quadrotor drone demonstrate the capability of the proposed algorithm on a real-world robotic platform 1. The experiments are carried out within a 5 m × 3 m area, with a motion capture system employed to measure the drone’s state. The running cost and final cost are 
+
+ω′
+
+> r
+
+cr(xt, ut) = 0 .1|| ut|| 2+100 || xt[3] −0.6|| 2+ω′
+
+> r,obs
+
+|| xt[1 : 2] − xobs [1 : 2] || 2 and ω′ 
+
+> f
+
+cf (xT , xg) = ω′ 
+
+> f
+
+|| xT − xg|| 2,respectively. Here, ωr = ωr,obs and xobs [1 : 2] = 0 5′.The goal state is x∗ 
+
+> g
+
+= 2 0 0.6 01×6 1 01×3
+
+′.Fig. 7 illustrates the prediction of the quadrotor drone at selected times. The average prediction time per step is 92.3 ms, which is lower than the motion capture system’s measuring time step 100 ms. The prediction loss slightly increases during the second turn but continues to converge toward zero as more observations are collected. VI. C ONCLUSIONS 
+
+This paper introduces an online framework for predicting the intention (goal state) of autonomous systems operat-ing in uncertain and dynamic environments. Unlike prior 
+
+> 1Video can be found at https://youtu.be/rKf8zJNEKc8
+
+(a) (b) (c) 
+
+Fig. 7: Snapshots of the experiment for a quadrotor drone. Fig. 7a shows that at t = 35 , the prediction indicates the quadrotor intends to fly in the positive x-direction but does not yet reflect an intention to avoid the no-fly zone or accurately predict its true goal. By t = 60 , as shown in Fig. 7b, the predicted goal shifts into the correct region as the quadrotor begins its second turn. As more measurements are collected, the prediction continues to improve and eventually converges to the ground truth, as illustrated in Fig. 7c. The prediction loss is included in Fig. 7c. approaches that assume a fixed or limited set of goals, our formulation treats the goal as a parameter and allows it to change during execution, even when the system’s dynamics or objective parameters are unknown. The method casts intention prediction as an IOC / IRL problem and employs a shifting horizon update scheme powered by online control-informed learning to update goal estimates as new data arrive. Experiments with a quadrotor, along with simulations under varying noise levels, confirm that the proposed approach enables fast and accurate real-time intention prediction. REFERENCES [1] C. L. McGhan, A. Nasir, and E. M. Atkins, “Human intent prediction using markov decision processes,” Journal of Aerospace Information Systems , vol. 12, no. 5, pp. 393–397, 2015. [2] B. Liu, E. Adeli, Z. Cao, K.-H. Lee, A. Shenoi, A. Gaidon, and J. C. Niebles, “Spatiotemporal relationship reasoning for pedestrian intent prediction,” IEEE RA-L , vol. 5, no. 2, pp. 3485–3492, 2020. [3] A. Rudenko, L. Palmieri, M. Herman, K. M. Kitani, D. M. Gavrila, and K. O. Arras, “Human motion trajectory prediction: A survey,” Int. J. Robot. Res. , vol. 39, no. 8, pp. 895–935, 2020. [4] Y. Huang, J. Du, Z. Yang, Z. Zhou, L. Zhang, and H. Chen, “A survey on trajectory-prediction methods for autonomous driving,” 
+
+IEEE Trans. Intell. Veh. , vol. 7, no. 3, pp. 652–674, 2022. [5] M. Br¨ annstr¨ om, E. Coelingh, and J. Sj¨ oberg, “Model-based threat assessment for avoiding arbitrary vehicle collisions,” IEEE Trans. Intell. Transp. Syst. , vol. 11, no. 3, pp. 658–669, 2010. [6] V. Lefkopoulos, M. Menner, A. Domahidi, and M. N. Zeilinger, “Interaction-aware motion prediction for autonomous driving: A mul-tiple model kalman filtering scheme,” IEEE RA-L , vol. 6, no. 1, pp. 80–87, 2020. [7] Y. Wang, Z. Liu, Z. Zuo, Z. Li, L. Wang, and X. Luo, “Trajectory planning and safety assessment of autonomous vehicles based on motion prediction and model predictive control,” IEEE IEEE Trans. Veh. Technol. , vol. 68, no. 9, pp. 8546–8556, 2019. [8] Y. Guo, V. V. Kalidindi, M. Arief, W. Wang, J. Zhu, H. Peng, and D. Zhao, “Modeling multi-vehicle interaction scenarios using gaussian random field,” in 2019 IEEE ITSC . IEEE, 2019, pp. 3974–3980. [9] P. Kumar, M. Perrollaz, S. Lefevre, and C. Laugier, “Learning-based approach for online lane change intention prediction,” in 2013 IEEE Intelligent Vehicles Symposium (IV) . IEEE, 2013, pp. 797–802. [10] Y. Li, X.-Y. Lu, J. Wang, and K. Li, “Pedestrian trajectory predic-tion combining probabilistic reasoning and sequence learning,” IEEE Trans. Intell. Veh. , vol. 5, no. 3, pp. 461–474, 2020. [11] R. Chandra, T. Guan, S. Panuganti, T. Mittal, U. Bhattacharya, A. Bera, and D. Manocha, “Forecasting trajectory and behavior of road-agents using spectral clustering in graph-lstms,” IEEE RA-L , vol. 5, no. 3, pp. 4882–4890, 2020. [12] J. Gu, C. Sun, and H. Zhao, “Densetnt: End-to-end trajectory predic-tion from dense goal sets,” in Proceedings of the IEEE/CVF ICCV ,2021, pp. 15 303–15 312. [13] B. Wang, E. Adeli, H.-k. Chiu, D.-A. Huang, and J. C. Niebles, “Imitation learning for human pose prediction,” in Proceedings of the IEEE/CVF ICCV , 2019, pp. 7124–7133. [14] J. MacGlashan and M. L. Littman, “Between imitation and intention learning.” in IJCAI , vol. 15, 2015, pp. 3692–3698. [15] P. Abbeel and A. Y. Ng, “Apprenticeship learning via inverse rein-forcement learning,” in ICML , 2004, pp. 1–8. [16] B. D. Ziebart, A. Maas, J. A. Bagnell, and A. K. Dey, “Maximum entropy inverse reinforcement learning,” in AAAI Conference on Arti-ficial Intelligence , 2008, pp. 1433–1438. [17] Z. Liang, W. Jin, and S. Mou, “An iterative method for inverse optimal control,” in 2022 ASCC , 2022, pp. 959–964. [18] Z. Wu, L. Sun, W. Zhan, C. Yang, and M. Tomizuka, “Efficient sampling-based maximum entropy inverse reinforcement learning with application to autonomous driving,” IEEE RA-L , vol. 5, no. 4, pp. 5355–5362, 2020. [19] Z. Huang, J. Wu, and C. Lv, “Driving behavior modeling using naturalistic human driving data with inverse reinforcement learning,” 
+
+IEEE Trans. Intell. Transp. Syst. , vol. 23, no. 8, pp. 10 239–10 251, 2021. [20] H. Zhao, J. Gao, T. Lan, C. Sun, B. Sapp, B. Varadarajan, Y. Shen, Y. Shen, Y. Chai, C. Schmid et al. , “Tnt: Target-driven trajectory prediction,” in CoRL . PMLR, 2021, pp. 895–904. [21] A. Hu, G. Corrado, N. Griffiths, Z. Murez, C. Gurau, H. Yeo, A. Kendall, R. Cipolla, and J. Shotton, “Model-based imitation learn-ing for urban driving,” in NeurIPS , 2022, pp. 20 703–20 716. [22] A. Duan, I. Batzianoulis, R. Camoriano, L. Rosasco, D. Pucci, and A. Billard, “A structured prediction approach for robot imitation learning,” Int. J. Robot. Res. , vol. 43, no. 2, pp. 113–133, 2024. [23] W. Jin, Z. Wang, Z. Yang, and S. Mou, “Pontryagin differentiable programming: An end-to-end learning and control framework,” in 
+
+NeurIPS , 2020, pp. 7979–7992. [24] Z. Liang, W. Hao, and S. Mou, “A data-driven approach for inverse optimal control,” in 2023 IEEE CDC , 2023, pp. 3632–3637. [25] Z. Liang, T. Zhou, Z. Lu, and S. Mou, “Online control-informed learning,” Transactions on Machine Learning Research , 2025. [26] T. Zhou, Z. Liang, Z. Lu, and S. Mou, “Safe online control-informed learning,” IEEE Control Systems Letters , vol. 9, pp. 3083–3088, 2025. [27] M. Elnaggar and N. Bezzo, “An irl approach for cyber-physical attack intention prediction and recovery,” in 2018 Annual American Control Conference (ACC) . IEEE, 2018, pp. 222–227. [28] G. Best and R. Fitch, “Bayesian intention inference for trajectory prediction with an unknown goal destination,” in 2015 IEEE/RSJ IROS . IEEE, 2015, pp. 5817–5823. [29] M. Boutayeb, H. Rafaralahy, and M. Darouach, “Convergence analysis of the extended kalman filter used as an observer for nonlinear deterministic discrete-time systems,” IEEE Transactions on Automatic Control , vol. 42, no. 4, pp. 581–586, 2002.

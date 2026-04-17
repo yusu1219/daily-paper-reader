@@ -1,0 +1,1913 @@
+Title: GPC: An expressive and tractable deep generative model for genetic variation data
+
+URL Source: https://www.biorxiv.org/content/10.1101/2023.05.16.541036v2.full.pdf
+
+Number of Pages: 33
+
+Markdown Content:
+# GPC : An expressive and tractable deep generative model for 1
+
+# genetic variation data 2
+
+## Prateek Anand 1, Anji Liu 2, Meihua Dang 3, Boyang Fu 4, Xinzhu Wei 5,3
+
+## Guy Van den Broeck 1,* , and Sriram Sankararaman 1,6,7,* 
+
+> 4
+
+1Department of Computer Science, UCLA, Los Angeles, CA, USA 5
+
+2Department of Computer Science, National University of Singapore, Singapore 6
+
+3Department of Computer Science, Stanford University, Stanford, CA, USA 7
+
+4Department of Biomedical Informatics, Harvard Medical School, Boston, MA, USA 8
+
+5Department of Computational Biology, Cornell University, Ithaca, NY, USA 9
+
+6Department of Human Genetics, UCLA, Los Angeles, CA, USA 10 
+
+7Department of Computational Medicine, UCLA, Los Angeles, CA, USA 11 
+
+*Joint supervision 12 
+
+Abstract 13 
+
+Generative models play an important role in population genetics, being used to generate artificial 14 
+
+genomes (AGs) that help benchmark methods, test evolutionary hypotheses, and construct reference 15 
+
+panels for imputation while working around data-sharing restrictions. Existing generative models of ge-16 
+
+netic variation, however, struggle to faithfully express dependencies in the data while retaining tractability 17 
+
+and preserving privacy. 18 
+
+We introduce Genetic Probabilistic Circuits ( GPC ), a deep generative model for genetic variation 19 
+
+data based on hidden Chow-Liu trees represented as probabilistic circuits. GPC generalizes traditional 20 
+
+hidden Markov models by allowing arbitrary tree structures over latent variables, enabling it to capture 21 
+
+long-range dependencies among SNPs. GPC is tractable, supporting exact computation of marginal and 22 
+
+conditional probabilities that enables both AG generation and direct genotype imputation (avoiding the 23 
+
+need for simulating AGs). 24 
+
+We show that GPC generates AGs that accurately reproduce population structure and linkage dise-25 
+
+quilibrium patterns across a range of length scales. Compared to other deep generative approaches, GPC 26 
+
+consistently improves imputation accuracy, with particularly strong gains for low-frequency variants and 27 
+
+in populations that are not well-represented in public reference panels. Finally, we show that GPC 28 
+
+better preserves privacy of the training data, thereby providing a practical framework for AG generation 29 
+
+in settings with limited data access. 30 
+
+# 1 Introduction 31 
+
+Generative models of genetic variation play a central role in population genomics [1, 2]. By modeling depen-32 
+
+dencies across individuals and variants, these models support core analyses such as genotype imputation [3], 33 
+
+1
+
+.CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint haplotype phasing [4], and ancestry inference [5]. They also form the foundation of simulators that generate 34 
+
+artificial genomes (AGs) [6, 7, 8, 9, 10], which are widely used to test evolutionary hypotheses, estimate 35 
+
+population genetic parameters, validate empirical results, and benchmark new methods. As the sharing 36 
+
+of primary genetic data becomes increasingly restricted due to privacy and consent constraints, accurate 37 
+
+simulation tools have become essential for reproducibility and equity. Trained generative models, or data 38 
+
+simulated from them, can in principle be shared without requiring access to identifiable genomic data. 39 
+
+Classical population genetic simulators rely on the coalescent model [11], which generates genomes based 40 
+
+on demographic history together with mutation and recombination rates. The coalescent with recombina-41 
+
+tion [12] connects observed genetic variation to latent genealogies that change along the genome [13] and is 42 
+
+highly expressive, but exact inference under this model is computationally challenging, motivating tractable 43 
+
+approximations. One class approximates the coalescent as a Markovian process along the genome [14, 15], 44 
+
+forming the basis of widely used simulators such as msprime [9] and its extensions [10]. A second class 45 
+
+dispenses with explicit genealogical modeling and instead directly approximates the data distribution. A46 
+
+prominent example is the product-of-approximate-conditionals (PAC) model [16], which naturally yields 47 
+
+a hidden Markov model (HMM) [17]. HMM-based models have proven highly successful in applications 48 
+
+including haplotype phasing [18, 19], genotype imputation [20, 3], and ancestry inference [21, 22]. 49 
+
+Motivated by the success of deep learning, recent work has explored deep generative models as an al-50 
+
+ternative approach to represent genetic variation [23, 24, 25]. Models based on generative adversarial net-51 
+
+works (GANs) [25, 26, 27, 28], variational autoencoders (VAEs) [23, 29, 30], restricted Boltzmann machines 52 
+
+(RBMs) [25], and more recently di !usion models [31] can be more expressive than HMMs and often pro-53 
+
+duce AGs that visually resemble real genomes in principal component analysis (PCA) or allele frequency 54 
+
+summaries. However, these models have critical limitations for genomic applications. First, GANs do not 55 
+
+define a probability distribution over the data, making likelihood-based inference impossible. RBMs define 56 
+
+a distribution but require computing an intractable partition function over exponentially many configu-57 
+
+rations, preventing exact likelihood evaluation. VAEs define a probability distribution but the marginal 58 
+
+likelihood requires integrating over a continuous latent space with a nonlinear decoder, which is intractable; 59 
+
+only a lower bound (the ELBO) is accessible in practice. Di !usion models can in principle compute exact 60 
+
+likelihoods via probability flow ordinary di !erential equations, but scale poorly to SNP data: existing ap-61 
+
+proaches [31] require lossy dimensionality reduction (e.g., per-gene PCA) as a preprocessing step before the 62 
+
+model operates [31], and have not been evaluated on imputation tasks. Second, none of these approaches 63 
+
+support e ”cient conditional probability estimation. This limitation makes model comparison di ”cult and 64 
+
+limits their use in downstream tasks such as genotype imputation, which require computing the probability 65 
+
+of unobserved variants conditioned on observed variants. A common workaround involves generating AGs 66 
+
+from these models, which then serve as a reference panel for imputation methods such as Impute5, Beagle, 67 
+
+or Minimac [32, 33, 34], though this approach can introduce additional noise in the imputation process. 68 
+
+Third, training these models is challenging due to complex optimization objectives and large hyperparam-69 
+
+eter spaces, and convergence must be assessed through subjective visual inspection rather than principled 70 
+
+likelihood monitoring. These di ”culties collectively highlight the need for deep generative models that are 71 
+
+both expressive and tractable. 72 
+
+We address this need by introducing GPC (Genetic Probabilistic Circuits), a class of deep generative 73 
+
+models that fits genetic variation data with high accuracy while supporting e ”cient and exact inference. To 74 
+
+model the distribution over single nucleotide polymorphisms (SNPs) in an individual, we propose a latent 75 
+
+variable model in which each SNP is associated with a hidden variable and the hidden variables form a 76 
+
+2
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+tree-structured graphical model. This model, termed the hidden Chow-Liu tree (HCLT) [35], generalizes the 77 
+
+HMM. Classical HMMs impose a chain structure where hidden variables corresponding to consecutive SNPs 78 
+
+are adjacent in the tree. HCLTs relax this constraint by allowing arbitrary tree structures, which enables 79 
+
+the model to capture long-range dependencies, or linkage disequilibrium (LD), across the genome [36]. This 80 
+
+flexible structure allows HCLTs to more faithfully represent the distribution of genetic variation. While 81 
+
+HCLTs are more expressive than HMMs, naively training and performing inference in HCLTs at the scale 82 
+
+required for modern genomic datasets would be computationally prohibitive. Our approach represents HCLTs 83 
+
+as probabilistic circuits (PCs) [37, 38], a circuit-based framework that permits tractable inference tasks such 84 
+
+as exact likelihood and conditional probability computation. This representation allows us to leverage 85 
+
+stochastic gradient-based learning and GPU acceleration to train HCLTs with millions of parameters on 86 
+
+large genomic datasets. 87 
+
+GPC , like GANs and RBMs, can generate AGs for use as reference panels with standard imputation 88 
+
+tools. Unlike these methods, GPC can also perform imputation directly through e ”cient computation of 89 
+
+conditional probabilities, without the need for generating AGs as an intermediate step. We show that this 90 
+
+ability further improves imputation accuracy. 91 
+
+We first compare GPC to baselines on genomic regions chosen from the 1000 Genomes Project (1KG) 92 
+
+and UK Biobank (UKBB), demonstrating that GPC achieves higher held-out log-likelihoods than simpler 93 
+
+probabilistic models and generates AGs that accurately capture population structure and linkage disequi-94 
+
+librium patterns across all distance ranges. We then evaluate GPC extensively for genotype imputation. 95 
+
+Across both datasets, GPC yields significant improvements in imputation accuracy compared to other deep 96 
+
+generative models, with substantial improvements in settings where reference genomes from the target pop-97 
+
+ulation are not publicly available. In such population-specific settings, GPC consistently outperforms other 98 
+
+deep generative methods, with particularly strong gains for low-frequency variants. Finally, we find that 99 
+
+AGs produced by GPC o!er improved privacy properties compared to previous deep generative models. 100 
+
+Overall, our results indicate that the increased expressivity and tractability of GPC lead to more accurate 101 
+
+and privacy-preserving models of human genetic variation. 102 
+
+# 2 Results 103 
+
+## 2.1 Methods Overview 104 
+
+We present GPC , a deep generative model for genetic variation data. GPC is based on hidden Chow-105 
+
+Liu trees (HCLTs) [35], a class of latent variable models that generalize hidden Markov models (HMMs), 106 
+
+represented as probabilistic circuits (PCs) [37, 38] for e ”cient inference and learning. 107 
+
+Hidden Chow-Liu Trees HCLTs are tree-structured graphical models that represent the probability 108 
+
+distribution over observed random variables, X = ( X1, . . . , X N ). In the context of genetic variation across 109 
+
+N SNPs, each observed Xn represents the genotype at SNP n (e.g., Xn → {0, 1} for haploid genomes). 110 
+
+HCLTs rely on the following key designs: 111 
+
+• Hidden Variable Mapping: For every observed variable Xn, the model introduces a corresponding 112 
+
+hidden variable Zn (which takes one of L discrete values). Together, these form hidden variables 113 
+
+Z = ( Z1, . . . , Z N ). 114 
+
+3
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+• Chow-Liu Tree Architecture: Each observed variable Xn connects solely to its hidden counterpart Zn.115 
+
+The hidden variables, however, connect to each other to form a tree structure. This tree is learned 116 
+
+using the Chow-Liu algorithm [39] to capture the strongest pairwise correlations between variables 117 
+
+(Figure 1). 118 
+
+• Parameterization: The entire HCLT is defined by just two sets of conditional probability distributions: 119 
+
+the emissions P (Xn|Zn) and the tree transitions P (Zn|ZPa( n)), where Pa( n) denotes the parent of node 120 
+
+n in the hidden variable tree. 121 
+
+The critical distinction from HMMs is structural. Classical HMMs impose a chain structure where hidden 122 
+
+variables corresponding to consecutive SNPs are adjacent in the tree ( Z1 ↑ Z2 ↑ . . . ↑ ZN ). This chain 123 
+
+topology can only propagate information between distant SNPs through all intermediate variables. HCLTs 124 
+
+relax this constraint by allowing arbitrary tree structures, so that SNPs with strong long-range correlations 125 
+
+(such as X1 and X5 being highly correlated without being correlated with intermediate SNPs) can be placed 126 
+
+close together in the tree (Figure 1). This flexible structure allows HCLTs to more faithfully capture linkage 127 
+
+disequilibrium patterns at all length scales. 128 
+
+Probabilistic Circuits and Tractable Inference While HCLTs are more expressive than HMMs, 129 
+
+naively training and performing inference in HCLTs at the scale required for modern genomic datasets would 130 
+
+be computationally prohibitive. Our key insight is to represent HCLTs as probabilistic circuits (PCs) [37, 38]. 131 
+
+A PC represents a joint probability distribution through a directed acyclic graph (DAG) consisting of input, 132 
+
+sum, and product nodes. Product nodes define factorized distributions over their inputs, while sum nodes 133 
+
+represent mixtures weighted by learnable parameters. Under structural constraints known as smoothness 134 
+
+and decomposability, arbitrary marginal queries can be computed in time linear in the size of the circuit. 135 
+
+This tractability is what enables GPC to perform three key operations e ”ciently: (1) computing likelihoods 136 
+
+on held-out data for principled model comparison, (2) generating artificial genomes via ancestral sampling, 137 
+
+and (3) performing direct genotype imputation through exact conditional probability computation. By rep-138 
+
+resenting HCLTs as equivalent PCs and training them using the PC package PyJuice [40], we can extensively 139 
+
+parallelize Expectation-Maximization (EM) updates on GPUs, enabling e ”cient training even for models 140 
+
+with over 88 million parameters (Section 4.2). 141 
+
+Generating AGs from GPC is performed via ancestral sampling through the circuit in time linear in 142 
+
+the circuit size. For genotype imputation, GPC computes conditional probabilities p(Xmissing |Xobserved )143 
+
+directly as ratios of marginal queries, both of which can be evaluated via a single feedforward pass through 144 
+
+the circuit. This direct imputation capability, unique to GPC among the deep generative approaches we 145 
+
+consider, eliminates the need for intermediate AG generation and, as we show, yields consistently higher 146 
+
+accuracy (see Section 4.2.2 for full details on sampling and conditional inference). 147 
+
+## 2.2 Data 148 
+
+Our experiments evaluate di !erent aspects of GPC in terms of its ability to generate realistic AGs, its 149 
+
+ability to perform genotype imputation, and its privacy properties. We perform the evaluations on three 150 
+
+datasets with distinct properties: 1000 Genomes Project Phase 3 (1KG) [41], UK Biobank (UKBB) [42], 151 
+
+and high-coverage 1KG (high-coverage 1KG) [43], with the high-coverage 1KG dataset only being used for 152 
+
+the array-based imputation experiment (see Section 4.1 for details). 153 
+
+4
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+## 2.3 Evaluation 154 
+
+Baselines We compare GPC against two categories of baselines. The first category consists of deep 155 
+
+generative models that have been previously proposed for AG generation: (1) generative adversarial networks 156 
+
+(WGAN ) and (2) restricted Boltzmann machines ( RBM ) as implemented in [25]. We focus our comparison 157 
+
+on these two methods as they are the most established deep generative approaches specifically designed and 158 
+
+benchmarked for the local genetic structure and imputation tasks we evaluate here. More recent approaches 159 
+
+including VAEs [29, 30] and di !usion models [31] have been proposed for related but distinct tasks, and do 160 
+
+not support e ”cient, tractable probabilistic inference; we leave systematic comparison with these methods 161 
+
+to future work. For both WGAN and RBM baselines, we use the samples generated by the corresponding 162 
+
+authors for comparison 1 in our 1KG experiments, but we also retrain their models on our own training split 163 
+
+to ensure a fair comparison. In imputation experiments, we additionally compare against Impute5 [32], a 164 
+
+state-of-the-art imputation tool widely used in genetics. Impute5 serves a dual role: it is used with real 165 
+
+reference genomes to establish performance benchmarks, and it is used with AG reference panels generated 166 
+
+by each method to evaluate their utility for imputation. 167 
+
+The second category consists of simpler probabilistic graphical models (PGMs) that support tractable 168 
+
+likelihood computation: fully-factorized distributions ( Indep ), Markov chain models of order 1 ( Markov ), 169 
+
+and non-homogeneous hidden Markov models ( HMM ). These serve as baselines for density estimation and 170 
+
+AG quality comparisons. 171 
+
+Evaluation criteria We evaluate these models using the following metrics: (1) log-likelihood on test data 172 
+
+to assess the capability of each model as a density estimator; (2) summaries of AGs sampled from each 173 
+
+model, including the top principal components and linkage disequilibrium at pairs of SNPs; (3) genotype 174 
+
+imputation, which evaluates the models’ utility on an important downstream task; and (4) privacy analysis 175 
+
+of the AGs sampled from each model. 176 
+
+## 2.4 GPC trains e !ciently with objective convergence criteria 177 
+
+Training GPC requires minimal hyperparameter tuning. We set the number of latent states to 128 (the 178 
+
+maximum feasible given memory constraints) and use a small pseudocount (0.005) for smoothing. Models 179 
+
+were trained for 2,000–5,000 epochs depending on dataset size. We use the PC package PyJuice [40] to train 180 
+
+GPC e”ciently on GPUs, achieving EM updates in under 2, 10, and 3 seconds per epoch on the 1KG, 181 
+
+UKBB, and high-coverage 1KG datasets, respectively. On a single NVIDIA RTX A5000 GPU with 24GB 182 
+
+available memory, GPC trains in roughly 2, 6, and 4 hours on each dataset, respectively. Once the model is 183 
+
+loaded, generating a single sample can be done in under 2, 5, and 3 seconds for each dataset, respectively. 184 
+
+Imputing all missing SNPs within a single sample can be done in 20 milliseconds. A key advantage over 185 
+
+other deep generative approaches is that convergence can be monitored via held-out log-likelihood, providing 186 
+
+an objective stopping criterion rather than subjective visual inspection. Full training details for GPC and 187 
+
+all baseline methods are provided in Section 4.4. 188 
+
+## 2.5 GPC accurately reconstructs local genetic structure 189 
+
+We first compared the ability of di !erent generative models to represent genetic variation in the 1KG and 190 
+
+UKBB datasets. We simulate AGs with GPC and all five baselines ( WGAN , RBM , HMM , Indep , and 191     
+
+> 1Note that [25] did not perform train/test splits so WGAN and RBM are actually trained on train+test.
+
+5
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Markov ) for comparison. For both datasets, we use an 80% train / 20% test split performed at the 192 
+
+individual level before haplotype separation; we generate 5 ,008 AGs from each model for 1KG and 10 ,000 193 
+
+AGs for UKBB. 194 
+
+GPC learns more accurate probabilistic models than HMM , Markov , and Indep as measured by their 195 
+
+log likelihood on the test dataset that was not used for model fitting (Table 1). Note that we do not compare 196 
+
+with WGAN and RBM since they do not support tractable exact likelihood computation. We additionally 197 
+
+evaluated the quality of AGs based on whether they preserve distances across pairs of haploid genomes. To 198 
+
+do this, we compute the pairwise di !erences of haploid genomes within a single dataset or between the test 199 
+
+dataset and an AG dataset and compute the Wasserstein distance between these pairs of distributions; a 200 
+
+lower Wasserstein distance indicates that the AGs tend to be more similar to real genomes in the test dataset. 201 
+
+WGAN , RBM , and GPC all capture the distribution well with GPC having second-lowest distance behind 202 
+
+WGAN on 1KG and having the lowest distance on UKBB (Figure S1 and rows 1-2 of Table S1). 203 
+
+We then analyze the quality of AGs generated by all models in terms of capturing commonly-used 204 
+
+summaries of genetic variation data. To visualize all methods in the same latent space, we merge eight 205 
+
+datasets (training set, test set, and AGs from six methods) and apply a single PCA to the combined data. 206 
+
+Inspecting the top six principal components (PCs) of genomes in the test set and the AGs, we find that AGs 207 
+
+generated from GPC qualitatively capture the dominant structure in this dataset as do the deep learning 208 
+
+methods ( WGAN and RBM ), unlike Indep , Markov , and HMM (Figure 2 for 1KG and Figure S2 for 209 
+
+UKBB). To quantify the accuracy of these summaries, we compute the Wasserstein distance between the 210 
+
+2D PCA representations of the test genomes versus the AGs (Table S1) and find that distances for the deep 211 
+
+learning methods ( WGAN , RBM , and GPC ) tend to be lower than simpler models. 212 
+
+We also examined patterns of linkage disequilibrium (LD) to assess how the pairwise short and long-213 
+
+range correlations of SNPs can be captured by AGs. While WGAN and RBM tend to be accurate at longer 214 
+
+length scales and HMM and Markov are accurate at shorter length scales, GPC is accurate across all 215 
+
+length scales (Figure 3). Finally, we examined the topology of the CLT learned on the 1KG dataset to gain 216 
+
+intuition into why GPC captures LD at all scales. In contrast to the chain-structured HMM in which every 217 
+
+node has degree at most 2 and every edge connects adjacent SNPs along the genome, the learned CLT has 218 
+
+4,599 leaf nodes, 397 nodes with degree ↓ 5, and a maximum degree of 161, with 18.3% of edges connecting 219 
+
+SNPs more than 1,000 positions apart in sequential index (Figure 4; Supplementary Figures S3 and S4). 220 
+
+The non-chain tree topology allows the model to place strongly correlated SNPs close together in the tree 221 
+
+regardless of their genomic positions, enabling direct propagation of information across long ranges without 222 
+
+passing through all intermediate variables. 223 
+
+## 2.6 GPC improves imputation accuracy across diverse scenarios 224 
+
+A key downstream application of generative models and AGs is genotype imputation. To assess the quality 225 
+
+of artificial genomes (AGs) produced by GPC and competing generative models, we evaluate their utility in 226 
+
+several imputation settings across the datasets described in Section 2.2. One approach is to generate AGs 227 
+
+from these models, which then serve as reference panels for Impute5 [32] and other standard imputation 228 
+
+tools. Alternatively, as described in Section 2.1, GPC can perform direct imputation by leveraging e ”cient 229 
+
+conditional probability computation over the learned model, without the need to generate AGs. 230 
+
+Following the same training protocol as in Section 2.5, we use 80/20 train/test splits and generate the 231 
+
+same number of AGs per dataset. For population-specific experiments, the same 80/20 split is applied 232 
+
+within the target population. Following the experimental protocol established in prior work [32, 33, 44], we 233 
+
+6
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+evaluate imputation accuracy at each SNP by removing the selected SNP from the test haplotypes while 234 
+
+keeping all other SNPs observed. Imputation is then performed conditional on the remaining observed SNPs 235 
+
+in the test haplotypes. We calculate the squared Pearson correlation ( r2) between the imputed posterior 236 
+
+probabilities of carrying allele 1 and the true allelic state at the target SNP (excluding monomorphic SNPs), 237 
+
+aggregating results into bins by minor allele frequency (MAF) with 95% confidence intervals computed from 238 
+
+10 bootstrapped replicates. This imputation protocol follows the approach of Yu et al. [44] (Sections 2.6.1 239 
+
+and 2.6.2). We additionally evaluate imputation from genotyping arrays following Rubinacci et al. [32] and 240 
+
+Browning et al. [33] for which we use the high-coverage 1KG dataset (Section 2.6.3) (additional details in 241 
+
+Section 4.3). 242 
+
+We consider two broad scenarios for imputation. In the first (general) scenario, imputation is applied to 243 
+
+genotypes from a cosmopolitan sample (test set) consisting of individuals from multiple ancestries with AGs 244 
+
+generated by di !erent models that were also trained on a cosmopolitan panel of matched ancestries consisting 245 
+
+of a distinct set of individuals (training set). This setting reflects common practice in large-scale genetic 246 
+
+studies where diverse reference panels are used to impute missing genotypes across heterogeneous cohorts. 247 
+
+The second (population-specific) scenario considers a setting in which imputation is to be performed in a 248 
+
+population for which reference genomes are limited or restricted. Because the target population might be 249 
+
+under-represented in public reference panels, imputation accuracy in these populations might be adversely 250 
+
+impacted. This scenario is particularly relevant for underrepresented populations in genomic research, where 251 
+
+privacy constraints or limited sequencing resources may restrict the availability of ancestry-matched reference 252 
+
+data. In a realistic setting, a researcher may only have access to publicly available European reference 253 
+
+genomes while population-specific data remains private. GPC and other generative approaches can learn 254 
+
+from such private data and either generate AGs or perform direct imputation without exposing the underlying 255 
+
+genomes. For the population-specific analyses, we designate a target population which is limited or restricted 256 
+
+in access. We consider two sets of target populations: all individuals of non-European ancestry and all 257 
+
+individuals of African ancestry. In each of these settings, we also explore how the accuracy of imputation is 258 
+
+impacted when AGs are combined with real genomes (possibly with di !erent genetic ancestry characteristics 259 
+
+than the target population) that might be available. 260 
+
+2.6.1 General Imputation 261 
+
+We first examine the general setting, in which models are trained on genomes from diverse ancestries and 262 
+
+are then used to impute into target genomes drawn from similar ancestries. To mimic this scenario, we train 263 
+
+and test models on random splits of the 1KG and UKBB datasets. For 1KG, we also include a comparison 264 
+
+to 5 ,008 AGs based on fitting WGAN and RBM to the same genomic region that were made available by 265 
+
+the authors of [25]. 266 
+
+We see that reference panels composed entirely of real genomes used with Impute5 achieve the highest 267 
+
+imputation accuracy across MAF bins, providing an approximate upper bound on achievable performance 268 
+
+(Figure 5a for 1KG and Figure 5b for UKBB). Among the generative models, GPC obtains the highest 269 
+
+imputation accuracy across MAF bins. Averaged across both datasets, GPC (direct) achieves a 0.168 (27.5%) 270 
+
+improvement in r2 over the next best method, RBM (0.230 (174%) for low-frequency variants with MAF 271 
+
+< 1%). GPC (direct) imputation, via conditional probability computation rather than simulated AGs, tends 272 
+
+to be the more accurate version, achieving a 0.105 (15.5%) improvement in r2 (0.195 (61.5%) for low-frequency 273 
+
+variants) over GPC with AG-based imputation, likely due to directly targeting the imputation objective 274 
+
+rather than relying on simulated AGs. To assess the robustness of these findings, we repeated the UKBB 275 
+
+7
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+general imputation experiment on five additional LD blocks across distinct chromosomes (see Section 4.1.2 276 
+
+for details) to find the same qualitative pattern holds across all regions: GPC (direct) consistently improves 277 
+
+over RBM (the next best method) across the range of MAF (Figure 5c; additional per-chromosome results 278 
+
+in Supplementary Figure S5). 279 
+
+2.6.2 Population-Specific Imputation 280 
+
+We next consider imputation in populations for which reference genomes are limited or restricted. Because 281 
+
+large public datasets are predominantly of European ancestry, we consider scenarios where the target popula-282 
+
+tion consists of individuals of either non-European or African ancestry. In this setting, imputation accuracy 283 
+
+in the target population can be degraded when public European reference genomes are the only data avail-284 
+
+able to the imputation method. AGs specific to the target population generated by GPC can mitigate this 285 
+
+challenge by learning from an ancestry-matched set of private reference genomes. We also evaluate combined 286 
+
+reference panels formed by augmenting real European data with population-specific AGs. 287 
+
+Analogous to the general imputation experiments, GPC (direct) remains the most accurate across MAF 288 
+
+bins (Figures 6 and S6 for 1KG and UKBB respectively). Averaged across datasets and ancestries, GPC 289 
+
+(direct) achieves a 0.154 (33%) improvement in r2 over the next best method, RBM (0.202 (279%) for 290 
+
+low-frequency variants). Unlike in the general imputation setting, GPC , when used for direct imputation, 291 
+
+tends to be more accurate than using Impute5 with a reference panel of European genomes, likely due to 292 
+
+the distributional mismatch between the reference and target populations. This holds consistently across 293 
+
+the 1KG dataset. In the UKBB dataset, GPC (direct) outperforms Impute5 for common variants but is 294 
+
+slightly less accurate for rare variants. We attribute this to our balanced sampling strategy (Section 4.1.2), 295 
+
+in which the European reference panel available to Impute5 and the population-specific training data for 296 
+
+the generative models are matched in sample size. Under this design, a large European reference panel 297 
+
+(even one mismatched in ancestry) can partially compensate for distributional mismatch at rare variants, 298 
+
+where population-specific sample sizes are most limiting. Importantly, when the real European genomes are 299 
+
+incorporated into the training of the generative models (the “combined” setting), all methods improve, and 300 
+
+GPC (direct combined) remains competitive with or above Impute5 across MAF bins, indicating that the 301 
+
+gains from ancestry matching and from larger sample size are complementary. Averaged across datasets 302 
+
+and ancestries, GPC (direct) achieves a 0.056 (12.3%) improvement in r2 over Impute5 using European 303 
+
+genomes (0.012 (42.1%) for low-frequency variants). Finally, we find that combining population-specific 304 
+
+AGs with European genomes consistently improves accuracy across all MAF bins. Averaged across datasets 305 
+
+and ancestries, GPC (direct) achieves a 0.011 (1.8%) improvement in r2 over itself when including European 306 
+
+genomes in the reference panel (0.023 (12.3%) for low-frequency variants). 307 
+
+Taken together, these results demonstrate that population-specific AGs from GPC can substantially 308 
+
+enhance imputation accuracy in underrepresented groups, either by augmenting existing reference panels 309 
+
+or through direct conditional imputation. The magnitude of improvement depends on several interacting 310 
+
+factors: the degree of genetic distance between the target population and the available public reference panel, 311 
+
+the sample size of the private population-specific data, and the frequency of the variants being imputed. 312 
+
+When public reference data is both ancestrally mismatched and matched in size to the private data, as 313 
+
+in our balanced UKBB design, gains over a large European-only panel are most pronounced for common 314 
+
+variants, while rare variant performance remains sensitive to total sample size regardless of ancestry. These 315 
+
+findings suggest that in practice, combining ancestry-matched private data with available public genome 316 
+
+(even those from a di !erent ancestry) will generally yield the best imputation accuracy, and that the relative 317 
+
+8
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+value of each component will depend on the specific target population and variant frequency spectrum. 318 
+
+2.6.3 Array-based Imputation 319 
+
+We also evaluate GPC in a more realistic scenario of imputation from variants genotyped on a commonly-320 
+
+used SNP array. In this experiment, we attempted to impute SNPs genotyped in the high-coverage 1KG 321 
+
+dataset from variants that were typed on the HumanOmni5Exome array (see Section 4.1.3 for details). 322 
+
+GPC (direct) remains the most accurate in both the general (Figure 7) and population-specific settings 323 
+
+(Figure 8). In the general setting, GPC (direct) achieves a 0.020 (3.5%) improvement in r2 over the next best 324 
+
+method, RBM (0.043 (14.3%) for low-frequency variants). In the population-specific setting, averaged across 325 
+
+both ancestries, GPC (direct) achieves a 0.030 (5.3%) improvement in r2 over RBM (0.040 (12.7%) for low-326 
+
+frequency variants). Similar to the previous population-specific setting, GPC (direct) outperforms Impute5 327 
+
+with the European-only reference panel, achieving a 0.285 (96.5%) improvement in r2 averaged across both 328 
+
+ancestries (0.324 (1 ,123%) for low-frequency variants). In contrast to our previous imputation experiments, 329 
+
+here the best performance is achieved by GPC (direct) trained solely on the population-specific data, rather 330 
+
+than a combined population-specific plus European dataset. Thus, the optimal imputation strategy is 331 
+
+likely determined by a combination of genetic ancestries, sample size, and SNP sets, and needs further 332 
+
+investigation. These results suggest that in realistic imputation scenarios, population-specific modeling may 333 
+
+provide accuracy gains over approaches that aggregate across populations. 334 
+
+## 2.7 GPC balances considerations of privacy and utility 335 
+
+To evaluate the privacy of the AGs, we compute the nearest neighbor adversarial accuracy ( AAT S ) metric 336 
+
+introduced by Yale et al. [45]. The metric decomposes into two components: AA TRUTH , which measures 337 
+
+whether real samples are closer to other real samples than to synthetic ones, and AA SYN , which measures 338 
+
+the analogous property for synthetic samples. Values near 0.5 for both components indicate an ideal balance 339 
+
+between utility and privacy. We report AA TRUTH and AA SYN separately rather than their average, as the 340 
+
+overall AAT S can mask pathological cases where poor values in one component cancel those in the other. 341 
+
+We evaluate on both training and held-out test sets and standardize genotypes prior to distance computation 342 
+
+as this upweights the impact of rare variants which tend to be more challenging to model (see Section 4.5.1 343 
+
+for details). 344 
+
+Under this evaluation, GPC achieves AA SYN closest to 0.5 across all splits and both datasets, and 345 
+
+AA TRUTH closest to 0.5 in all but one case (1KG test, where WGAN is marginally closer: 0.818 vs. 0.820), 346 
+
+indicating the best overall balance between utility and privacy (Table 2). The near-zero AA SYN values for 347 
+
+RBM paired with near-unity AA TRUTH reveal a distinct failure mode: real samples still find other real sam-348 
+
+ples as their nearest neighbors (real-to-real distances are smaller than real-to-synthetic), but each synthetic 349 
+
+sample is closer to some individual real genome than to any other synthetic sample. Rather than form-350 
+
+ing a coherent distribution, RBM produces samples that float near individual training haplotypes without 351 
+
+capturing broader structure, a privacy risk because each synthetic genome can potentially be traced back 352 
+
+to a specific training individual. Conversely, WGAN exhibits uniformly high values for both components, 353 
+
+indicating that its synthetic distribution occupies a region largely disjoint from the real data, sacrificing 354 
+
+utility. We note that even for GPC , AA TRUTH remains noticeably above 0.5, suggesting that the AGs are 355 
+
+still somewhat distinguishable from real data. 356 
+
+9
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+# 3 Discussion 357 
+
+In this work, we introduced GPC , a deep generative model for genetic variation based on hidden Chow-Liu 358 
+
+trees (HCLTs) and probabilistic circuits (PCs). Unlike prior deep generative models (e.g., GANs, VAEs, and 359 
+
+RBMs), GPC combines tractable probabilistic inference with an expressive latent variable structure, enabling 360 
+
+principled convergence monitoring via held-out log-likelihood, accurate reconstruction of population structure 361 
+
+and linkage disequilibrium patterns across all distance scales, and direct genotype imputation through exact 362 
+
+conditional probability computation. In population-specific settings, GPC (direct) consistently outperforms 363 
+
+other deep generative methods as well as Impute5 using publicly available European reference genomes, 364 
+
+with particularly strong gains for low-frequency variants that are disproportionately population-specific. We 365 
+
+also found that GPC AGs provide improved privacy properties compared to RBMs and WGANs, though 366 
+
+we emphasize that demonstrating improved performance on a single metric does not guarantee complete 367 
+
+privacy preservation. Other attack models, such as membership inference attacks [46, 47] or attribute 368 
+
+inference attacks [48], may still pose risks. Future work should explore whether GPC can be extended to 369 
+
+provide formal privacy guarantees through di !erentially private EM algorithms [49]. 370 
+
+Despite these advantages, several limitations remain. First, scaling GPC to full genome length remains 371 
+
+challenging and will likely require hierarchical or distributed approaches. A straightforward approach to 372 
+
+whole genome data would involve applying GPC to LD blocks which are treated as independentof each 373 
+
+other though such an approach is likely to ignore LD across blocks. Second, our current implementation of 374 
+
+GPC is restricted to haploid genomes to enable direct comparisons with prior approaches. Extending GPC 375 
+
+to generate diploid genotype data would increase the applicability of the model. Third, like all generative 376 
+
+approaches, GPC inherits biases from the training data, and ensuring fairness across diverse cohorts remains 377 
+
+an open challenge. Fourth, additional downstream benchmarks such as rare variant association studies, fine-378 
+
+mapping, or polygenic risk scores would provide a more complete picture of utility. Finally, our experiments 379 
+
+focused on single genomic regions; genome-wide evaluation would better assess robustness across varying LD 380 
+
+structures and recombination rates. 381 
+
+Additionally, recent work has extended the space of deep generative approaches for genetic data to include 382 
+
+VAEs [29, 30], GANs operating in reduced-dimensional spaces [26, 28], and di !usion models [31], as well as 383 
+
+genome-wide WGAN and CRBM variants [25]. Systematically comparing GPC against these approaches 384 
+
+across imputation and other downstream tasks, and extending all methods to genome-wide scales, remains 385 
+
+an important direction for future work. 386 
+
+# 4 Materials and Methods 387 
+
+## 4.1 Datasets 388 
+
+4.1.1 1000 Genomes Project Phase 3 (1KG) 389 
+
+We first use data from the 1000 Genomes Project (Phase 3), consisting of 2,504 unrelated diploid genomes 390 
+
+spanning diverse ancestries. Because the genomes are phased, we split each into its two constituent haplo-391 
+
+types, yielding 5,008 haplotypes in total. To avoid any possibility of data leakage, all train/test splits are 392 
+
+performed at the diploid-individual level, before haplotype separation. 393 
+
+Following prior work [24, 25], we analyze a contiguous 10K-SNP region on chromosome 15 (15:27,379,578 394 
+
+– 15:29,625,035). This dataset is used primarily to compare GPC to baselines and to evaluate how well it 395 
+
+10 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+captures population and LD structure. It is also used in our single-SNP imputation experiments. 396 
+
+4.1.2 UK Biobank (UKBB) 397 
+
+To evaluate performance in a larger, secondary cohort, we analyze genotypes from the UK Biobank (UKBB). 398 
+
+We analyzed high-quality imputed SNPs (with a hard call threshold of 0 .2 and an INFO score ↓ 0.8) with 399 
+
+MAF ↓ 0.1%. We apply standard quality control by retaining SNPs that are under Hardy-Weinberg equi-400 
+
+librium ( p < 10 →6) and are confidently imputed in more than 99% of the individuals. We retain individuals 401 
+
+with no kinship to other individuals (UKBB field 22021) and exclude those with missing ancestry informa-402 
+
+tion. Following these procedures, we select an LD block on chromosome 22 (22:29,456,546 – 22:32,665,772). 403 
+
+This yields 337,862 individuals and 9,820 SNPs. To assess robustness across genomic regions, we addition-404 
+
+ally select five LD blocks on separate chromosomes: chromosome 2 (2:118,367,466 – 2:121,303,783; 9,227 405 
+
+SNPs), chromosome 11 (11:101,331,121 – 11:103,959,636; 9,507 SNPs), chromosome 12 (12:85,990,426 – 406 
+
+12:89,682,122; 9,823 SNPs), chromosome 14 (14:72,889,615 – 14:76,444,767; 9,248 SNPs), and chromosome 18 407 
+
+(18:51,554,175 – 18:55,213,838; 9,415 SNPs). These additional regions are used for the general imputation 408 
+
+replication experiment. We phased all data using Beagle 5.5. 409 
+
+To ensure computational feasibility for all methods while maintaining statistical power, we randomly 410 
+
+select 5,000 individuals each from the European (EUR), non-European (Non-EUR), and African (AFR) 411 
+
+ancestry groups, yielding 10,000 haplotypes per group after phasing. Due to partial overlap between the 412 
+
+Non-EUR and AFR subsets, the combined imputation dataset includes 26,924 total haplotypes. Similar to 413 
+
+1KG, we use this dataset to evaluate population/LD structure and single-SNP imputation. The balanced 414 
+
+sampling strategy also allows us to assess whether equal amounts of European and non-European data can 415 
+
+compensate for distributional mismatch when imputing into non-European test populations. 416 
+
+4.1.3 High-coverage 1KG 417 
+
+To evaluate GPC in a realistic imputation scenario, we consider the high-coverage whole-genome sequencing 418 
+
+release of 1KG, using the same genomic region as in the earlier 1KG analysis, mapped to build 38 coordinates 419 
+
+(15:27,134,431 – 15:29,332,831). We restrict the analysis to the same set of 2,504 unrelated individuals. This 420 
+
+region contains 56,766 variants. After selecting biallelic SNPs and removing those with minor allele count 421 
+
+(MAC) ↔ 20, 14,670 SNPs remain. 422 
+
+Among these, 2,119 SNPs are present on the HumanOmni5Exome-4v1-2 A genotyping array. The remain-423 
+
+ing 12,551 SNPs (86%) are imputed simultaneously, providing a setting that closely mirrors real imputation 424 
+
+pipelines. This dataset is used for our array-based imputation experiments, both overall and stratified by 425 
+
+ancestry. 426 
+
+## 4.2 Model and Inference Methods 427 
+
+4.2.1 Hidden Chow-Liu Trees 428 
+
+Hidden Chow-Liu trees (HCLTs) [35] represent a distribution over a collection of random variables (RVs) 429 
+
+(Z = ( Z1, . . . , Z N ), X = ( X1, . . . , X N )). Z denotes hidden or latent RVs while X denotes observed RVs. 430 
+
+The joint distribution is described by a graphical model ( G) in which the nodes in the graph represent the 431 
+
+RVs and the lack of edges among the nodes represents conditional independence assumptions. In HCLTs, we 432 
+
+have edges from each hidden variable to its corresponding observed random variable ( Zn ↑ Xn) while the 433 
+
+edges among the hidden variables form a tree. When the graph over the hidden variables is a chain ( Z1 ↑434 
+
+11 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Z2 ↑ . . . Z N ), we obtain a hidden Markov model (HMM). By permitting tree-structured graphs, HCLTs 435 
+
+generalize HMMs and can provide a better representation of the data to capture long-range dependence, 436 
+
+e.g. , RV X2 and X6 are highly correlated without being correlated with X3, X4, X5 (Figure 1). 437 
+
+For genetic variation data over N single nucleotide polymorphisms (SNPs), each Xn denotes the genotype 438 
+
+value at SNP n → {1, . . . , N } (Xn → {0, 1} when we model haploid genomes). Each Zn is a discrete RV that 439 
+
+can take one of L values ( Zn → {0 , . . . , L ↗ 1}). Figure 1 demonstrates how to construct an HCLT using 440 
+
+genetic data. Given a dataset D that contains 6 SNPs (Figure 1(a)), we first invoke the Chow-Liu algorithm 441 
+
+to generate a tree over the latent variables associated with each SNP (Figure 1(b)). The Chow-Liu algorithm 442 
+
+computes pairwise mutual information between all variable pairs and finds the maximum-weight spanning 443 
+
+tree, which can be done e ”ciently even for large SNP panels since it only requires computing pairwise 444 
+
+statistics and solving a minimum spanning tree problem. The tree encodes strong variable dependencies 445 
+
+by placing highly correlated SNPs (e.g., X1 and X3) closer in the generated tree. Finally, the HCLT is 446 
+
+constructed by adding an edge from every latent variable Zi to its corresponding observed variable Xi447 
+
+(Figure 1(c)). The parameters of the HCLT are those associated with the discrete conditional probability 448 
+
+distributions P (Xn|Zn) and P (Zn|ZPa( n)), where Pa( n) denotes the parent of node n in the tree. 449 
+
+4.2.2 Probabilistic Circuits 450 
+
+Probabilistic Circuits (PCs) [37, 38] are a class of probabilistic models that support tractable probabilistic 451 
+
+inference. These capabilities have allowed PCs to perform various probabilistic reasoning tasks that are 452 
+
+out of reach for most deep generative models [50, 51], including problems in explainable AI [52, 53, 54], 453 
+
+algorithmic fairness [55, 56], and missing data robustness [57, 54, 58]. PCs are furthermore appealing for 454 
+
+their expressive power and suitability for density estimation, with recent advances in structure learning [59] 455 
+
+and parameter estimation [56, 35] allowing PCs to accurately capture useful correlations in the data. 456 
+
+Representation PCs are an umbrella term for a wide family of tractable probabilistic models [60], in-457 
+
+cluding arithmetic circuits [61], sum-product networks [62], and cutset networks [63]. A PC ( G, ω) represents 458 
+
+a joint probability distribution Pr( X) over random variables X through a directed acyclic graph (DAG) G459 
+
+parametrized by ω. The DAG G consists of three types of nodes: input , sum , and product . Each leaf node is 460 
+
+an input node; each inner node n (i.e., sum or product) receives inputs from its children ch (n). Each node 461 
+
+n → G encodes a probability distribution Pr n, which is defined recursively as follows: 462 
+
+Pr n(x) = 
+
+
+
+fn(x) if n is an input node ,
+
+∏ 
+
+> c↑ch (n)
+
+Pr c(x) if n is a product node ,
+
+∑ 
+
+> c↑ch (n)
+
+ωn,c Pr c(x) if n is a sum node ,
+
+(1) where fn(x) is a univariate input distribution (e.g., Binomial, Gaussian), and ωn,c denotes the parameter 463 
+
+that corresponds to edge ( n, c ). Intuitively, a product node defines a factorized distribution over its inputs, 464 
+
+and a sum node represents a mixture over its input distributions weighted by ω. Finally, the probability 465 
+
+distribution of a PC is defined as the distribution represented by its root node. The size of a PC ( G, ω) is 466 
+
+defined as the number of parameterized edges in its DAG G.467 
+
+Inference In contrast to many other generative models, PCs support e ”cient reasoning over their encoded 468 
+
+distribution. One can compute likelihoods by evaluating the PC feed-forward as in Equation 1. Many 469 
+
+12 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+common reasoning tasks such as marginal probabilities and maximum a posteriori probability (MAP) are 470 
+
+also supported by PCs. To guarantee the e ”ciency for computing these queries, the DAG of the PC should 471 
+
+satisfy certain structural constraints. Please refer to [64] for a more detailed summary of various inference 472 
+
+scenarios for PCs. 473 
+
+To support linear-time computation (with respect to the size of the PC) of arbitrary marginal queries, 474 
+
+PCs need to satisfy two structural properties: smoothness and decomposability. Both are properties of the 475 
+
+scope ε(n) of PC units n, that is, the collection of variables defined by all its input nodes. 476 
+
+Definition 1 (Smoothness) A PC (G, ω) is smooth if for any sum node n → G, its children have identical 477 
+
+scope: ↘c1, c 2 → ch (n ) : ε(c1) = ε(c2).478 
+
+Definition 2 (Decomposability) A PC (G, ω) is decomposable if for any product node n → G, its children 479 
+
+have disjoint scopes: ↘c1, c 2 → ch (n), c 1 ≃ = c2 : ε(c1) ⇐ ε(c2) = ⇒.480 
+
+Given a smooth and decomposable PC, querying an arbitrary marginal probability boils down to a 481 
+
+feedforward evaluation of its DAG, thus the computation time is linear with respect to the size of the PC. 482 
+
+Sampling and Conditional Inference Sampling from a PC is performed via ancestral sampling. Starting 483 
+
+from the root node, we traverse sum nodes by sampling a child proportionally to the edge weights ωn,c , and 484 
+
+traverse product nodes by recursively sampling from all children (since they define independent factorizations 485 
+
+over disjoint variable sets). At input nodes, we sample from the corresponding univariate distributions. This 486 
+
+procedure generates a complete assignment to all variables in time linear in the circuit size. 487 
+
+For genotype imputation, we compute conditional probabilities p(Xmissing |Xobserved ). Smooth and de-488 
+
+composable PCs support exact marginalization over any subset of variables: to marginalize out a variable Xi,489 
+
+we simply replace its input distribution with the constant 1 (summing over all possible values). Conditional 490 
+
+queries are then computed as ratios of two marginal queries [37]: 491 
+
+p(Xmissing = x|Xobserved = e ) = p(Xmissing = x, X observed = e)
+
+p(Xobserved = e) . (2) Both the numerator and denominator can be computed via a single feedforward pass through the circuit, 492 
+
+making conditional inference e ”cient. 493 
+
+4.2.3 HCLTs as Probabilistic Circuits 494 
+
+HCLTs can be represented as smooth and decomposable PCs, meaning they support e ”cient (i.e., linear in 495 
+
+the size of the PC) computation of marginal queries and likelihoods. When considering both the observed and 496 
+
+hidden variables, HCLTs are also deterministic (i.e., for any sum node, its children have disjoint support), 497 
+
+meaning that the MAP instance arg max x↑X,z↑Z Pr n(x, z) can be evaluated in linear time. However, HCLTs 498 
+
+are not deterministic with respect to the observed variables X alone, which has implications for parameter 499 
+
+estimation as described below. 500 
+
+4.2.4 Parameter Estimation 501 
+
+Any probabilistic graphical model (PGM) can be transformed into a PC that encodes the same probability 502 
+
+distribution. We demonstrate the high-level idea of this transformation, and refer interested readers to [38] 503 
+
+for more details. To transform an HCLT into an equivalent PC, we iteratively encode every conditional 504 
+
+13 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+probability Pr( Xn|XPa( n)) by representing each possible value of Xn as a sum node. Thus, the probability 505 
+
+of Pr( Xn = xn|XPa( n) = xPa( n)) can be represented by the weight of an edge connecting xn and xPa( n).506 
+
+Take the HCLT in Figure 1 as an example. The conditional probabilities are encoded into a single PC in a 507 
+
+bottom-up manner: we first encode Pr( X5|Z5) and then followed by Pr( X4|Z4) and Pr( Z5|Z4), and so on. 508 
+
+If a PC is smooth, decomposable, and deterministic, its maximum-likelihood estimation (MLE) parame-509 
+
+ters can be e ”ciently learned in closed form [65]. To formalize the MLE parameters, we define the context 510 
+
+ϑn of any node n as follows. The context of the root node nr is its support supp (nr ). The context of any 511 
+
+other node is the intersection of its support and the union of its parents’ contexts: 512 
+
+ϑn := ⋃
+
+> c↑pa (n)
+
+ϑc ⇐ supp (n).
+
+For any sum node n and its child c, the associated MLE parameter ω↓ 
+
+> n,c
+
+on a dataset D = {xi}Ni=1 is 513 
+
+ωn,c = FD (n, c )/ ∑
+
+> c↑ch (n)
+
+FD (n, c ), where FD (n, c ) := 
+
+> N
+
+∑
+
+> i=1
+
+[xi → ϑn ⇐ ϑc]. (3) The quantity FD (n, c ) is called the circuit flow of edge ( n, c ). Intuitively, circuit flows count the number of 514 
+
+samples in D that “activate” an edge. 515 
+
+However, since HCLTs are not deterministic with respect to the observed variables X, MLE does not 516 
+
+have a closed-form expression, and we instead resort to Expectation-Maximization (EM), where in the E step 517 
+
+we compute the expected circuit flow given incomplete data, and in the M step we estimate the closed-form 518 
+
+MLE parameters given those expected flows [66, 56]. 519 
+
+Concretely, given a deterministic PC ( G, ω) with root node r and an incomplete dataset D = {xi}Ni=1 ,520 
+
+the parameters for the next EM iteration are given by [56]: 521 
+
+ω(new)  
+
+> n,c
+
+= EF D,ω (n, c )/ ∑
+
+> c↑ch (n)
+
+EF D,ω (n, c ), where EF D,ω (n, c ) := 
+
+> N
+
+∑
+
+> i=1
+
+Ez↔Pr r (·| xi)
+
+[ [zx i → ϑn ⇐ ϑc]] (4) defines an expected version of circuit flow for edge ( n, c ) given samples with missing values in D.522 
+
+Using their equivalent PC representations, HCLTs can be trained e ”ciently using the PC package 523 
+
+PyJuice [40]. By representing graphical models (e.g., HCLTs) as PCs, we take advantage of the struc-524 
+
+ture of the model to extensively parallelize the computation required by EM updates (Equation 4). Further, 525 
+
+we develop specialized GPU kernels to significantly speed up the EM algorithm. As a result, despite the 526 
+
+model having over 88 million parameters, a single EM epoch on the 1KG dataset can be done in less than 2 527 
+
+seconds. 528 
+
+## 4.3 Impute5 Specifications 529 
+
+Haploid imputation is specified in Impute5, with all other SNPs in the region serving as bu !er (observed con-530 
+
+text). Further, we provide the corresponding fine-scale human recombination map for the chromosome being 531 
+
+imputed. These are linked in the Impute5 documentation: https://github.com/odelaneau/shapeit4/ 532 
+
+tree/master/maps .533 
+
+14 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+## 4.4 Training Specifications 534 
+
+Training GPC is straightforward, requiring minimal hyperparameter tuning. We set the number of latent 535 
+
+states (for each hidden variable in the HCLT) to 128 for both datasets – the maximum feasible given memory 536 
+
+constraints. We observe that changing the pseudocount parameter (used to smooth probability estimates) 537 
+
+does not significantly impact the training procedure and can be left at a small default value (0.005). 538 
+
+Based on initial experiments with small validation sets, we find that training for 2,000–5,000 epochs 539 
+
+works well for these datasets, though longer training is possible without overfitting (with minimal perfor-540 
+
+mance gains). For the 1KG data, we trained GPC for 5,000 epochs. Due to the larger sample size (and 541 
+
+longer training time per epoch) in the UKBB data, we stopped at 2,000 epochs. Although we do not tune 542 
+
+the pseudocount, this would be the only parameter to consider adjusting for further optimization. Addi-543 
+
+tionally, since we use full-batch EM to learn the circuit parameters, we do not need to tune other standard 544 
+
+hyperparameters such as learning rate or batch size. 545 
+
+A key advantage of GPC over other deep generative approaches is that we can probabilistically deter-546 
+
+mine convergence by monitoring held-out log-likelihood, which provides an objective, quantitative stopping 547 
+
+criterion. This stands in contrast to methods that lack tractable likelihoods, where convergence must be 548 
+
+assessed through slower, less consistent visual inspection methods that are more prone to human error. 549 
+
+The baseline RBM and WGAN methods require substantially more time and experimentation to tune, 550 
+
+primarily due to their larger hyperparameter spaces and inability to calculate likelihoods or determine 551 
+
+convergence probabilistically. For RBMs, the partition function is intractable due to an exponentially large 552 
+
+number of configurations over the visible and hidden nodes. Therefore, we must rely on indirect metrics such 553 
+
+as Nearest Neighbor Adversarial Accuracy (AATS) [45] and visual overlap in principal component space. 554 
+
+Similarly, WGANs do not define a probability distribution over the data, preventing direct evaluation of 555 
+
+sample likelihoods. Here too, we must rely on visual overlap in the principal component space to assess 556 
+
+convergence, a subjective and time-consuming process. 557 
+
+We utilize the training code and notebooks provided by the authors on GitHub to tune both methods. 558 
+
+Although we initially struggled to achieve optimal performance on the 1KG African data subset, we resolved 559 
+
+this issue after consulting with the authors. For the RBM, we modified several parameters (e.g., higher 560 
+
+learning rate, fewer epochs, fewer Gibbs sampling steps). For the WGAN, we increased the batch size. 561 
+
+Otherwise, all other parameters were kept at their default values. When training on the UKBB data, we 562 
+
+retained the default parameters; similar to the GPC case, we used fewer epochs due to longer training time 563 
+
+but still achieved good overlap in the principal component space based on visual inspection. 564 
+
+The simpler PGM baselines, Indep and Markov , model the observed SNPs directly without latent 565 
+
+variables. Indep treats each SNP as an independent Bernoulli random variable, estimating P (Xn = 1) 566 
+
+separately for each site via its sample mean (calculated by a single pass over the training data). Markov 567 
+
+is a first-order Markov chain: it models each SNP conditioned only on the immediately preceding one in 568 
+
+genomic order, P (Xn | Xn→1), and is likewise fit in closed form via maximum likelihood. Both models 569 
+
+therefore require no iterative training. For HMM , we use the EM algorithm with random initialization. 570 
+
+Similar to GPC , we set the number of latent states for HMM at 128 and train for 2,000–5,000 epochs 571 
+
+depending on the dataset. Using these settings, the held-out log-likelihood converged e !ectively. We tried 572 
+
+higher values of latent states for HMM but these all resulted in worse log-likelihoods and slower training 573 
+
+overall. 574 
+
+15 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+## 4.5 Evaluation Metrics 575 
+
+4.5.1 Nearest Neighbor Adversarial Accuracy 576 
+
+To evaluate the utility and privacy of the AGs, we compute the AATS metric introduced by Yale et al. [45]: 577 
+
+AAT S = 12
+
+(
+
+1
+
+n
+
+> n
+
+∑
+
+> i=1
+
+1 (dT S (i) > d T T (i)) + 1
+
+n
+
+> n
+
+∑
+
+> i=1
+
+1 (dST (i) > d SS (i)) 
+
+)
+
+(5) 
+
+T represents the true (real) data and S represents the synthetic data. dT S (i) is the distance between 578 
+
+sample i in the true data and its nearest neighbor in the synthetic data, while dT T (i) is the distance between 579 
+
+sample i in the true data and its nearest neighbor in the true data (not including itself). dST (i) and dSS (i)580 
+
+are defined analogously for the synthetic data. Following Yale et al. [45], we use Euclidean distance. The 581 
+
+AAT S is an average of two components, which we denote AA TRUTH and AA SYN :582 
+
+1
+
+n
+
+> n
+
+∑
+
+> i=1
+
+1 (dT S (i) > d T T (i)) 
+
+︸ ︷︷ 
+
+AA TRUTH 
+
+1
+
+n
+
+> n
+
+∑
+
+> i=1
+
+1 (dST (i) > d SS (i)) 
+
+︸ ︷︷ 
+
+AA SYN 
+
+(6) Each component returns a value between 0 and 1, with values near 0.5 indicating the ideal balance 583 
+
+between utility and privacy. We do not report the overall AAT S because poor values in each component 584 
+
+can cancel each other out: for instance, an AA TRUTH of 0 paired with an AA SYN of 1 would average to 0.5, 585 
+
+masking both extreme memorization and a collapsed synthetic distribution. 586 
+
+Experimental setup. Using a 50/50 train/test split, we construct four datasets of equal size n: a real 587 
+
+training set Rtr , a real test set Rte , and two disjoint halves of the generated synthetic data, A1 and A2. We 588 
+
+compute the AATS components twice: pairing ( Rtr , A 1) for train metrics and ( Rte , A 2) for test metrics. 589 
+
+For 1KG, n = 2 ,504, matching each real split exactly. For UKBB, the real dataset has 13,462 samples per 590 
+
+split but we generated only 10,000 synthetic samples total, so we set n = 5 ,000: A1 and A2 are the first and 591 
+
+second halves of the 10,000 generated samples, and 5,000 haplotypes are drawn without replacement from 592 
+
+each real split using a fixed random seed. 593 
+
+Standardization. For each SNP, we compute the mean μj and standard deviation ϖj from Rtr only, 594 
+
+and apply the transformation x ⇑ ↑ (x ↗ μj )/ϖj to all four datasets ( Rtr , Rte , A1, A2) before computing 595 
+
+any distances. Monomorphic sites ( ϖj = 0) are left unchanged. Fitting the scaler on Rtr and applying it 596 
+
+uniformly ensures that no information from the test set or the synthetic data influences the scaling. This 597 
+
+choice is motivated by the fact that standardization reweights each SNP’s contribution to Euclidean distance 598 
+
+by 1 /ϖj ⇓ 1/pj (1 ↗ pj ), amplifying the contribution of rare variants (low MAF pj ) and making the metric 599 
+
+sensitive to failures in rare-variant modeling that would otherwise go undetected. 600 
+
+4.5.2 Wasserstein Distance Calculation 601 
+
+To quantify di !erences between real and generated data, we used Wasserstein distances in two complementary 602 
+
+settings. For comparisons in PCA space, we reported a two-dimensional Wasserstein distance computed 603 
+
+between the empirical distributions of real (test set) and generated individuals. For each generative method, 604 
+
+PCA was fit jointly on the real test samples and the corresponding generated samples (“coupled PCA”), 605 
+
+and Wasserstein distances were evaluated in selected two-dimensional PCA subspaces (PC1–PC2, PC3–PC4, 606 
+
+16 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+and PC5–PC6). Distances were computed using the entropically regularized optimal transport (Sinkhorn) 607 
+
+algorithm as implemented in the ot Python package, with a regularization parameter set to ϱ = 2 ⇔ 10 →3.608 
+
+Lower values indicate closer agreement between the distributions of real and generated samples in PCA 609 
+
+space. 610 
+
+To assess similarity at the haplotype level, we computed one-dimensional Wasserstein distances between 611 
+
+distributions of pairwise haplotypic distances. For each pair of haplotypes, we computed the Manhattan 612 
+
+(cityblock) distance, which for haploid genomes equals the number of di !ering SNP positions, i.e. , Hamming 613 
+
+distance. We define two comparison metrics, both using the distribution of pairwise distances within the 614 
+
+real test set (real–real) as the reference. The within metric compares internal diversity: it measures the 615 
+
+Wasserstein distance between the distribution of all pairwise distances among AGs (generated–generated; 616 
+
+NG(NG ↗ 1) /2 values for NG AGs) and the distribution among real test haplotypes (real–real; NR(NR ↗617 
+
+1) /2 values for NR real genomes). This quantifies whether generated samples exhibit similar diversity 618 
+
+to real samples. The between metric compares the distribution of cross-distances between generated and 619 
+
+real test haplotypes (generated–real; NG ⇔ NR values) to the same real–real reference distribution. This 620 
+
+quantifies whether generated haplotypes are as close to real haplotypes as real haplotypes are to each other. 621 
+
+One-dimensional Wasserstein distances were computed using scipy.stats.wasserstein distance , which 622 
+
+handles distributions with di !erent numbers of samples by treating them as empirical distributions. 623 
+
+17 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+# Acknowledgements 624 
+
+This work was supported, in part, by NIH grant GM153406, by National University of Singapore under its 625 
+
+Start-up Grant SUG-251RES250, by the DARPA ANSR, CODORD, and SAFRON programs under awards 626 
+
+FA8750-23-2-0004, HR00112590089, and HR00112530141, NSF grant IIS1943641, and gifts from Adobe 627 
+
+Research, Cisco Research, Qualcomm, and Amazon. Approved for public release; distribution is unlimited. 628 
+
+This research was conducted using the UK Biobank Resource under application 331277. We thank the 629 
+
+participants of UK Biobank for making this work possible. We also thank the authors of [25], Burak Yelmen 630 
+
+and Aur´ elien Decelle, for their assistance with training and parameter selection for the WGAN and RBM 631 
+
+models. 632 
+
+# Code availability 633 
+
+Code and experiments are available at https://github.com/sriramlab/GPC .634 
+
+# Data Availability 635 
+
+The 1000 Genomes datasets can be freely downloaded at https://www.internationalgenome.org/data .636 
+
+The UK Biobank dataset is available upon application at https://www.ukbiobank.ac.uk/ .637 
+
+18 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Figure 1: Generating HCLT structures given genetic data. SNPs: An example dataset of 6 SNPs (X1, . . . , X 6), where dashed lines indicate SNPs with strong correlations. CLT: A Chow–Liu Tree learned from the SNP data, represented as a Bayesian network over latent variables Z1, . . . , Z 6. The tree structure places latent variables with stronger dependencies closer together, capturing the dominant correlation struc-ture among the SNPs. HCLT: The Hidden CLT constructed from the CLT, in which each latent variable 
+
+Zi is additionally connected to its corresponding observed SNP Xi as a child node. The resulting structure respects the dependencies among SNPs while providing a principled generative model over the observed data. 19 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Figure 2: Principal components analysis for AGs generated by models trained on the 1KG dataset . (Top half) The top six principal components (PCs) of the held-out test set of genomes (gray) vs. AGs generated by each of Indep (brown), Markov (pink), HMM (purple), WGAN (green), RBM 
+
+(orange), and GPC (blue). The leftmost plot shows the PCs of genomes from the training set as “perfectly” generated data (black). (Bottom half) A density map of the PCs for each dataset. 20 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+(a) 1KG: full range (b) UKBB: full range 
+
+(c) 1KG: 1–1000 bp zoom (d) UKBB: 1–1000 bp zoom 
+
+(e) 1KG: absolute error per bin (f) UKBB: absolute error per bin 
+
+Figure 3: Patterns of linkage disequilibrium (LD) in the AGs generated by models. We compare LD betweens pairs of SNPs in the AGs generated by each of the models trained on the 1KG (left) and the UKBB (right) datasets respectively. We plot mean squared correlation r2 within bins of physical distance (error bars denote the standard error of the mean); truth represents the LD distribution of the training data. We plot the decay of LD across the full length scale of the locus (top row); at shorter length scales (1–1000 bp; middle row); and the absolute error in mean r2 per bin relative to the test data (bottom row) (see Table S2 for detailed metrics). 21              
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint                    
+>    
+
+   
+
+Figure 4: Compact radial visualization of the Chow–Liu Tree (CLT) learned from the 1KG dataset. Starting from the full 10,000-SNP tree (Supplementary Figure S4), all degree-2 nodes forming unbranched chains are contracted into single edges between their endpoints, retaining only branching points and leaves. Edge color encodes genomic distance |i↗j| on a log scale (purple: nearby; yellow: distant). Node size scales with degree; the top 8 highest-degree nodes are labeled. Unlike an HMM , which forms a single unbranched chain, the CLT exhibits rich branching structure with long-range edges connecting SNPs thousands of positions apart, capturing distal LD directly rather than routing it through all intermediate variables. 22 
+
+.CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint (a) 1KG (b) UKBB 
+
+(c) Summary across UKBB regions Figure 5: General imputation. The light blue lines denote direct imputation using GPC while the other lines show the results of imputation using Impute5 with AG reference panels in the 1KG (left) and the UKBB (right) datasets respectively. We also plot the results of imputation using real reference genomes (black dotted lines) while RBM/WGAN (full) show results using AGs provided by the authors of [25] in their analysis of the same locus in the 1KG dataset (see Table S3 for detailed metrics). (c) summarizes UKBB imputation performance for the best-performing methods (excludes WGAN ) by MAF bin, averaged across chr22 (the main UKBB region shown in (b)) and five additional chromosomes (chr2, 11, 12, 14, 18; see Supplementary Figure S5), demonstrating that results are robust across genomic regions. 23 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+(a) Non-European target (b) Non-European target 
+
+(c) African target (d) African target 
+
+Figure 6: Population-specific imputation in the 1KG dataset. On the left, the AG lines show imputation results using population-specific AGs (where the target genomes correspond to non-European populations in part a and African populations in part c) while the light blue line shows direct imputation with GPC trained on population-specific genomes. On the right, the AG lines show results using combined reference panels (real European genomes plus population-specific AGs) while the light blue line shows direct imputation with GPC trained on both European and population-specific genomes (where the target genomes correspond to non-European populations in part b and African populations in part d). The black line shows results using Impute5 with real European genomes as the reference panel (see Table S5 for detailed metrics). 24 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Figure 7: Array-based imputation. This task aims to impute SNPs from the HumanOmni5Exome array using high-coverage 1KG data. The black and light blue lines show results using Impute5 with real training data as the reference panel and direct imputation using GPC , respectively. The other lines show results using Impute5 with AG reference panels (see Table S7 for detailed metrics). 25 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+(a) Non-European target (b) Non-European target 
+
+(c) African target (d) African target 
+
+Figure 8: Array-based imputation (population-specific). The black line shows results using Impute5 with real European reference genomes. On the left (parts a and c), the AG lines show results using population-specific AGs alone, and the light blue line shows direct imputation with GPC trained on population-specific data. On the right (parts b and d), the AG lines show results using combined reference panels (real European data plus population-specific AGs), and the light blue line shows direct imputation with GPC trained on both European and population-specific data (see Table S8 for detailed metrics). 26 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+Dataset Category Indep Markov HMM GPC 
+
+1KG train LL -2386.81 -1806.33 -591.08 -202.51 test LL -2404.51 -1819.96 -599.88 -265.06 UKBB train LL -1642.62 -1360.86 -554.88 -120.10 test LL -1648.03 -1362.16 -554.38 -127.75 
+
+Table 1: Log-likelihoods of probabilistic models that support tractable likelihood computation in 1KG and UKBB datasets. Averaged training and test log-likelihoods for Indep , Markov HMM ,and GPC . The bold values highlight the best averaged log-likelihoods. 27 
+
+.CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint Dataset Metric RBM WGAN GPC 
+
+1KG 
+
+AA TRUTH (Train) 0.9561 0.8103 0.7185 
+
+AA TRUTH (Test) 0.9916 0.8183 0.8199 
+
+AA SYN (Train) 0.0024 0.7356 0.4225 
+
+AA SYN (Test) 0.0212 0.7680 0.4912 UKBB 
+
+AA TRUTH (Train) 0.9934 0.9664 0.9096 
+
+AA TRUTH (Test) 0.9970 0.9692 0.9240 
+
+AA SYN (Train) 0.0094 0.7828 0.5380 
+
+AA SYN (Test) 0.0114 0.7730 0.4686 
+
+Table 2: Nearest neighbor adversarial accuracy ( AA TRUTH , AA SYN ) for AGs generated by RBM ,
+
+WGAN , and GPC , evaluated on training and test splits from 1KG and UKBB. Distances are standardized Euclidean. This upweights rare variants relative to common ones, exposing failures in rare-variant modeling. Values closest to 0.5 are bolded. 28 
+
+.CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint References 638 
+
+[1] Magnus Nordborg. Coalescent theory. Handbook of Statistical Genomics: Two Volume Set , pages 639 
+
+145–30, 2019. 640 
+
+[2] John Wakeley. Developments in coalescent theory from single loci to chromosomes. Theoretical popula-641 
+
+tion biology , 133:56–64, 2020. 642 
+
+[3] Jonathan Marchini and Bryan Howie. Genotype imputation for genome-wide association studies. Nature 643 
+
+Reviews Genetics , 11(7):499–511, 2010. 644 
+
+[4] Sharon R Browning and Brian L Browning. Haplotype phasing: existing methods and new developments. 645 
+
+Nature Reviews Genetics , 12(10):703–714, 2011. 646 
+
+[5] Daniel Mas Montserrat, Carlos Bustamante, and Alexander Ioannidis. Class-conditional vae-gan for 647 
+
+local-ancestry simulation. arXiv preprint arXiv:1911.13220 , 2019. 648 
+
+[6] Richard R Hudson. Generating samples under a wright–fisher neutral model of genetic variation. Bioin-649 
+
+formatics , 18(2):337–338, 2002. 650 
+
+[7] Garrett Hellenthal and Matthew Stephens. mshot: modifying hudson’s ms simulator to incorporate 651 
+
+crossover and gene conversion hotspots. Bioinformatics , 23(4), 2007. 652 
+
+[8] Laurent Exco ”er and Matthieu Foll. Fastsimcoal: a continuous-time coalescent simulator of genomic 653 
+
+diversity under arbitrarily complex evolutionary scenarios. Bioinformatics , 27(9):1332–1334, 2011. 654 
+
+[9] Jerome Kelleher, Alison M. Etheridge, and Gilean McVean. E”cient Coalescent Simulation and Ge-655 
+
+nealogical Analysis for Large Sample Sizes. PLoS Computational Biology , 12(5):1–22, 2016. 656 
+
+[10] Franz Baumdicker, Gertjan Bisschop, Daniel Goldstein, Graham Gower, Aaron P Ragsdale, Georgia 657 
+
+Tsambos, Sha Zhu, Bjarki Eldon, Castedo E Ellerman, Jared G Galloway, et al. E ”cient ancestry and 658 
+
+mutation simulation with msprime 1.0. bioRxiv , 2021. 659 
+
+[11] Richard R Hudson. Properties of a neutral allele model with intragenic recombination. Theoretical 660 
+
+Population Biology , 23(2):183–201, 1983. 661 
+
+[12] Robert C. Gri ”ths and Paul Marjoram. An Ancestral Recombination Graph. In P. Donnelly and 662 
+
+S. Tavare, editors, Progress in Population Genetics and Human Evolution, IMA Volumes in Mathematics 663 
+
+and its Applications, vol. 87 , pages 257–270. Springer, 1997. 664 
+
+[13] Carsten Wiuf and Jotun Hein. Recombination as a point process along sequences. Theoretical Population 665 
+
+Biology , 55(3):248–259, 1999. 666 
+
+[14] Gilean A T McVean and Niall J Cardin. Approximating the coalescent with recombination. Philosophical 667 
+
+transactions of the Royal Society of London. Series B, Biological sciences , 360(1459):1387–93, 2005. 668 
+
+[15] Paul Marjoram and Je ! D. Wall. Fast ”coalescent” simulation. BMC Genetics , 7(1):16, 2006. 669 
+
+[16] Na Li and Matthew Stephens. Modeling linkage disequilibrium and identifying recombination hotspots 670 
+
+using single-nucleotide polymorphism data. Genetics , 165(4):2213–2233, 2003. 671 
+
+29 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+[17] Lawrence Rabiner and Biinghwang Juang. An introduction to hidden markov models. ieee assp maga-672 
+
+zine , 3(1):4–16, 1986. 673 
+
+[18] Paul Scheet and Matthew Stephens. A fast and flexible statistical model for large-scale population 674 
+
+genotype data: applications to inferring missing genotypes and haplotypic phase. The American Journal 675 
+
+of Human Genetics , 78(4):629–644, 2006. 676 
+
+[19] Olivier Delaneau, Jonathan Marchini, and Jean-Fran¸ cois Zagury. A linear complexity phasing method 677 
+
+for thousands of genomes. Nature methods , 9(2):179–181, 2012. 678 
+
+[20] Bryan Howie, Christian Fuchsberger, Matthew Stephens, Jonathan Marchini, and Gon¸ calo R Abecasis. 679 
+
+Fast and accurate genotype imputation in genome-wide association studies through pre-phasing. Nature 680 
+
+genetics , 44(8):955–959, 2012. 681 
+
+[21] Yael Baran, Bogdan Pasaniuc, Sriram Sankararaman, Dara G Torgerson, Christopher Gignoux, Celeste 682 
+
+Eng, William Rodriguez-Cintron, Rocio Chapela, Jean G Ford, Pedro C Avila, et al. Fast and accurate 683 
+
+inference of local ancestry in latino populations. Bioinformatics , 28(10):1359–1367, 2012. 684 
+
+[22] Alkes L Price, Arti Tandon, Nick Patterson, Kathleen C Barnes, Nicholas Rafaels, Ingo Ruczinski, 685 
+
+Terri H Beaty, Rasika Mathias, David Reich, and Simon Myers. Sensitive detection of chromosomal 686 
+
+segments of distinct ancestry in admixed populations. PLoS genetics , 5(6):e1000519, 2009. 687 
+
+[23] CJ Battey, Gabrielle C Co ”ng, and Andrew D Kern. Visualizing population structure with variational 688 
+
+autoencoders. G3 , 11(1):1–11, 2021. 689 
+
+[24] Burak Yelmen, Aur´ elien Decelle, Linda Ongaro, Davide Marnetto, Corentin Tallec, Francesco Monti-690 
+
+naro, Cyril Furtlehner, Luca Pagani, and Flora Jay. Creating artificial human genomes using generative 691 
+
+neural networks. PLOS Genetics , 17(2):1–22, 02 2021. 692 
+
+[25] Burak Yelmen, Aur´ elien Decelle, Leila Lea Boulos, Antoine Szatkownik, Cyril Furtlehner, Guillaume 693 
+
+Charpiat, and Flora Jay. Deep convolutional and conditional neural networks for large-scale genomic 694 
+
+data generation. PLOS Computational Biology , 19(10):1–21, 10 2023. 695 
+
+[26] Antoine Szatkownik, Cyril Furtlehner, Guillaume Charpiat, Burak Yelmen, and Flora Jay. Towards 696 
+
+creating longer genetic sequences with gans: Generation in principal component space. In David A. 697 
+
+Knowles and Sara Mostafavi, editors, Proceedings of the 18th Machine Learning in Computational 698 
+
+Biology meeting , volume 240 of Proceedings of Machine Learning Research , pages 110–122. PMLR, 30 699 
+
+Nov–01 Dec 2024. 700 
+
+[27] Rebecca Riley, Iain Mathieson, and Sara Mathieson. Interpreting generative adversarial networks to 701 
+
+infer natural selection from genetic data. Genetics , 226(4):iyae024, 02 2024. 702 
+
+[28] Shaked Ahronoviz and Ilan Gronau. Genome-AC-GAN: Enhancing synthetic genotype generation 703 
+
+through auxiliary classification. bioRxiv, Feb 2024. 704 
+
+[29] Margarita Geleta, Daniel Mas Montserrat, Xavier Giro-i Nieto, and Alexander G. Ioannidis. Autoen-705 
+
+coders for genomic variation analysis. Genome Research , 36:348–360, Jan 2026. 706 
+
+[30] Callum Burnard, Alban Mancheron, and William Ritchie. Generating realistic artificial human genomes 707 
+
+using adversarial autoencoders. NAR Genomics and Bioinformatics , 7(3):lqaf101, Jul 2025. 708 
+
+30 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+[31] Philip Kenneweg, Raghuram Dandinasivara, Xiao Luo, Barbara Hammer, and Alexander Sch¨ onhuth. 709 
+
+Generating synthetic genotypes using di !usion models. Bioinformatics , 41(Supplement 1):i484–i492, 710 
+
+Jul 2025. 711 
+
+[32] Simone Rubinacci, Olivier Delaneau, and Jonathan Marchini. Genotype imputation using the positional 712 
+
+burrows wheeler transform. PLOS Genetics , 16(11):1–19, 11 2020. 713 
+
+[33] Brian L. Browning, Ying Zhou, and Sharon R. Browning. A one-penny imputed genome from next-714 
+
+generation reference panels. The American Journal of Human Genetics , 103(3):338–348, Sep 2018. 715 
+
+[34] Christian Fuchsberger, Gon¸ calo R. Abecasis, and David A. Hinds. Minimac2: Faster genotype imputa-716 
+
+tion. Bioinformatics , 31(5):782–784, Oct 2014. 717 
+
+[35] Anji Liu and Guy Van den Broeck. Tractable regularization of probabilistic circuits. In Advances in 718 
+
+Neural Information Processing Systems 35 (NeurIPS) , dec 2021. 719 
+
+[36] Jonathan K Pritchard and Molly Przeworski. Linkage disequilibrium in humans: models and data. The 720 
+
+American Journal of Human Genetics , 69(1):1–14, 2001. 721 
+
+[37] Antonio Vergari, YooJung Choi, Robert Peharz, and Guy Van den Broeck. Probabilistic circuits: 722 
+
+Representations, inference, learning and applications. AAAI Tutorial , 2020. 723 
+
+[38] YooJung Choi, Antonio Vergari, and Guy Van den Broeck. Probabilistic circuits: A unifying framework 724 
+
+for tractable probabilistic models. oct 2020. 725 
+
+[39] C. K. Chow and C. N. Liu. Approximating discrete probability distributions with dependence trees. 726 
+
+IEEE Transactions on Information Theory , 14:462–467, 1968. 727 
+
+[40] Anji Liu, Kareem Ahmed, and Guy Van den Broeck. Scaling tractable probabilistic circuits: A systems 728 
+
+perspective. In Proceedings of the 41th International Conference on Machine Learning (ICML) , jul 729 
+
+2024. 730 
+
+[41] Adam Auton, Gon¸ calo R. Abecasis, David M. Altshuler, Richard M. Durbin, Gon¸ calo R. Abecasis, 731 
+
+David R. Bentley, Aravinda Chakravarti, Andrew G. Clark, Peter Donnelly, Evan E. Eichler, and et al. 732 
+
+A global reference for human genetic variation. Nature , 526(7571):68–74, Sep 2015. 733 
+
+[42] Clare Bycroft, Colin Freeman, Desislava Petkova, Gavin Band, Lloyd T. Elliott, Kevin Sharp, Allan 734 
+
+Motyer, Damjan Vukcevic, Olivier Delaneau, Jared O’Connell, and et al. The uk biobank resource with 735 
+
+deep phenotyping and genomic data. Nature , 562(7726):203–209, Oct 2018. 736 
+
+[43] Marta Byrska-Bishop, Uday S. Evani, Xuefang Zhao, Anna O. Basile, Haley J. Abel, Allison A. Regier, 737 
+
+Andr´ e Corvelo, Wayne E. Clarke, Rajeeva Musunuri, Kshithija Nagulapalli, Susan Fairley, Alexi Run-738 
+
+nels, Lara Winterkorn, Ernesto Lowy, Evan E. Eichler, Jan O. Korbel, Charles Lee, Tobias Marschall, 739 
+
+Scott E. Devine, William T. Harvey, Weichen Zhou, Ryan E. Mills, Tobias Rausch, Sushant Kumar, Can 740 
+
+Alkan, Fereydoun Hormozdiari, Zechen Chong, Yu Chen, Xiaofei Yang, Jiadong Lin, Mark B. Gerstein, 741 
+
+Ye Kai, Qihui Zhu, Feyza Yilmaz, Chunlin Xiao, Paul Flicek, Soren Germer, Harrison Brand, Ira M. 742 
+
+Hall, Michael E. Talkowski, Giuseppe Narzisi, and Michael C. Zody. High-coverage whole-genome se-743 
+
+quencing of the expanded 1000 genomes project cohort including 602 trios. Cell , 185(18):3426–3440.e19, 744 
+
+2022. 745 
+
+31 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+[44] Ketian Yu, Sayantan Das, Jonathon LeFaive, Alan Kwong, Jacob Pleiness, Lukas Forer, Sebas-746 
+
+tian Sch¨ onherr, Christian Fuchsberger, Albert Vernon Smith, and Gon¸ calo Rocha Abecasis. Meta-747 
+
+imputation: An e ”cient method to combine genotype data after imputation with multiple reference 748 
+
+panels. The American Journal of Human Genetics , 109(6):1007–1015, Jun 2022. 749 
+
+[45] Andrew Yale, Saloni Dash, Ritik Dutta, Isabelle Guyon, Adrien Pavao, and Kristin P. Bennett. Gener-750 
+
+ation and evaluation of privacy preserving synthetic health data. Neurocomputing , 416:244–255, 2020. 751 
+
+[46] Reza Shokri, Marco Stronati, Congzheng Song, and Vitaly Shmatikov. Membership inference attacks 752 
+
+against machine learning models. In 2017 IEEE Symposium on Security and Privacy (SP) , pages 3–18. 753 
+
+IEEE, 2017. 754 
+
+[47] Nils Homer, Szabolcs Szelinger, Margot Redman, David Duggan, Waibhav Tembe, Jill Muehling, John V 755 
+
+Pearson, Dietrich A Stephan, Stanley F Nelson, and David W Craig. Resolving individuals contributing 756 
+
+trace amounts of dna to highly complex mixtures using high-density snp genotyping microarrays. PLoS 757 
+
+Genetics , 4(8):e1000167, 2008. 758 
+
+[48] Matt Fredrikson, Somesh Jha, and Thomas Ristenpart. Model inversion attacks that exploit confidence 759 
+
+information and basic countermeasures. In Proceedings of the 22nd ACM SIGSAC Conference on 760 
+
+Computer and Communications Security , pages 1322–1333, 2015. 761 
+
+[49] Mijung Park, Jimmy Foulds, Kamalika Chaudhuri, and Max Welling. Dp-em: Di !erentially private 762 
+
+expectation maximization, 2016. 763 
+
+[50] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron 764 
+
+Courville, and Yoshua Bengio. Generative adversarial nets. In Advances in neural information processing 765 
+
+systems , pages 2672–2680, 2014. 766 
+
+[51] Diederik P Kingma and Max Welling. Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114 ,767 
+
+2013. 768 
+
+[52] Mahsan Nourani, Chiradeep Roy, Tahrima Rahman, Eric D. Ragan, Nicholas Ruozzi, and Vibhav 769 
+
+Gogate. Don’t explain without verifying veracity: An evaluation of explainable AI with video activity 770 
+
+recognition. CoRR , abs/2005.02335, 2020. 771 
+
+[53] Kareem Ahmed, Zhe Zeng, Mathias Niepert, and Guy Van den Broeck. Simple: A gradient estimator 772 
+
+for k-subset sampling. In ICLR , 2023. 773 
+
+[54] Pasha Khosravi, YooJung Choi, Yitao Liang, Antonio Vergari, and Guy Van den Broeck. On tractable 774 
+
+computation of expected predictions. Advances in Neural Information Processing Systems , 32:11169– 775 
+
+11180, 2019. 776 
+
+[55] Nikil Roashan Selvam, Guy Van den Broeck, and YooJung Choi. Certifying fairness of probabilistic 777 
+
+circuits. In Proceedings of the 37th AAAI Conference on Artificial Intelligence , feb 2023. 778 
+
+[56] YooJung Choi, Meihua Dang, and Guy Van den Broeck. Group fairness by probabilistic modeling with 779 
+
+latent fair decisions. In Proceedings of the 35th AAAI Conference on Artificial Intelligence , Feb 2021. 780 
+
+[57] Alvaro Correia, Robert Peharz, and Cassio P de Campos. Joints in random forests. In Advances in 781 
+
+Neural Information Processing Systems 33 (NeurIPS) , 2020. 782 
+
+32 
+
+> .CC-BY 4.0 International license available under a was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint (which this version posted April 17, 2026. ;https://doi.org/10.1101/2023.05.16.541036 doi: bioRxiv preprint
+
+[58] Wenzhe Li, Zhe Zeng, Antonio Vergari, and Guy Van den Broeck. Tractable computation of expected 783 
+
+kernels. In Proceedings of the 37th Conference on Uncertainty in Aritifical Intelligence (UAI) , jul 2021. 784 
+
+[59] Meihua Dang, Antonio Vergari, and Guy Van den Broeck. Strudel: Learning structured-decomposable 785 
+
+probabilistic circuits. In Proceedings of the 10th International Conference on Probabilistic Graphical 786 
+
+Models (PGM) , sep 2020. 787 
+
+[60] Honghua Zhang, Brendan Juba, and Guy Van den Broeck. Probabilistic generating circuits. In Pro-788 
+
+ceedings of the 38th International Conference on Machine Learning (ICML) , jul 2021. 789 
+
+[61] Adnan Darwiche. A logical approach to factoring belief networks. In Proceedings of KR , pages 409–420, 790 
+
+2002. 791 
+
+[62] Hoifung Poon and Pedro Domingos. Sum-product networks: A new deep architecture. In 2011 IEEE 792 
+
+International Conference on Computer Vision Workshops (ICCV Workshops) , pages 689–690. IEEE, 793 
+
+2011. 794 
+
+[63] Tahrima Rahman, Prasanna Kothalkar, and Vibhav Gogate. Cutset networks: A simple, tractable, 795 
+
+and scalable approach for improving the accuracy of chow-liu trees. In Joint European conference on 796 
+
+machine learning and knowledge discovery in databases , pages 630–645. Springer, 2014. 797 
+
+[64] Antonio Vergari, YooJung Choi, Anji Liu, Stefano Teso, and Guy Van den Broeck. A compositional atlas 798 
+
+of tractable circuit operations for probabilistic inference. In Advances in Neural Information Processing 799 
+
+Systems 35 (NeurIPS) , dec 2021. 800 
+
+[65] Doga Kisa, Guy Van den Broeck, Arthur Choi, and Adnan Darwiche. Probabilistic sentential decision 801 
+
+diagrams. In Fourteenth International Conference on the Principles of Knowledge Representation and 802 
+
+Reasoning , 2014. 803 
+
+[66] Daphne Koller and Nir Friedman. Probabilistic Graphical Models: Principles and Techniques - Adaptive 804 
+
+Computation and Machine Learning . The MIT Press, 2009. 805 
+
+33
