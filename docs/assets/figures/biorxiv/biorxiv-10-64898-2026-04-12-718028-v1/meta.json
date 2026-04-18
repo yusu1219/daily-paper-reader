@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-718028-v1/fig-001.webp",
+      "caption": "Figure 1. Overview of the CROssBARv2 workflow. (a) Integration of data from 34 well-established sources covering various biomedical domains. (b) Automatic retrieval, standardisation, and integration of source data using modular adapter scripts. (c) CROssBARv2 KG schema, comprising 14 node types and 51 edge types. (d) Storage of the KG in a Neo4j graph database, along with rich metadata and node embeddings computed using deep learning-based methods. (e) Execution of the CROssBAR-LLM workflow, which translates natural language queries into Cypher, executes the queries on KG, and synthesizes structured results into natural language responses; also supports vector-based similarity search.",
+      "page": 6,
+      "index": 1,
+      "width": 890,
+      "height": 1158
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-718028-v1/fig-002.webp",
+      "caption": "Figure 2. Exploration of the CROssBARv2 KG through three complementary interfaces. a) Natural language querying via the CROssBAR-LLM tool enables users to interact with the KG through questions written in plain language, supported by a backend that connects large language models with the Neo4j database (https://crossbarv2.hubiodatalab.com/llm). b) Programmatic access",
+      "page": 7,
+      "index": 2,
+      "width": 875,
+      "height": 1252
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-718028-v1/fig-003.webp",
+      "caption": "Figure 5. CROssBAR-LLM benchmarking performance results on Cypher query generation and biomedical question answering tasks. (a) The number of correct Cypher queries produced by various LLMs utilised in CROssBAR-LLM (out of 50 cases). (b) The numbers of correct answers for standalone LLMs (striped bars) and CROssBAR-LLMs (solid bars) when answering in-house curated",
+      "page": 18,
+      "index": 3,
+      "width": 888,
+      "height": 777
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-718028-v1/fig-004.webp",
+      "caption": "Figure 6. Deep learning-based utilization of CROssBARv2 for biological relationship prediction. (a) Overview of Heterogeneous Graph Transformer (HGT) based ProtHGT model and its training on the CROssBARv2 knowledge graph for protein function prediction. (b) Protein function prediction performance evaluated on the DeepHGAT Human dataset using Fmax scores. ProtHGT models that utilise ESM2 and ProtT5 protein language models achieved top performance in all categories.",
+      "page": 20,
+      "index": 4,
+      "width": 888,
+      "height": 1196
+    }
+  ]
+}

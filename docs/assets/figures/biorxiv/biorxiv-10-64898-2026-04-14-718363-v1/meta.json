@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-001.webp",
+      "caption": "Figure 1: A schematic overview of the architecture and conditioning strategy of the IDP-Prop2seq model. The encoder processes IDR descriptors that define the conditioning signal, while the decoder generates amino acid sequences. Conditioning is achieved through cross-attention between encoder and decoder representations. During training, sequence generation is optimized using a cross-entropy loss.",
+      "page": 3,
+      "index": 1,
+      "width": 944,
+      "height": 194
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-002.webp",
+      "caption": "Figure 2: Distribution of absolute error statistics for Rg and Ree. Violin plots showing the distributions of the minimal (A), maximal (B), and variance (C) of the absolute error obtained when generating sequences targeting the conformational descriptors Rg (blue) and Ree (orange). Results are shown for the h-IDR-Prop2Seq model and the b-IDR-Prop2Seq model. The vertical axis represents absolute error on a logarithmic scale. For the b-IDR-Prop2Seq model, minimal errors are typically in the range of 10−3–10−2 for Rg and around 10−2 for Ree, whereas the h-IDR-Prop2Seq model exhibits broader distributions extending from approximately 10−2 up to values near 10. Similar trends are observed for maximal errors and variances, which remain substantially lower and more tightly distributed for the model trained on the larger dataset. Boxes indicate the interquartile range with the median shown as a horizontal line.",
+      "page": 5,
+      "index": 2,
+      "width": 940,
+      "height": 271
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-003.webp",
+      "caption": "Figure 3: Distribution of SHARK similarity scores for sequences generated in batches of 100 sequences across 1,000 generations conditioned on Ree. Panels show the distributions of the (A) maximal and (B) median SHARK scores. Light brown violins report similarities computed within each generation batch, whereas dark brown violins report similarities between generated sequences and training-set sequences with matching Ree values. Overall, similarity values are low, indicating high diversity among generated sequences and no overlap with training sequences.",
+      "page": 7,
+      "index": 3,
+      "width": 461,
+      "height": 618
+    }
+  ]
+}

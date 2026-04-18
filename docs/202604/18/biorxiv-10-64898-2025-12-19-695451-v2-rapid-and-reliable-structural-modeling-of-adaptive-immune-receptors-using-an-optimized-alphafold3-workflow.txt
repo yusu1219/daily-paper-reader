@@ -1,0 +1,1372 @@
+Title: Rapid and Reliable Structural Modeling of Adaptive Immune Receptors Using an Optimized AlphaFold3 workflow
+
+URL Source: https://www.biorxiv.org/content/10.64898/2025.12.19.695451v2.full.pdf
+
+Number of Pages: 33
+
+Markdown Content:
+1
+
+# Rapid and Reliable Structural Modeling of Adaptive Immune 1
+
+# Receptors Using an Optimized AlphaFold3 workflow 2
+
+3
+
+Alexandre Jann 1,2 , Marta A. S. Perez 1,2,* and Vincent Zoete 1,2,* 
+
+4 
+
+> 1
+
+Ludwig Institute for Cancer Research, Lausanne Branch, Department of Oncology, Lausanne 5
+
+University Hospital (CHUV) and University of Lausanne (UNIL), Agora Cancer Research Center, 6
+
+Lausanne, Switzerland. 7
+
+> 2
+
+Molecular Modeling Group, SIB Swiss Institute of Bioinformatics, University of Lausanne, 8
+
+Quartier UNIL-Sorge, Bâtiment Amphipole, CH-1015 Lausanne, Switzerland. 9
+
+*Correspondence to: marta.perez@sib.swiss, vincent.zoete@unil.ch 10 
+
+11 
+
+## Abstract 12 
+
+13 
+
+AlphaFold (AF), a deep-learning based protein modelling approach, has revolutionized structural biology 14 
+
+by generally achieving near-experimental accuracy in protein structure prediction. An impactful application 15 
+
+of AF is the modelling of antibodies (Abs) and T-cell receptors (TCRs), key mediators of cellular immunity, 16 
+
+whose structural specificity underlies responses in cancer, infection, and autoimmune diseases. In this work, 17 
+
+we analyse AF3 performance by systematically examining how MSA composition, number of inference 18 
+
+phases and inference parameters affect prediction accuracy and computational efficiency. We present an 19 
+
+acceleration of ~45-fold of the AF3 MSA phase using reduced UniRef90 subsets, combined with up to a 20 
+
+3.6-fold increase in AF3 inference speed through optimized parameters. We provide a highly accurate 21 
+
+variant of the AF3 workflow specifically optimized for the modelling of the Abs and TCRs receptor 22 
+
+domains, enabling rapid, reliable structural predictions at a scale suitable for high-throughput 23 
+
+immunological studies. Our findings provide a foundation for faster therapeutic discovery and deeper 24 
+
+molecular mechanism understanding of immune recognition. 25 
+
+Teaser: By improving key steps in the process, we made AlphaFold3 about 40 times faster at modeling 26 
+
+specific immune proteins 27 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+2
+
+## Introduction 28 
+
+29 
+
+The ability to accurately predict protein structures has been revolutionized by AlphaFold (AF)[1], a deep 30 
+
+learning (DL) framework that generally demonstrates near-experimental accuracy across most of the human 31 
+
+proteome. AlphaFold3 (AF3)[2], released in 2024, is the most recent and advanced version of AF for 32 
+
+biomolecular structure prediction and interaction analysis. Unlike AlphaFold2 (AF2)[3], AF3 significantly 33 
+
+reduces the reliance on Multiple Sequence Alignment (MSA) representations. While MSA information is 34 
+
+still used, its role is greatly diminished in favor of single and pair representations, which helps to simplify 35 
+
+the model’s architecture. The single representation refers to per-residue or per-atom embeddings that 36 
+
+capture local biochemical properties. The pair representation encodes features between every pair of 37 
+
+residues or atoms, capturing spatial proximity, geometric constraints, and co-evolutionary signals. AF3 38 
+
+adopts new components, such as a Pairformer and a Diffusion-based Generative Model, to replace the 39 
+
+Evoformer stack used in AF2. These new modules are responsible for updating both pairwise and single 40 
+
+representations in a more flexible and generalizable manner, allowing AF3 to support heterogeneous 41 
+
+biomolecular assemblies. 42 
+
+Despite the reduced influence of the MSA on model construction in AF3, the MSA component remains the 43 
+
+slowest step in the workflow, representing more than 90% of the end-to-end execution time. Consequently, 44 
+
+MSA generation imposes a disproportionate runtime and emerges as a bottleneck in AF3, notably for 45 
+
+studies requiring the generation of large numbers of 3D structures. Some alternative approaches mitigate 46 
+
+the expensive MSA computation, ColabFold[4] uses a different software to compute the MSA faster while 47 
+
+ImmuneBuilder[5] removes the need of MSA as an input by training their machine learning model 48 
+
+exclusively on immune proteins. 49 
+
+T-cell Receptors (TCRs) and Antibodies (Abs) are key mediators of cellular immunity, whose structural 50 
+
+specificity underlies responses in cancer, infection, and autoimmune diseases. TCRs and Abs exhibit 51 
+
+exceptional sequence diversity and flexible regions, posing challenges in the creation of 3D models. Abs 52 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+3
+
+and TCRs are distinct from other proteins due to their conserved structure in the framework region but large 53 
+
+structure variability in the Complementarity-Determining Regions (CDR) regions. Our group develops 3D-54 
+
+based predictors of TCR and Ab repertoires analysis and specificity prediction[6, 7], which rely on the rapid 55 
+
+modeling of large numbers of receptor domains. 56 
+
+In this paper, we conducted a comprehensive performance analysis of AF3 for modelling TCRs and Abs. 57 
+
+We focus on two phases of the AF3 workflow: (i) the MSA phase, which prepares evolutionary features 58 
+
+from homologous sequences, and (ii) the inference phase, which performs structure prediction using deep 59 
+
+neural network modules, primarily the Pairformer and Diffusion module, to iteratively update pair 60 
+
+representations that capture atomic interaction relationships. By benchmarking end-to-end execution time 61 
+
+across multiple AF3 workflow variants, with different MSA databases and number of seeds, we 62 
+
+demonstrate that the AF3 efficiency can be improved by using subsets of the UniRef90 database [8] in the 63 
+
+MSA phase ( Figure 1a-b) . On our desktop system, AF3 MSA pipeline execution time is accelerated by up 64 
+
+to 45-fold while keeping the TCRs and Abs models at near-experimental accuracy. We also improved AF3 65 
+
+inference parameters to better fit Ab and TCR modelling, reducing the new bottleneck step of model 66 
+
+generation. By allowing 9 inferences to run in parallel on a single 24Go GPU and optimizing AF3 specific 67 
+
+parameters, we reduced inference time by an additional 1.5 to 3.6-fold depending on input size ( Figure 1a ). 68 
+
+Developing specialized AF3 variants that retain AF’s predictive accuracy while making it extremely fast is 69 
+
+critical for advancing structural immunology and enabling large-scale modeling of immune repertoires. Our 70 
+
+approach could be readily generalized to other protein families with large numbers of experimentally 71 
+
+determined 3D structures in the Protein Data Bank (PDB), such as kinases or proteases or MHC complexes. 72 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+4
+
+73 
+
+Figure 1 . a) General overview of AF3 original workflow and our AF3 variant workflow, along with running 74 
+
+time of the corresponding AF3 MSA and inference phases. The original AF3 uses 4 databases to build the 75 
+
+MSA input while AF3 variant uses a much smaller database named UniRef90-TCR or UniRef90-Ab. b)76 
+
+Process used to build the reduced Uniref90-TCR/Ab databases, by sequentially generating MSAs for 77 
+
+individual TCRs using JackHMMER and the UniRef90 database, and aggregating the resulting sequences. 78 
+
+79 
+
+80 
+
+81 
+
+TCR/Ab 1 AF3 MSA pipeline    
+
+> MGY BFD uniprot UniRef90
+
+AF3 MSA pipeline TCR/Ab 1 TCR/Ab 2 TCR/Ab 3 TCR/Ab 4 TCR/Ab 5 TCR/Ab 6 TCR/Ab 7 TCR/Ab 8 TCR/Ab 9 AF3 inference (parallelized) 
+
+10s 
+
+AF3 inference TCR / Ab Validation Set TCR / Ab Validation Set 
+
+> Uniref90 * TCR/Ab
+
+MSA MSA 
+
+20s 
+
+40s 11m 
+
+> AF3 Original AF3 Variant
+
+# a
+
+> UniRef90
+
+JackHMMER JackHMMER JackHMMER ... bMSA Uniref90 * TCR/Ab TCR / Ab Representative sequences 
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 5
+
+## Results 82 
+
+83 
+
+In this results section, we present AF3 workflow variants specifically developed for the modelling of the 84 
+
+receptor domain of the Abs and TCRs. We show that the AF3 end-to-end runtime can be substantially 85 
+
+reduced by generating a curated subset of UniRef90 sequences, rather than relying on the full databases 86 
+
+used by AF3. Using the AF3 ranking score, we further demonstrate that a single seed is sufficient to obtain 87 
+
+highly accurate models, eliminating the need for multiple runs. In addition, we accelerate the AF3 inference 88 
+
+stage by up to 3.6-fold through optimized parameter settings. Notably, we show that our AF3 workflow 89 
+
+variant achieves near-experimental accuracy, even for challenging CDRs such as antibody CDRH3 and T-90 
+
+cell receptor CDR3b, while relying solely on the reduced database and a single seed. 91 
+
+## Less than 3% of the UniRef90 sequences are used in AF3 MSA for TCR and 92 
+
+## Ab modelling 93 
+
+AF uses multiple sequence alignments (MSAs) computed by JackHMMER[9] to extract information from 94 
+
+evolutionarily related sequences corresponding to the input proteins. Homologous sequences are retrieved 95 
+
+for each protein chain in a very time-consuming process, reading sequences from huge databases such as 96 
+
+UniRef90, which contains 153,742,194 sequences, to ensure general applicability. 97 
+
+To evaluate the Uniref90 sequences selected by AF3 for the modelling of TCRs we used a non-redundant 98 
+
+set of 3’213 TCRs from the VDJ database [10, 11] (Methods ). By sequentially generating MSAs for 99 
+
+individual TCRs and aggregating the resulting sequences, we found that the size of the cumulative sequence 100 
+
+database after treating 500 TCRs (15% of the number of samples used) already contains more than 95% of 101 
+
+the total number of sequences, becoming sufficient to reproduce the UniRef90-based MSAs of all 102 
+
+subsequent TCRs ( Figure 2 a-c ). Across the entire VDJ set, 261,055 sequences are used for TCRα ( Figure 103 
+
+2a and 2g ), 208,047 for TCRβ ( Figure 2b and 2g) , and 261,780 for TCRαβ ( Figure 2 c) and 2g ), indicating 104 
+
+that the α chain incorporates more UniRef90 sequences than the β chain, with substantial overlap between 105 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+6
+
+the sequences used for both chains. Less than 3% of the UniRef90 sequences are used in the MSA for the 106 
+
+entire set suggesting that the size of the reference database used for MSA could be substantially reduced if 107 
+
+AF3 is applied to this specific protein family. These sequences were compiled into a new database called 108 
+
+UniRef-TCR. Among the UniRef90 codes present in the reduced database UniRef-TCR and successfully 109 
+
+mapped to a protein domain or family using the UniProt ID mapping tool, (https://www.uniprot.org/id-110 
+
+mapping), 98.7% were assigned to proteins with known gene ontology relate to the immune system (i.e. 111 
+
+adaptive immune response [GO:0002250]) or with immune-related protein name (i.e. Ig-like domain-112 
+
+containing protein).. 113 
+
+We also performed the same exercise for a set of 2’490 reference Abs and aggregated a total of 174,601 114 
+
+unique sequences from the UniRef90 database after sequentially treating the heavy chain, 249,657 for the 115 
+
+light chain and 250,160 for both heavy and light chains ( Figure 2g ). Similarly to TCR sequences, 98.6% 116 
+
+of UniRef90 cluster codes successfully mapped to a Uniprot protein with a gene ontology or protein name 117 
+
+related to adaptive immunity. These sequences were aggregated into a new database called UniRef-Ab. The 118 
+
+convergence of sequence accumulation during the sequential processing of antibodies, which supports the 119 
+
+sufficiency of the final sequence datasets, could in principle depend on the order in which antibodies are 120 
+
+analyzed. To assess if convergence is robust to Abs processing order, we performed 100 accumulation runs, 121 
+
+each initiated from a different random shuffling of the reference antibody set. The resulting standard 122 
+
+deviation of the cumulative number of sequences as a function of the number of reference Abs processed 123 
+
+is shown in Figure 2 d–f . These results demonstrate that convergence is independent of antibody processing 124 
+
+order, supporting the comprehensiveness of the final sequence datasets. We expect this behavior to extend 125 
+
+to the construction of the TCR datasets as well. Notably, the accumulation analysis ( Figure 2 d–f ) reveals 126 
+
+that, on average, approximately 80% of all unique sequences are already captured after processing the first 127 
+
+five reference Abs, indicating substantial sequence sharing across multiple Abs. 128 
+
+129 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+7
+
+Another new database, UniRef-TextMining, containing 41,055 sequences, was generated by text-mining 130 
+
+the UniRef90 database for terms associated with TCRs or Abs. 131 
+
+132 
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 8
+
+Figure 2 . Convergence of the aggregated MSA-derived sequence databases. ( a-c ) Cumulative number of 133 
+
+unique sequences obtained from UniRef90 by generating multiple sequence alignments (MSAs) for 134 
+
+individual T cell receptors (TCRs) and aggregating the resulting sequences, plotted as a function of the 135 
+
+number of TCRs processed, for a set 3,213 unique TCRs from VDJ database. The convergence is shown 136 
+
+over 500 random shuffling of the order in which the TCRs were processed. a) and b) show analyses for 137 
+
+TCR α chains and β chains, respectively, and c) present analyses of paired αβ TCRs. ( d-f ) Sequence 138 
+
+accumulation obtained from the sequential MSA analysis of a set of 2,490 reference Abs, and respective 139 
+
+standard deviation computed over 100 random shuffling of the order in which the antibodies were 140 
+
+processed. d) corresponds to the Ab’s heavy chain MSA analysis, e) to Ab’s light chain, f) Ab’s heavy and 141 
+
+light chain together and g) . Number of UniRef90 sequences in the AF3 Uniref90 database, number of 142 
+
+sequences from UniRef90 used either in the MSA of TCRa, TCRb and TCRab paired for a set of 3,213 143 
+
+unique TCRs from VDJ database or used in the MSA of AbH, AbL and AbHL paired for a set of 2,490 144 
+
+Abs. Number of sequences in a non-exhaustive database containing just chains belonging to TCRs and Abs. 145 
+
+146 
+
+These specialized databases, UniRef-TCR, UniRef-Ab and UniRef-textminining were used as the only 147 
+
+databases to generate MSA instead of the databases usually used during a normal AF3 run. The four 148 
+
+databases used by AF3 to gather homologous sequences for building the MSA are (i) UniRef90, a clustered 149 
+
+version of UniProt with sequences merged at 90 % identity for broad evolutionary coverage (described as 150 
+
+UniRef90-AF3 in Figure 2g , (ii) MGnigy, large metagenomic sequence database that greatly increases 151 
+
+depth of evolutionary information, (iii) BFD (Big Fantastic Database), one of the largest collection of 152 
+
+protein families and (iv) the full UniProt protein sequence database[3]. AF3 can also generate MSAs for 153 
+
+RNA chains using nucleotide resources (not described because were not used). 154 
+
+155 
+
+156 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+9
+
+## Focused sequence databases can be used for Ab and TCR modelling while 157 
+
+## keeping accuracy near experimental resolution 158 
+
+To evaluate the impact of reducing the reference database used for MSA, we assessed model performance 159 
+
+and accuracy across different AF3 workflow variants that incorporate sequence databases of varying sizes. 160 
+
+Model accuracy was quantified by calculating the root mean square deviation (RMSD) between the 161 
+
+predicted 3D structure generated with a given AF3 variant (both the original and the reduced-database 162 
+
+versions) and the corresponding experimental PDB structure. Figure 3. 163 
+
+Our systems of interest, TCRs and Abs, were selected because of their structural similarities, and the well-164 
+
+known challenges associated with accurately modeling their loops[5, 12, 13]. TCRs and Abs share a 165 
+
+broadly similar 3D architecture ( Figure 3 ): both are heterodimers containing six complementarity-166 
+
+determining regions (CDRs) that form their binding interfaces. As illustrated in Figure 3 , CDRH1, CDRH2, 167 
+
+and CDRH3 from the Ab heavy chain (H) correspond to CDRβ1, CDRβ2, and CDRβ3 of the TCR β chain; 168 
+
+likewise, the three CDRs of the Ab light chain (L) align with those of the TCR α chain. Despite these 169 
+
+structural parallels, Abs can bind to an extraordinarily wide range of molecular targets, including peptides, 170 
+
+proteins, and haptens, whereas αβ TCRs recognize peptide antigens presented by MHC molecules. 171 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+10 172 
+
+Figure 3. Structural parallels between TCRs (on the left) and antibodies (on the right). Analogous chains 173 
+
+and CDRs are color-coded consistently. 174 
+
+175 
+
+RMSDs were calculated for the entire system as well as for the CDR loops, which are the most challenging 176 
+
+regions and contain the key structural information. 177 
+
+As shown in Figure 4 , AF3 workflow variants with MSA based on reduced sequence datasets performed 178 
+
+comparably to the original AF3 for TCR modelling, including for the challenging CDR3β loop. On the 179 
+
+contrary, MSA-free predictions performed markedly worse (Figure 4a and Figure 4b) , with an average 180 
+
+RMSD considering all heavy atoms in the entire TCR of 10.5 ±6.6 Å, underscoring that some degree of 181 
+
+evolutionary information remains essential for accurate TCR structure prediction ( Figure 4b ). Notably, 182 
+
+UniRef90-TCR and UniRef-textmining based variant yields the lowest average RMSD for CDR3β among 183 
+
+all tested configurations (Figure 4) , a particularly relevant result given that CDR3β is widely recognized 184 
+
+as the most difficult TCR loop to model accurately[5, 13]. The results shown in Figure 4 were generated 185 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+11 
+
+using a single seed. Repeating the analysis with five different seeds produced consistent outcomes, with no 186 
+
+statistically significant difference between results obtained from the original AF3 and the AF3 variants with 187 
+
+reduced MSA, as shown in the Supporting Information Fig. 1 . The RMSD differences across variants 188 
+
+with reduced sequence datasets are not statistically significant (p >0.05, annotated as “ns” in Figure 4a ), 189 
+
+indicating that reduced sequence datasets for MSAs can effectively compete with the full AF3 reference 190 
+
+database. Crucially, these reduced-MSA variants offer substantial computational advantages, enabling up 191 
+
+to a 45-fold reduction in runtime. The AF3 variant with a reduced database of sequences, decreases the 192 
+
+computation time from 15 minutes to less than 40 seconds (on a recent Dell Precision 3680 with 1 GPU 193 
+
+NVIDIA RTX A4500 Ada Generation; 1 cpu used). RMSD values for each TCR in the validation set across 194 
+
+all AF3 variants are provided in the Supporting Information. 195 
+
+196 
+
+197 
+
+198 
+
+Figure 4 . Analysis using different AF3 MSA variants for TCR modelling. a) RMSD analysis using one 199 
+
+seed. We compared results of AF3 runs using four MSA configurations: no MSA (in blue), the default AF3 200 
+
+that uses among others UniRef90 (in gray), a UniRef90 subset selected according to AF3’s choices during 201 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+12 
+
+TCR modelling from the VDJ database, i.e. UniRef-TCR (in orange), and a UniRef90 subset curated using 202 
+
+TCR and antibody sequences, UniRef-textmining (in violet). The evaluation used a set of 77 TCRs for 203 
+
+which just one TCR was accidentally used to also generate the sequence datasets for the MSA. RMSDs 204 
+
+were calculated for the entire TCR receptor domain based on carbon alpha (rmsd_all_ca), backbone 205 
+
+(rmsd_all_backbone) and all heavy atoms (rmsd_all_heavy). Backbone RMSD for the CDR1β 206 
+
+(CDR1β_backbone), CDR2β (CDR2β_backbone), and CDR3β (CDR3β _backbone), CDR1a 207 
+
+(CDR1a_backbone), CDR2a (CDR2a_backbone) and CDR3a (CDR3a _backbone). P-values calculated 208 
+
+with Mann-Whitney-Wilcoxon test two-sided. The annotations used in the graph are ns: p>5.00e-02, *: 209 
+
+1.00e-02 < p <= 5.00e-02, **: 1.00e-03 < p <= 1.00e-02, ***: 1.00e-04 < p <= 1.00e-03 and ****: p <= 210 
+
+1.00e-04. b) Superimposition of the crystallographic structure (PDB code 7RRG) with structural models of 211 
+
+the same TCR generated using four AF3-MSA variants: no MSA (in blue), AF3 (in gray), UniRef90-TCR 212 
+
+(in orange), and UniRef90-textmining (in violet). Five seeds (and five inferences) were used, and the model 213 
+
+with the best AF3 score was selected for analysis. The RMSD between the no-MSA variant model and the 214 
+
+crystallographic structure is 13.5 Å. In this model, the long-coiled terminal regions are parts of the TCR 215 
+
+variable domain not properly folded (and not to any signal peptide). 216 
+
+217 
+
+The correlation between TCR RMSDs obtained from the native and AF3 workflow variants can be seen in 218 
+
+Figure 5 and Supporting Information Figures 2 and 3. We observe that correlation between the RMSD 219 
+
+obtained from AF3 (full databases) and AF3 workflow variant with UniRef-TCR database models is higher 220 
+
+than 0.75 for all the different RMSD analysis including loop-specific RMSDs, indicating that expected 221 
+
+prediction accuracy for each TCR is preserved regardless of whether the native or accelerated workflow is 222 
+
+used, with both workflows reproducing the same overall error patterns and relative loop-specific modeling 223 
+
+difficulties. 224 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+13 
+
+225 
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 14 
+
+Figure 5. RMSD correlations for the native AF3 workflow and one variant using UniRef-TCR. RMSD 226 
+
+were calculated between the experimental structure and the model generated by a given AF3 workflow, on 227 
+
+the entire TCR based on heavy atoms (rmsd_all_heavy), on Cα atoms (rmsd_all_Ca), and on backbone 228 
+
+atoms (rmsd_backbone), as well as for the backbone of the CDR1β (CDR1β _backbone), CDR2β (CDR1β 229 
+
+_backbone), CDR3β (CDR1β _backbone), CDR1a (CDR1a_backbone), CDR2a (CDR2a_backbone), and 230 
+
+CDR3a (CDR3a_backbone) loops. 231 
+
+The AF3 MSA pipeline was run either with its default databases or exclusively with the specialized 232 
+
+databases on a set of 525 Abs from SAbDab (thus with an experimental 3D structure) that were not part of 233 
+
+the AF3 training set. The inference was performed with 10 seeds. We then compared the RMSD of the 234 
+
+backbone atoms of the models to their crystal structures. Whatever the native or accelerated workflows 235 
+
+used, we observed a much higher RMSD for CDRH3 than any other CDR – the latter having a median 236 
+
+RMSD below 1Å ( Figure 6a ). When comparing the RMSD for all CDRs between the models created with 237 
+
+the accelerated (using the Uniref-Ab sequence dataset) and native AF3 workflows, the first showed 238 
+
+marginally higher RMSD despite having a median RMSD with the same order of magnitude, indicating 239 
+
+that the predictive performance of the two workflows is effectively indistinguishable. A high correlation 240 
+
+could be observed between the 6 CDRs RMSD of the models generated with the native and this accelerated 241 
+
+AF3 workflows (pearson correlation: 0.917) as well as between the native AF3 workflow and that using 242 
+
+the AF3-textmining sequence dataset (pearson correlation: 0.871), Figures 6b and c, respectively. The 243 
+
+correlation between CDRs’ RMSD obtained from the native and AF3 workflow variants can be seen in 244 
+
+Supporting Information Figures 5 and 6 . Thus, similarly to TCRs, the use of reduced-MSA protocols to 245 
+
+model Ab structures reproduce the same overall error patterns and relative loop-specific modelling 246 
+
+difficulties as the original AF3 workflow. 247 
+
+248 
+
+249 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+15 
+
+250 
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 16 
+
+Figure 6 . RMSD analysis using different AF3 workflow variants for Ab modelling. a) We compared results 251 
+
+of AF3 runs using four MSA configurations: no MSA (in blue), the default AF3 that uses among others 252 
+
+UniRef90 (in orange), a UniRef90 subset selected according to AF3’s MSA on Ab modelling of 2,490 253 
+
+structures, i.e. UniRef-Ab (in green), and a UniRef90 subset curated using TCR and antibody sequences, 254 
+
+UniRef-textmining (in red). For evaluation, we used 525 Abs from SAbDab that were not included in AF3’s 255 
+
+training set. RMSDs were calculated for the entire Ab's Fv domain based on carbon alpha (rmsd_ca), 256 
+
+backbone (rmsd_backbone), and all heavy atoms (rmsd_all heavy). Backbone RMSD for the CDR H1 257 
+
+(CDRH1_backbone), CDR H2 (CDRH2_backbone), and CDR H3 (CDRH3_backbone), CDR L1 258 
+
+(CDRL1_backbone), CDR L2 (CDRL2_backbone), and CDR L3 (CDRL3_backbone). The annotations 259 
+
+used in the graph are ns: p > 5.00e-02, *: 1.00e-02 < p <= 5.00e-02, **: 1.00e-03 < p <= 1.00e-02, ***: 260 
+
+1.00e-04 < p <= 1.00e-03 and ****: p <= 1.00e-04. For a non-cropped Y axis see Supporting Information 261 
+
+Figure 7 . In b) and c) we observed a high correlation between the RMSD of all 6 CDRs between AF3 and 262 
+
+Uniref-Ab or Uniref-textmining workflow variants. 263 
+
+264 
+
+## One seed is enough for high-accuracy modelling of TCR and Ab receptor 265 
+
+## domains 266 
+
+We analysed the relationship between the AF3 ranking scores - generated across all models, using 20 seeds 267 
+
+and five inferences per seed applied to the TCR validation set – and the model accuracy ( Figure 7a-b ). We 268 
+
+have observed some outliers, highlighted with an orange cross for which the RMSD using the 6CDRs was 269 
+
+higher than 15 Angstrom and the ranking score was lower than 0.4. Surprisingly, for example, for TCR 270 
+
+with PDB code 7N2Q and for seed 56970, the ranking scores range between 0.35 and 0.44 and the RMSD 271 
+
+ranges between 0.7 and 16.1 Angstrom ( Figure 7c ). Our results showed that a high ranking score does not 272 
+
+reliably correspond to an experimentally accurate prediction, nor does the top-ranked model necessarily 273 
+
+represent the best-quality structure among those generated. Furthermore, increasing the number of seeds 274 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+17 
+
+does not improve model accuracy, indicating that additional sampling offers no benefit in this context 275 
+
+(Figure 7d). 276 
+
+277 
+
+278 
+
+Figure 7 . ( a-b ) Ranking score vs backbone RMSD calculated for the 6 CDR loops using UniRef-TCR 279 
+
+sequence dataset. 20 seeds and 5 inferences per seed were used on a set of 77 TCR structures with known 280 
+
+3D that were not included in AF3 training. A) with outliers and B) without outliers. Ranking score = 0.8 × 281 
+
+ipTM + 0.2 × pTM + 0.5 × disorder factor – 100 × has_clash as described in the code 282 
+
+https://github.com/google-deepmind/alphafold3. c) Ranking score and RMSD for a PDB example: TCR 283 
+
+7n2q – 3 inferences for seed 56970. The ranking scores range between 0.35 and 0.44 and the RMSD for the 284 
+
+6CDRs between 0.7 and 16.1 Angstrom. d) RMSD of the 6 CDR loops as a function of the number of 285 
+
+inference seeds used. Each run with n+1 seeds includes all seeds from the run with n seeds, plus one 286 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+18 
+
+additional randomly selected seed. At each iteration, the RMSD is analysed relative to the best ranking 287 
+
+score obtained across all preceding seeds and the newly added seed. RMSD analysis of TCR modelling 288 
+
+using an AF3 variant with the UniRef90-TCR sequence dataset. A maximum of 20 random seeds were 289 
+
+used. 290 
+
+291 
+
+292 
+
+We also analysed the AF3 ranking scores generated across all models, using 10 seeds and five inferences 293 
+
+per seed for the Ab validation set ( Figure 8 ). We found that for the same Ab, several models achieved low 294 
+
+RMSD for CDRH3 or all CDRs but were not top ranked. So, suboptimal model selection (i.e. scoring 295 
+
+failure) is observed. The AF3 ranking score showed poor correlation with CDR accuracy as measured by 296 
+
+the RMSD, both for all CDRs (Pearson r = −0.297) and for CDRH3 (r = −0.247). Increasing the number of 297 
+
+seeds to 20 did not improve CDR modelling or model selection, and the same trend was observed with the 298 
+
+AF3 variants with reduced UniRef-Ab and UniRef-textmining sequence datasets ( Supplementary 299 
+
+Figures ). These results indicate that the default AF3 ranking score, dominated by the ipTM term, 300 
+
+inadequately reflects Ab model quality. 301 
+
+302 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+19 
+
+303 
+
+# a
+
+# b
+
+# c
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 20 
+
+304 
+
+Figure 8 . Analysis of the relationship between AF3's ranking score and CDRs modelling accuracy. We 305 
+
+assessed the correlation between the ranking score and a) the RMSD of all 6 CDRs and b) the RMSD of 306 
+
+CDR H3. c) We plotted the evolution of the RMSD of all CDRs over the generation of models for 10 seeds, 307 
+
+taking for each seed the best ranking score among the generated models up to that seed. 308 
+
+309 
+
+## Comparisons with faster-than-AF3 state-of-the-art method shows that AF3 310 
+
+## using a reduced MSA achieves comparable or superior accuracy while offering 311 
+
+## superior speed. 312 
+
+We analyzed the accuracy of AF3 and AF3 variants with reduced MSA modelling TCR against competitors 313 
+
+(Figure 9 a-b ). The two state-of-the-art competitors used were Boltz2 and TCRBuilder2. Boltz2, similarly 314 
+
+to AF3, is a general-purpose biomolecular structure predictor, and TCRBuilder2 is a specialized, 315 
+
+computationally efficient tool optimized specifically for TCR structure prediction. We compared AF3 316 
+
+with Boltz2 in Figure 9a) and AF3 with TCRBuilder2 in Figure 9b) , as the sizes of the evaluation sets 317 
+
+differ. Because Boltz2 was published later, a smaller dataset was used for this comparison to ensure that 318 
+
+none of the evaluated structures were included in the training data of any software (see Methods ). 319 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+21 
+
+320 
+
+b
+
+a
+
+c
+
+(which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint 22 
+
+Figure 9 . RMSD analysis using different AF3 MSA variants for TCR modelling and one seed, and 321 
+
+comparison with state-of-the-art approaches. We compared results of AF3 runs using three MSA 322 
+
+configurations: the default AF3 that uses among others UniRef90 (in gray), a UniRef90 subset selected 323 
+
+according to AF3’s choices during TCR modelling from the VDJ database, i.e. UniRef-TCR (in orange), 324 
+
+and a UniRef90 subset curated using TCR and antibody sequences, UniRef-textmining (in violet). 325 
+
+Comparison with Boltz2 in a) and with TCRBuilder2 in b). RMSDs were calculated for the entire TCR 326 
+
+receptor domain based on carbon alpha (rmsd_all_ca), backbone (rmsd_all_backbone) and all heavy atoms 327 
+
+(rmsd_all_heavy). Backbone RMSD for the CDR1β (CDR1β_backbone), CDR2β (CDR2β_backbone), and 328 
+
+CDR3β (CDR3β _backbone), CDR1a (CDR1a_backbone), CDR2a (CDR2a_backbone) and CDR3a 329 
+
+(CDR3a _backbone). P-values calculated with Mann-Whitney-Wilcoxon test two-sided. c) RMSD was 330 
+
+computed on the Fv domain of 236 Abs and compared to AF3 UniRef90 Ab, on carbon alpha (rmsd_ca), 331 
+
+backbone (rmsd_backbone), and all heavy atoms (rmsd_all heavy). Backbone RMSD for the CDR H1 332 
+
+(CDRH1_backbone), CDR H2 (CDRH2_backbone), and CDR H3 (CDRH3_backbone), CDR L1 333 
+
+(CDRL1_backbone), CDR L2 (CDRL2_backbone), and CDR L3 (CDRL3_backbone) were also computed. 334 
+
+The annotations used in the graph are ns: p <= 1.00e+00, *: 1.00e-02 < p <= 5.00e-02, **: 1.00e-03 < p <= 335 
+
+1.00e-02, ***: 1.00e-04 < p <= 1.00e-03 and ****: p <= 1.00e-04. 336 
+
+337 
+
+We observe that all approaches show similar accuracy when modelling TCRs. All p-values are non-338 
+
+significant, except for CDR1α, where AF3 performs significantly better than TCRBuilder2 ( Figure 9b ). In 339 
+
+terms of computational efficiency, AF3 variants with reduced databases, Boltz-2 and TCRBuilder2 are 340 
+
+faster than AlphaFold 3. Predictions are typically completed in seconds (TCR Builder 2 and AF3 variants 341 
+
+with reduced databases) to a few minutes (Boltz-2), whereas for AF3 generally requires several minutes 342 
+
+and higher computational resources. 343 
+
+The same anaylsis of competitors was also performed for Abs, as mentioned previously, to have a validation 344 
+
+set that doesn’t overlap with the training set of Boltz2 a smaller validation set was selected. We observed 345 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+23 
+
+that ABodyBuilder 2 was performing significantly worse than AF3. While Boltz 2 had also less accurate 346 
+
+prediction than AF3, it was only significant for CDR L1 ( Figure 9c ). 347 
+
+348 
+
+349 
+
+## AF3 parameters optimization during inference allows for substantial speed up for 350 
+
+## modelling small proteins 351 
+
+First, by reducing the default GPU memory pre-allocation to 10% instead of 95% we were able to run up 352 
+
+to 9 inferences in parallel on a single 24Gb GPU. While these numbers are specific to the hardware used 353 
+
+(10% allowed us to generate models of up to 312 tokens), we hypothesize that on a GPU with more 354 
+
+dedicated memory we could run even more inferences in parallel. Parallelizing inferences allows to reduce 355 
+
+the featurization and the first seed inference time, respectively from 7 to 1 second and from 36 to 23 seconds 356 
+
+(Figure 10a ), but not subsequent seeds. This probably means that only the model compilation and 357 
+
+featurization which are handled by the CPU were accelerated through this parallelization. 358 
+
+To further reduce inference time, we tailored bucket size to the exact length of our inputs (1 amino acid = 359 
+
+1 token) and observed a speed up proportional to the amount of padding tokens eliminated ( Figure 10 b ). 360 
+
+The most striking example was a 272 tokens Ab that would by default use a bucket of 512 tokens resulting 361 
+
+in 240 padding tokens. The inference of the first and second seeds respectively took 65.5 and 50.5 seconds 362 
+
+with default bucket while it only took 34 and 17.3 seconds with optimized bucket size, this showed a 363 
+
+roughly flat 30 seconds time gain per seed inference. This optimization is not hardware specific and would 364 
+
+provide significant speed up to any processus needing to generate large number of small models with AF3. 365 
+
+We did not analyse more seeds because all subsequent seeds after the second one are identical to it 366 
+
+(Supporting Information Figure 8 ). 367 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+24 
+
+368 
+
+Figure 10 . Temporal analysis of GPU optimized AF3 inference for 2 seeds with different Ab length in 369 
+
+tokens (1 token equals 1 amino acid). We compare relative speed for different input lengths under the same 370 
+
+conditions for parallelization with optimized buckets a) or only for bucket optimization b) .371 
+
+## Discussion 372 
+
+Despite the reduced influence of the MSA on model construction in AF3, the MSA component remains the 373 
+
+slowest step in the workflow, representing more than 90% of the end-to-end execution time. Consequently, 374 
+
+MSA generation imposes a disproportionate runtime and emerges as a bottleneck in AF3. 375 
+
+To largely decrease the end to end execution time of AF3 to generate structural models of TCR or Ab 376 
+
+receptor domains, four different AF3 MSA variants were developed: no MSA, the original AF3 setup with 377 
+
+the full UniRef90 database, a UniRef90 subset selected according to AF3’s choices during TCR and Ab 378 
+
+b
+
+a
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+25 
+
+modelling (UniRef90-TCR and UniRef90-Ab, respectively) and a non-exhaustive UniRef90 subset curated 379 
+
+using TCR and Ab sequences (UniRef90-textmining). 380 
+
+All the models obtained with the AF3 MSA-free variant are significantly worse than the ones obtained with 381 
+
+the reduced databases and original AF3 (p-value < 0.0001) for the modelling of TCRs, indicating that MSA 382 
+
+is needed for the modelling of the TCRs. Conversely, we observed that for Ab modelling the MSA-free 383 
+
+variant can be used while keeping accuracy near experimental resolution (except for about 11 structures, 6 384 
+
+CDRs RMSD > 10Å, see Supporting Information ) – at the cost of a very marginal yet significant loss in 385 
+
+accuracy compared to the native AF3 workflow. We hypothesize that these differences arise partly because 386 
+
+far fewer TCR experimental 3D structures were available for AF3 training compared to antibodies. 387 
+
+Although some TCRs are better modelled than others in the MSA-free variant, we do not observe that the 388 
+
+ones with low RMSD have better representation of their genes in the 3D structures that were used for AF3 389 
+
+training (data not shown). 390 
+
+Despite using highly size-reduced subsets of UniRef90 for MSA, all our accelerated Af3 workflows lead 391 
+
+to results comparable to the native AF3 workflow. The RMSD differences are comparable indicating that 392 
+
+reduced-database MSAs can effectively compete with the full AF3 reference database for some conserved 393 
+
+families/domains of proteins, including TCRs and Abs. 394 
+
+We observed that the Pearson correlation between the original AF3 model and each reduced-MSA AF3 395 
+
+variant for TCR and Ab modelling exceeds 0.75 across all RMSD evaluations, including the per-loop 396 
+
+analyses. In addition to reflecting methodological consistency, a high Pearson correlation suggests three 397 
+
+important points. First, the structural variability captured by the models is largely driven by intrinsic 398 
+
+features of the TCRs and Abs, such as loop length, conformational flexibility, or limited evolutionary signal, 399 
+
+rather than by the specific size of the MSA database used. Second, the strong correlation implies that 400 
+
+reducing the MSA complexity does not introduce new biases or failure modes; the variants remain aligned 401 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+26 
+
+with AF3’s ranking of “easy” versus “difficult” cases to model. Third, this stability supports the 402 
+
+interpretability and robustness of the reduced-database approach, reinforcing that computational efficiency 403 
+
+can be gained without altering the fundamental behaviour of the prediction algorithm. 404 
+
+Crucially, these reduced-MSA variants offer substantial computational advantages, enabling up to a 45-405 
+
+fold reduction in runtime. AF3 variant with a reduced database of sequences, decreases the computation 406 
+
+time from 17 minutes (11 minutes for Abs) to less than 40 seconds (10 seconds for Abs, with 8 cpus used) 407 
+
+(Machine Dell Precision 3680 with 1 GPU NVIDIA RTX 4500 Ada Generation, 1 cpu used). 408 
+
+Our results showed that the AF3 ranking score does not correlate well with loop RMSD for either TCRs or 409 
+
+Abs. We therefore focused our analysis on loop regions, which represent the most challenging to model in 410 
+
+these structures, whereas framework regions are highly conserved and typically achieve RMSDs of ~1 Å. 411 
+
+Across different numbers of seeds and inference runs, we consistently observed that the top-ranked models 412 
+
+were not those with the lowest loop RMSD, leading to suboptimal model selection (i.e. scoring failure). 413 
+
+Importantly, increasing the number of seeds did not improve the average RMSD, indicating that generating 414 
+
+models for more than one seed provides little to no benefit. In this context, AF3 with a reduced MSA and 415 
+
+a single seed represents an excellent trade-off between computational efficiency and accuracy for TCR and 416 
+
+Ab modeling. 417 
+
+418 
+
+While MSA information is still used in AF3, its contribution appears substantially reduced compared with 419 
+
+AF2, suggesting additional opportunities for optimizing the MSA stage without sacrificing accuracy. 420 
+
+Although several faster competing approaches exist and have demonstrated strong performance in their 421 
+
+original publications, they have already been extensively compared to AF3 by their developers. AF3 relies 422 
+
+on JackHMMER to generate MSAs, which is computationally expensive but produces deep, high-quality 423 
+
+alignments. Faster alternatives, such as MMseqs2—used in the ColabFold API based on AF2—could 424 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+27 
+
+further reduce runtime. However, the use of such a tool puts an extra layer of complexity on the user's 425 
+
+workflow, while our method is simple and merely requires the user to use the dedicated AF3 options for 426 
+
+specific databases and to create a specialized database of sequences. 427 
+
+We benchmarked AF3 variants against other state-of-the-art modelling tools to compare their predictive 428 
+
+accuracy. We observe that TCRBuilder2, Boltz-2, AF3 and AF3 variants show similar accuracy when 429 
+
+modelling TCRs. Differences in model accuracy are non-significant, except for CDR1α, where AF3 430 
+
+performs significantly better than TCRBuilder2. For modelling Ab, AF3 performed better than 431 
+
+AbodyBuilder2 and similar to Boltz2. Boltz-2 was competitive in terms of accuracy but significantly more 432 
+
+time consuming than our AF3 variants, making the latter a good choice for TCR and Ab modelling. 433 
+
+Eventually, we also found some AF3 specific parameters to reduce the inference time down to 20 seconds 434 
+
+for Abs. 435 
+
+In conclusion, we analyzed AF3 performance for TCR and Ab modeling, varying the MSA generation and 436 
+
+inference phase. Using reduced subset of sequences from UniRef90 greatly speeds up AF3, achieving ~45× 437 
+
+faster runtimes on a desktop while maintaining near-experimental accuracy, enabling scalable structural 438 
+
+immunology. 439 
+
+440 
+
+## Methods 441 
+
+## TCR and Antibody set used for MSA analysis 442 
+
+A non-redundant set of 3,213 TCR sequences, derived from the VDJ database[10, 11], was used to identify 443 
+
+AF3-selected sequences for multiple sequence alignment (MSA), covering specificities for 200 different 444 
+
+antigens. Detailed information on all TCRs, including gene composition and peptide specificity, is provided 445 
+
+in Suplementary Table 9 of Mayol-Rullan et al[7] .446 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+28 
+
+The SAbDab [14, 15] website was used to retrieve a non-redundant set of Abs with at most 95% sequence 447 
+
+identity with paired chains (Heavy and Light) on the 20 th of January 2026. All bound and unbound structures 448 
+
+between 1 st of January 2022 and the 15 th of October 2025 were removed from this set as well as the 449 
+
+structures with the same concatenated CDR loops as structures between 1 st of January 2022 and the 15 th of 450 
+
+October 2025. This resulted in a set of 2,490 diverse Ab sequences. 451 
+
+## Custom Uniref90-derived databases creation: 452 
+
+Multiple sequence alignment (MSA) of the TCR sequences was performed using JackHMMER [9] 453 
+
+(EVALUE=1e-3, NUM_ITER=3) against the UniRef90 database[8, 17]. All unique aligned sequences were 454 
+
+aggregated into a new database called UniRef-TCR composed of 261’780 sequences, among which 455 
+
+261’055 were aligned with the alpha chain and 208’047 with the beta chain. The EVALUE threshold of 1e-456 
+
+3 used here is less stringent than the 1e-4 EVALUE typically used in AF3 MSA runs. This relaxed criterion 457 
+
+allows for faster sequence expansion and the identification of more distant homologs. The goal is to avoid 458 
+
+overly constraining the sequence space, providing AF with a reduced set but still with a broader diversity 459 
+
+of sequences. 460 
+
+Another subset of UniRef90 was created by searching in the database for the words "t-cell receptor", "t cell 461 
+
+receptor", "Tcell receptor", "immunoglobulin", "antibody", "nanobody" in the sequences header. This 462 
+
+resulted in a non-exhaustive set of sequences with a total of 41’055 sequences gathered this way. We called 463 
+
+this new database UniRef-textmining. 464 
+
+465 
+
+## Validation dataset: 466 
+
+TCR structures bound to a pMHC class I uploaded to the Protein Data Bank (PDB) between the 1st of 467 
+
+January 2022 and 12 November 2025 (outside of AlphaFold3 training set) were collected. As our objective 468 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+29 
+
+is to model TCR receptors alone to predict their specificity just TCR-pMHC class I structures were 469 
+
+considered and 77 structures were retained. The PDB codes of these structures are 470 
+
+8rj5,9d95,9gv6,9gv7,9iky,9j4t,9j4u,9k2i,9k2r,9ru5,9rup,9rxm,8en8,8enh,8eo8,8qfy,8rlt,8rlu,8rlv,8rym,8r 471 
+
+yn,8ryo,8ryp,8ryq,8v4z,8v50,8wte,8wul,8ye4,9c3e,7q99,7q9a,7q9b,8dnt,8es9,8i5c,8shi,6zkw,6zkx,6zky, 472 
+
+6zkz,7dzm,7dzn,7n2n,7n2o,7n2p,7n2q,7n2r,7n2s,7n4k,7n5c,7n5p,7na5,7ndq,7ndt,7ndu,7nme,7nmf,7nm 473 
+
+g,7ow5,7ow6,7pb2,7pbc,7pbe,7pdw,7phr,7qpj,7r80,7rk7,7rm4,7rrg,7su9,8cx4,8d5q,8gvb,8gvg,8gvi. 474 
+
+Ab structures bound to a peptide or protein antigen according to SAbDab and added between the 1st of 475 
+
+January 2022 to 15th of October 2025 were collected. Structures with a resolution above 3Å and or an R-476 
+
+free value superior to 0.3 were excluded. Only structures with two different chains as their heavy and light 477 
+
+chains were kept. Moreover, only the structures without missing residues were analysed resulting in a total 478 
+
+of 525 structures. The PDB code for the Ab structures are 479 
+
+9r2e,9fyt,7yzj,8tft,7trh,8zpq,8vvk,7s5p,8v13,8sdh,9fik,7ox1,7udh,8tq9,8xx0,8tfl,8zd5,9cds,7zoz,8qxc,7w 480 
+
+sl,8uky,8s6t,7y0g,9ghj,8rtw,7qt2,7qt0,8d1t,9axn,9axo,7qt3,8xk6,8g2o,8qya,8z39,8z2v,8z3a,7t0l,8yxi,8tq 481 
+
+5,8ipc,7ufn,7ufq,7ufo,9h4s,7ue9,9iut,9i1q,8f0l,8h8q,8dk6,8dcn,7t0f,8sip,8p6i,8s6v,9cpx,7zxk,9cpu,9cpv, 482 
+
+8cwj,8b7h,8rmx,7uvs,8z95,8up2,9ggp,9uvi,7yru,8hrd,7u5b,8vy4,9bqw,7t7b,8e1g,8bse,8qrg,9oas,7xsc,8d 483 
+
+9z,7s5r,7ycl,8tbq,9jqv,9ml9,8f60,8f6o,8zxw,8f6l,8u03,8u08,8wsp,8tzw,7ox3,8yor,7yds,8yhz,8og0,8u31, 484 
+
+8u32,9j8a,9ml8,8w86,8ruu,8c3v,9c7d,8cwi,8cz5,8vtd,7uij,8urf,8s73,7uzc,8jyr,9gwt,8gho,7wvl,8jyq,9npi, 485 
+
+9bdi,8sjk,8acf,9bdh,8gy5,8x0y,7u0a,7qu1,8bbo,8dao,8gb6,7xjf,8tqa,7yk4,8too,8tuz,9blx,8ffe,7tow,9lrf,7 486 
+
+x63,7xik,8v5q,8byu,8fhy,8g8a,7sl5,7xy8,8yx1,7wnb,7st5,8zu9,7zf8,7wn2,8elq,9c1s,9fm0,7wbz,9bns,8hn 487 
+
+6,8eli,7xeg,8ulj,9c7f,8f9t,8dxt,7tn0,8thn,8sj4,8fb5,8fa7,7y0c,8txp,9dx6,7y3o,8fb8,8fb7,8bk2,7urq,7fjc,9d 488 
+
+ss,9dst,8fa9,8f9v,9cr9,7uxl,8f9u,8fan,8rp8,7yv1,7zqt,9jcy,9pwn,7yxu,9njy,7wn8,8f5i,7z2m,8fba,8d6z,7s 489 
+
+sc,9f91,8g8c,8dtx,7unb,7t86,8fdc,7xrz,9avo,8dn6,8jnk,9cb5,8dn7,8vc7,9dl0,8caf,9mxi,8d29,8vm8,9d41, 490 
+
+8slb,9dbo,8ux6,8wsn,7skz,9gox,9goy,9dru,9oaq,8w0v,7uvi,8d47,9oao,8bh5,9byf,9rm2,8qh0,7s7i,7t25,8z 491 
+
+2e,8b9v,7str,7s5q,7ul1,8cbf,8w0w,9pix,8hn7,7z3w,8tui,8tv3,8gf2,7tp3,8dtt,8q3j,9bjg,8fax,8a44,8fdd,8t9 492 
+
+z,9bjh,8gb8,8dfg,9au1,7x2h,8be1,9cqb,8us8,7wlw,7zwi,7tuf,7y3j,8v2e,8ts0,7uzd,9mer,9dq4,7u64,7sa6,9 493 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+30 
+
+g6r,8rmo,8ja5,8eb2,8ds7,9c7x,8szy,7r58,9bt5,8bg1,8ee0,8ib1,9b2w,8che,7uen,8fat,8yx9,7txw,7wkx,7ue 494 
+
+m,8fas,7uqc,8bbh,7ucx,8t59,8t51,7u63,7u8c,7u62,9je3,7vaz,8b50,8fg0,9lf8,9dh2,8tbb,7uvh,7uvf,7t87,8g 495 
+
+2m,8g8n,8gye,7ut3,9f90,8rwb,7wg3,8oni,8ds5,9g6s,9jbq,7tcq,7quh,9q8l,7u0e,9cqa,7x8p,8x0t,7x8t,9nph, 496 
+
+9mqv,7u09,8sga,8ykt,8uzp,8s72,8r4n,8bsf,8tmz,8dgu,8av9,8sdf,8fbw,7sts,8dgw,7y0v,7sx7,8d36,8vdl,8tq 497 
+
+7,9lra,8hpk,7ycn,9c6y,8zyf,8siq,7u2d,7u2e,8ahn,7tr4,7tp4,8sgn,8rpb,9atm,8s6m,7z0y,7wph,8dcc,7ul0,7z 498 
+
+0x,8el2,8d3a,7u8e,8udz,9jd1,8eoo,7ttm,8oxw,9fys,8vvl,7fgk,7myt,7ra7,7rpt,7s08,7s0j,7sjm,7tqa,7tuh,7tu 499 
+
+s,7u0b,7u0k,7u5g,7u61,7uce,7ued,7uyl,7v3q,7ven,7vmz,7wvi,7zf6,7zff,8awl,8bf0,8bjz,8c67,8c7v,8cbx,8 500 
+
+d01,8d54,8dkf,8doz,8eez,8ef1,8ef2,8ef3,8ek6,8eq6,8eqa,8eqc,8f2t,8fwf,8fxj,8fzo,8fzp,8g19,8g1b,8g1c,8 501 
+
+gbv,8gbw,8gbx,8gc0,8gdo,8gkk,8gsi,8gv1,8hyl,8iqp,8iqs,8jbj,8jep,8jeq,8oju,8p2t,8p88,8ppm,8pul,8rel,8 502 
+
+rpe,8rtx,8ry2,8s6e,8sef,8sgg,8shv,8sve,8t0o,8t8i,8tca,8tfe,8ti4,8tjt,8tn4,8tv2,8uhh,8uhs,8uio,8uki,8ulh,8v 503 
+
+4i,8vbq,8vbr,8veg,8vfu,8vk2,8vlt,8vs8,8vtp,8vvb,8w9h,8y2k,8ywp,8z4c,8zay,9axq,9axs,9b76,9b88,9b8g 504 
+
+,9c9k,9dmf,9ds3,9dsc,9E+69,9eci,9ecx,9ecy,9f18,9fqo,9gff,9gfg,9gfh,9gfl,9gjv,9gp2,9ii9,9iy0,9luk,9mi7 505 
+
+,9mjc,9mji,9mk4,9n6u,9n7k,9n89,9pyf. 506 
+
+507 
+
+## AlphaFold3 model generation with custom databases: 508 
+
+Structures modelled with AlphaFold3, used 5 inferences per seed and the 20 following randomly chosen 509 
+
+seeds: 9986, 67719, 29960, 58505, 56970, 55176, 90764, 44813, 71819, 36501, 58009, 18970, 90779, 510 
+
+1948, 91807, 65829, 92455, 87079, 11815, 39719. When custom sequence databases were used, if a AF3 511 
+
+original databases needed to be removed, only the first two lines (the sequence header and the first line of 512 
+
+the sequence) were kept as AlphaFold3 would throw an error when trying to use empty files as databases. 513 
+
+The removed databases were bfd-first_non_consensus_sequences.fasta, mgy_clusters_2022_05.fa and 514 
+
+uniprot_all_2021_04.fa. 515 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+31 
+
+The UniRef-TCR, UniRef-Ab selection and UniRef-textmining custom databases were temporarily 516 
+
+renamed as the larger database they were issued from: uniref90_2022_05.fa when producing MSA through 517 
+
+AF3. AF3 MSA pipeline and inference were run independently for optimization purposes. To accelerate 518 
+
+model generation, the slurm queueing system was used to run batches of 4 MSA pipeline in parallel using 519 
+
+6 cpus each. Inference was run on a single Nvidia RTX 4500 Ada Generation GPU. Generating both chains 520 
+
+of anantigen binding Fragment (Fab) of an antibody took on average 30 seconds for a single seed and 170 521 
+
+seconds for 10 seeds. Generating both chains of TCR took on average 40 seconds for a single seed. 522 
+
+523 
+
+## Root Mean Square Deviation (RMSD) calculation: 524 
+
+To superimpose and compute the RMSD of TCRs and Ab models, the Biopython [18] package was used. 525 
+
+Any crystal structures with missing residues were removed from the RMSD analysis. For a more accurate 526 
+
+and consistent comparison, models were superimposed on their framework residues (thus excluding the 527 
+
+structurally variable CDR loops) rather than on the whole structure and RMSD was computed either on 528 
+
+single Complementary Determining Region’s (CDR) residues, on a set of all CDRs residues or on all 529 
+
+residues of the model. To determine CDRs and framework residues the ANARCI software was used[16]. 530 
+
+For TCRs, the IMGT numbering scheme was used while the Chothia numbering scheme was preferred for 531 
+
+antibodies. 532 
+
+## Analysis of CDRs RMSD across multiple seeds: 533 
+
+To compare the evolution of the RMSD of CDRs across multiple seeds we imitated AlphaFold3 behaviour 534 
+
+by taking the model with the highest ranking score for each seeds taken into consideration (e.g., after 4 535 
+
+seeds, the highest score among the 20 inferences). RMSD of all CDRs residues were then computed. For 536 
+
+Abs, only 10 seeds were generated. 537 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+32 
+
+## Comparison of AF3 with TCRBuilder2 and Boltz2: 538 
+
+TCRBuilder2 was applied to model AF3 with default parameters and the AF3 validation set described 539 
+
+above. Boltz2 was applied to model a subset of TCRs from the validation set. Structures published between 540 
+
+1st January 2022 and July 2025 were excluded from the original validation set because Boltz2 was released 541 
+
+after AF3, and some of the PDB structures used to validate AF3 were already included in Boltz2’s training 542 
+
+data. Boltz2 was applied with 10 recycling steps and 25 diffusion samples as recommended for comparison 543 
+
+with AF3 in the Boltz2 GitHub repository 544 
+
+https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md. 545 
+
+## AF3 inference optimization (GPU optimization): 546 
+
+Bucket optimization comparison was performed with the --buckets argument set to the exact same number 547 
+
+of tokens as the input or left to the default bucket sizes (256 or 512 tokens). Parallelization was performed 548 
+
+with optimized buckets, by creating an AlphaFold docker image with 10% pre-allocated memory 549 
+
+(Dockerfile : ENV XLA_CLIENT_MEM_FRACTION=0.10) then inferences were launched in parallel. 550 
+
+To assess the overall speed up a set of 100 random Abs from the validation set were modelled with 551 
+
+optimized parameters. Featurization and seed inference times were retrieved through the logs of AF3. Note 552 
+
+that computing 9 inferences in parallel necessitated about 40Go of RAM usage. 553 
+
+## Funding 554 
+
+This study was supported by a SNSF grant (#320030-236248) and a Oncosuisse grant (#KFS-6476-08-555 
+
+2025) 556 
+
+557 
+
+558 
+
+559 
+
+> (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this preprint this version posted April 15, 2026. ;https://doi.org/10.64898/2025.12.19.695451 doi: bioRxiv preprint
+
+33 
+
+## References 560 
+
+561 
+
+1. Senior, A.W., et al., Improved protein structure prediction using potentials from deep 562 
+
+learning. Nature, 2020. 577 (7792): p. 706-710. 563 
+
+2. Abramson, J., et al., Accurate structure prediction of biomolecular interactions with 564 
+
+AlphaFold 3. Nature, 2024. 630 (8016): p. 493-500. 565 
+
+3. Jumper, J., et al., Highly accurate protein structure prediction with AlphaFold. Nature, 566 
+
+2021. 596 (7873): p. 583-589. 567 
+
+4. Mirdita, M., et al., ColabFold: making protein folding accessible to all. Nat Methods, 2022. 568 
+
+19 (6): p. 679-682. 569 
+
+5. Abanades, B., et al., ImmuneBuilder: Deep-Learning models for predicting the structures 570 
+
+of immune proteins. Commun Biol, 2023. 6(1): p. 575. 571 
+
+6. Perez, M.A.S., et al., Predicting Antigen-Specificities of Orphan T Cell Receptors from 572 
+
+Cancer Patients with TCRpcDist. Adv Sci (Weinh), 2024. 11 (40): p. e2405949. 573 
+
+7. Mayol-Rullan, F., et al., A fingerprint approach to pioneer structure-based T cell receptor 574 
+
+repertoire analysis and specificity prediction. Front Immunol, 2025. 16 : p. 1688805. 575 
+
+8. Suzek, B.E., et al., UniRef clusters: a comprehensive and scalable alternative for 576 
+
+improving sequence similarity searches. Bioinformatics, 2015. 31 (6): p. 926-32. 577 
+
+9. Potter, S.C., et al., HMMER web server: 2018 update. Nucleic Acids Res, 2018. 46 (W1): 578 
+
+p. W200-W204. 579 
+
+10. Shugay, M., et al., VDJdb: a curated database of T-cell receptor sequences with known 580 
+
+antigen specificity. Nucleic Acids Res, 2018. 46 (D1): p. D419-D427. 581 
+
+11. Goncharov, M., et al., VDJdb in the pandemic era: a compendium of T cell receptors 582 
+
+specific for SARS-CoV-2. Nat Methods, 2022. 19 (9): p. 1017-1019. 583 
+
+12. Regep, C., et al., The H3 loop of antibodies shows unique structural characteristics. 584 
+
+Proteins, 2017. 85 (7): p. 1311-1318. 585 
+
+13. Marin, F.I. and P. Marcatili, Computational Modeling of Antibody and T-Cell Receptor 586 
+
+(CDR3 Loops). Methods Mol Biol, 2023. 2552 : p. 83-100. 587 
+
+14. Dunbar, J., et al., SAbDab: the structural antibody database. Nucleic Acids Res, 2014. 588 
+
+42 (Database issue): p. D1140-6. 589 
+
+15. Schneider, C., M.I.J. Raybould, and C.M. Deane, SAbDab in the age of biotherapeutics: 590 
+
+updates including SAbDab-nano, the nanobody structure tracker. Nucleic Acids Res, 591 
+
+2022. 50 (D1): p. D1368-D1372. 592 
+
+16. Dunbar, J. and C.M. Deane, ANARCI: antigen receptor numbering and receptor 593 
+
+classification. Bioinformatics, 2016. 32 (2): p. 298-300. 594 
+
+17. Pundir, S., et al., Searching and Navigating UniProt Databases. Curr Protoc 595 
+
+Bioinformatics, 2015. 50 : p. 1.27.1-1.27.10. 596 
+
+18. Cock, P.J., et al., Biopython: freely available Python tools for computational molecular 597 
+
+biology and bioinformatics. Bioinformatics, 2009. 25 (11): p. 1422-3. 598 
+
+19. Virtanen, P., et al., SciPy 1.0: fundamental algorithms for scientific computing in Python. 599 
+
+Nat Methods, 2020. 17 (3): p. 261-272. 600 
+
+601

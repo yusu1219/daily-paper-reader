@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-001.webp",
+      "caption": "Figure 3: Workflow for MinHash-based clustering and iterative MSA refinement of long reads. The pipeline begins with the input of raw reads characterized by variable lengths and high indel-dominated error rates (Step 1), which are subsequently fragmented into equal 1kb segments and processed into 6-mer \"shingles\" (Step 2). To evaluate sequence relationships, Jaccard Similarity was calculated across different k-mer sets (Step 3). These sets are compressed into MinHash signatures using m=128 hash functions to identify minimum hash values for each sequence (Step 4), allowing for efficient Locality-Sensitive Hashing (LSH) clustering of reads with high similarity (Step 5). Finally, an iterative Multiple Sequence Alignment (MSA) and 6-mer refinement process is applied leveraging the probability of indels to trim error-prone k-mers to produce a refined MSA and a high-accuracy final consensus sequence (Step 6).",
+      "page": 79,
+      "index": 1,
+      "width": 1008,
+      "height": 612
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-002.webp",
+      "caption": "Figure 9: Training dynamics, computational stability, and ten-fold random independent trails performance of the optimized Transformer model. (a) Training and validation loss curves across 100 epochs. Both losses decrease rapidly during early epochs and gradually converge, with minimal divergence between training and testing trajectories, indicating stable optimization and absence of overfitting. (b) Training and testing accuracy progression over epochs. Accuracy improves steadily for both sets, reaching peak validation accuracy near the final epochs, closely tracking training accuracy. (c-d) Ten-fold random independent train:test trails evaluation showing distribution of MAE and accuracy for training and testing sets. Boxplots illustrate minimal variation across folds. The small difference between training and testing MAE and a marginal accuracy gap indicate resistance to overfitting across randomized train:test data splits.",
+      "page": 85,
+      "index": 2,
+      "width": 1008,
+      "height": 831
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-003.webp",
+      "caption": "Figure 10: Cross-species performance for promoter generation capability of GANGE. For each species, the left panel displays a violin plot with embedded boxplot summarizing the overall accuracy distribution, while the right panel shows the corresponding scatter-density distribution across sequences. Across all species, accuracy values are tightly clustered around ~92-93.5%, demonstrating low variance, high reproducibility, and excellent consistency. This summarizes the fact that GANGE can generate highly accurate promoter sequence also if one provides just the 1st exon or transcript data. This makes it possible to perform regulomics research even in those species whose genome is yet not sequenced.",
+      "page": 86,
+      "index": 3,
+      "width": 1008,
+      "height": 419
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-004.webp",
+      "caption": "Figure 2: Distribution and probabilistic modeling of indels lengths in long-read reads. (a)",
+      "page": 78,
+      "index": 4,
+      "width": 1008,
+      "height": 1104
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-005.webp",
+      "caption": "Figure 6: Distribution of ONT sequencing error rates across various genomic sub-elements. ab) Box and scatter plots showing the distribution of error rates (%) across sample files of different species and GC% content bins. c) The grouped bar chart illustrates the mean error percentage across four economically significant plant species: Hordeum vulgare, Oryza sativa, Glycine max, and Zea mays. Errors are categorized by genomic context, including repetitive regions. Plot reveals a significant error spike in highly repetitive landscapes, particularly in Zea mays, whereas unique coding regions maintain higher fidelity across all taxa.",
+      "page": 82,
+      "index": 5,
+      "width": 1008,
+      "height": 850
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-006.webp",
+      "caption": "Figure 1: The workflow of the GANGE system. GANGE has four different levels. (A) The image illustrates the trade-off between the high continuity but high error rates of long-read sequencing (PacBio/ONT) and the high accuracy but low continuity of short-read sequencing (Illumina) by introducing a computational pipeline that reduces reliance on hybrid and high coverage sequencing. (B) First, the raw ONT reads are searched for any similarity overlap using ultra-fast Minhashing algorithm. This forms the clusters of shared similarity reads. In the next stage the clustered similarity shring reads undergo MSA. The raw MSA is refined for more correct ones using a novel k-meric iterative stepping realignment. The next stage takes this refined MSA to the DDPM guided error correction process where the noisy error prone positions are corrected by recovering the right bases. (C) The final stage is an iterative horizontal genration of upstream and downstream regions upto 2kb at each end. Based on the corrected consensus a dual Transformer-DDPM generative system generates the sequences through a 30 bases iterative cycles of generation and correction. (D) This way GANGE generate sequences with >92% accuracy from indel errors prone ONT reads at as low as 4X-10X depth and extends them further by 4kb. One can also use it to generate promoter sequences with same accuracy in species whose genome is unknown, just using RNA data.",
+      "page": 77,
+      "index": 6,
+      "width": 1008,
+      "height": 613
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-007.webp",
+      "caption": "Figure 5: Implementation of the Transformer system to generate promoter sequence. The encoder processes sequences represented in pentamer, hexamer, and heptamer word representations, and the decoder receives the upstream sequence information for the corresponding sequence. Eight layers of encoder–decoder pairs are incorporated. The learned representations from the encoder were passed to the encoder–decoder multi-head attention layer, which also receives input from decoder layers. The resulting output then undergoes conditional probability estimation, which plays a pivotal role in the decoding process. After layer normalization, the model proceeds to calculate the conditional probability distribution over the vocabulary for the next token backed by a attention mechanism. Finally, the resulting tokens are converted back into words, representing the promoter sequence for the given sequence.",
+      "page": 81,
+      "index": 7,
+      "width": 1008,
+      "height": 496
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-008.webp",
+      "caption": "Figure 7: Performance evaluation. a) This plot depicts the accuracy of the DDPM model in error correction across different timesteps implemented. b) This plot illustrates the training and testing MAE for the DDPM model across 10 random independent train:test trails. The convergence of these values suggests the model's error rate remains consistent, with MAE values generally fluctuating between 0.285 and 0.325 suggesting highly stable model. c) This plot displays the training and testing accuracy for each such trial of DDPM. The DDPM model demonstrates high performance, maintaining a testing accuracy between approximately 93.0% and 94.0%, while training accuracy peaks around 96.0%. d) The box plot shows accuracy of DDPM to recover bases that were lost due to poor sequencing quality in ONT read with respect to to GC%. e) The line plot shows the accuracy of transformers to generate bases upstream to the given input sequence. f) Performance comparison for the varying sequence depth.",
+      "page": 83,
+      "index": 8,
+      "width": 1008,
+      "height": 812
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-009.webp",
+      "caption": "Figure 4: The DDPM architecture. The DDPM architecture is divided into three core stages: (A) Forward Diffusion Process, where input DNA sequences are one-hot encoded into a 64X64X4 tensor and systematically corrupted with Gaussian noise over T timesteps according to a variance schedule, transitioning from a clean state to pure noise. (B) U-Net Noise generation, which serves as the reverse process core, utilizing an encoder-decoder structure with 1D-CNN ResBlocks and self-attention mechanisms to generate the noise added at any given timestep, guided by sinusoidal time embeddings and optimized via a loss function, and (C) Sampling and Reconstruction, where the model iteratively denoises a random Gaussian noise starting point to recover the denoised latent, which is then decoded using an Argmax function on the generated nucleotide probabilities to generate a high-fidelity DNA consensus sequence.",
+      "page": 80,
+      "index": 9,
+      "width": 1008,
+      "height": 475
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718133-v1/fig-010.webp",
+      "caption": "Figure 8: Ablation analysis of k-mer representations, sequence generation, and hyperparameter optimization of Transformer encoder:decoder pairs. (a) Performance of the model across individual and combined k-mer word representations. Accuracy increases progressively with word length, from dimers to heptamers. Combinatorial integration of higher-order k-mers further enhances performance, with five+six+seven achieving the highest accuracy. These results demonstrate that multi-scale k-mer representations captures complementary local and long-range contextual dependencies within the sequences. (b) Effect of increasing Transformer encoder– decoder depth on model accuracy. Accuracy rises steadily from 52.6% with one layer to 81.4% at eight layers, after which performance remains consistent, indicating performance saturation. The shaded region highlights the saturation zone beyond eight layers, and the dashed red line marks the peak performance (81.4%). This identifies eight layers as the optimal number for the Transformers.",
+      "page": 84,
+      "index": 10,
+      "width": 1008,
+      "height": 685
+    }
+  ]
+}

@@ -1,0 +1,691 @@
+Title: scDisent: disentangled representation learning with causal structure for multi-omic single-cell analysis
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.04.12.717909v1.full.pdf
+
+Number of Pages: 25
+
+Markdown Content:
+# scDisent: disentangled representation learning with causal structure for multi-omic single-cell analysis 
+
+Guoren Xi 
+
+Datenintegrationszentrum, Universitätsklinikum Jena Correspondence: xiguoren@hotmail.com 
+
+Abstract 
+
+Single-cell multi-omic technologies measure complementary aspects of cellular identity and regulatory state, yet most integration models compress these signals into one entangled latent space. Such representations are useful for clustering but poorly suited for mechanistic inter-pretation or perturbation-oriented analysis. We present scDisent ( https://github.com/xig uoren/scDisent ), a generative framework for disentangled representation learning that sep-arates expression-associated variables ( zexpr ) from regulation-associated variables ( zreg ) and links them through a sparse directed mapping. scDisent combines modality-specific encoding, variational disentanglement with total-correlation and orthogonality constraints, and a Gumbel-gated causal module protected by detach-based gradient isolation. Evaluated on benchmark datasets with matched modalities, scDisent achieved best-in-benchmark integration performance while exposing regulatory structure that competing integration methods do not model explicitly. The learned causal atlas remained sparse, perturbation analyses recovered biologically coherent lineage-associated programs, and cross-dataset discovery analyses highlighted interpretable im-mune, neural and developmental signatures. Quantitative branch-separation analyses further showed that benchmark-label information concentrated in zexpr rather than zreg . Together, these results position scDisent as a computational method that improves not only integration quality but also biological interpretability, making single-cell multi-omic representations better suited to biological question answering and in silico hypothesis generation. 
+
+## 1 Introduction 
+
+Recent single-cell multi-omic technologies make it possible to observe complementary molecular layers within the same cell [1–5]. When multiple modalities are measured for the same population, these data allow one to ask not only how cells cluster, but also which regulatory states may underlie those transcriptional identities. This experimental design has motivated a large class of integration methods that aim to denoise, align, cluster, and embed cells into a unified latent representation [6–14]. In practice, these methods are highly effective for cell-state discovery, but they usually optimize for a single mixed latent space that merges cellular state, lineage identity, and regulatory variation into one representation. That entanglement creates a limitation. If the same latent coordinates simultaneously encode both cell identity and putative regulatory drivers, then modifying those coordinates does not cor-respond to a clean biological intervention. Current multi-omic integration models therefore remain 1
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+largely observational: they summarize matched measurements well, but they do not cleanly support mechanistic perturbation analysis or interpretable regulatory attribution [8, 14–17]. This matters most when the question is not only whether populations separate, but which regulatory programs distinguish neighboring lineages or cell states. This limitation appears across method families. Variational generative models such as scVI and MultiVI, factor-analysis frameworks such as MOFA+ and LIGER, and embedding or alignment methods such as Cobolt, scJoint, Harmony, scGLUE and WNN all provide useful multimodal summaries or strong integration baselines [6, 8–12, 15, 16, 18, 19]. Translation-oriented models such as BABEL and Polarbear are also powerful for missing-modality prediction and cross-modal alignment [20, 21]. What these approaches generally do not provide is an explicit split between identity-preserving and regulation-oriented factors linked by a directed interface. We address this problem with scDisent, a disentangled causal representation model for single-cell multi-omic analysis. The model partitions the latent space into an expression branch, zexpr , and a regulatory branch, zreg . The expression branch is encouraged to capture stable cell-state informa-tion, whereas the regulatory branch encodes modulatory factors that map toward the expression branch through a sparse causal layer. scDisent combines total-correlation reduction and orthogo-nality constraints [22] with a detach-based gradient barrier that prevents the causal objective from corrupting the expression manifold. The motivation of the paper is therefore broader than another benchmark gain. Current multi-omic models still lack a representation that distinguishes cellular identity from regulatory hypothe-ses [13, 14, 17]. If that distinction is made explicit, one model can support clustering, lineage-aware interpretation and perturbation-oriented analysis within a single framework. This work makes three contributions. First, we introduce a dual-branch latent architecture that separates expression identity from regulatory variation. Second, we couple these branches with a sparse causal mapping layer that provides an explicit regulatory-to-expression interface while preserving expression geometry through gradient isolation. Third, we show on benchmark datasets with matched modalities that this design improves both performance and interpretability, enabling biologically coherent perturbation hypotheses rather than only better clustering [14, 17]. 
+
+## 2 Methods 
+
+2.1 Problem formulation 
+
+Let Xrna ∈ Rn×p and Xatac ∈ Rn×q denote two molecular views of the same cells in the paired benchmark setting studied here. Each training example contains matched modalities from the same cell. Rather than learning a single joint latent space, scDisent separates two biological roles that are usually mixed together in conventional embeddings: 
+
+z = [ zexpr ; zreg ],
+
+2
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+where zexpr preserves expression-associated identity and cell-state geometry, whereas zreg encodes regulation-oriented variation that can modulate expression without redefining cell identity. Instead of learning a single embedding optimized mainly for clustering, scDisent learns a fac-torized representation that reconstructs both modalities while preserving a regulatory branch for perturbation-oriented analysis. The model learns two conditional variational posteriors, q(zexpr |
+
+Xrna , X atac ) and q(zreg | Xrna , X atac ), together with modality decoders p(Xrna | zexpr , z reg ) and 
+
+p(Xatac | zexpr , z reg ). A directed mapping from zreg to zexpr makes the regulatory branch readable in terms of its influence on the expression branch. The central hypothesis is that this factorization remains useful even when the model is trained on observational data alone [14, 17]. Under this view, zexpr remains the main carrier of cell identity, whereas zreg organizes residual regulatory variation into a form that supports regulatory attribution, in silico perturbation and lineage-aware hypothesis generation. 
+
+2.1.1 Modeling targets 
+
+The objective has three parts: reconstruction of both modalities, non-trivial separation between expression-preserving and regulation-oriented information, and a directional constraint that makes the regulatory branch readable in terms of its influence on zexpr .
+
+2.1.2 Generative view 
+
+From a probabilistic perspective, scDisent remains a multimodal variational model in which both observed modalities are generated from the concatenated latent state, with an additional directional constraint between the two latent branches: 
+
+p(Xrna , X atac , z expr , z reg ) = p(zexpr ) p(zreg ) p(Xrna | zexpr , z reg ) p(Xatac | zexpr , z reg ),
+
+with Gaussian priors on the latent branches. The sparse mapping from zreg to zexpr does not replace this factorization; it adds a representation-level inductive bias designed to make regulation-oriented variation more interpretable. scDisent therefore does not claim direct causal identification from observational data, but couples multimodal reconstruction with a latent geometry better suited to biological hypothesis generation [14, 17]. 
+
+2.2 Datasets 
+
+We evaluated scDisent on three benchmark datasets spanning immune and neural contexts: PBMC 10k, Human Brain 3k, and Mouse E18 [23–25]. All three provide paired observations at the cell level. Together they cover mature immune lineages, heterogeneous brain populations and develop-mental trajectories. For the benchmark reported here, the reference labels were generated during preprocessing using a joint-modality annotation routine rather than imported as a separate man-ually curated metadata file; details are given in Supplementary Methods S1 and Supplementary Table ?? .3
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+Table 1: Summary of the three paired multi-omic benchmark datasets used in this study.                     
+
+> Dataset Tissue Cells RNA features ATAC features Cell types PBMC 10k Human blood 11,620 2,000 HVGs 20k peaks 6Human Brain 3k Human brain 3,179 2,000 HVGs 20k peaks 7Mouse E18 Mouse dev. brain 4,770 2,000 HVGs 20k peaks 6
+
+2.3 Baselines 
+
+We compared scDisent against four representative baselines spanning major method families in single-cell integration and multi-omic analysis. scVI serves as an RNA-only variational reference [18]. MultiVI extends that framework to multimodal integration and missing-modality settings [15]. scGLUE provides a graph-guided deep-learning comparator [16]. Seurat weighted-nearest-neighbor analysis provides a widely used non-generative baseline [19]. The benchmark therefore mixes RNA-only and multimodal references. None of these baselines explicitly separates a regulation-oriented branch from an identity-preserving expression branch. 
+
+2.3.1 Baseline limitations in the context of scDisent 
+
+The comparison is therefore not only about clustering score, but also about what kind of biological question the learned representation can support. Variational references such as scVI and MultiVI provide expressive latent manifolds, but direct manipulation of those manifolds has no explicit semantics for preserving identity while varying regulation. scGLUE still optimizes a joint repre-sentation rather than a two-branch decomposition with a directional interface, and WNN is an effective statistical integrator rather than a mechanistic latent model. These methods can succeed at integration while remaining less suited to perturbation-oriented regulatory interpretation. 
+
+2.4 Model architecture 
+
+scDisent is an end-to-end generative model with four components: modality-specific encoders, a dual-branch disentanglement head, a sparse regulatory-to-expression mapping, and modality de-coders. In the unified benchmark configuration, the model uses dexpr = 128 and dreg = 128 with shared hidden dimensions (1024 , 512 , 256) and dropout 0.1 throughout the encoder and decoder backbones. 
+
+2.4.1 Dual-modal encoders 
+
+The RNA branch takes 2,000 highly variable genes as input. The ATAC branch takes the 20,000 most variable peaks and, when available, appends gene-activity features to the peak matrix before encoding, following common single-cell chromatin analysis practice [26, 27]. Each encoder uses a multilayer perceptron consisting of repeated linear, batch-normalization, ReLU and dropout blocks: 
+
+xm → Linear → BN → ReLU → Dropout ,
+
+4
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+Representation learning Training constraints RNA ENCODER RNA features →hrnaATAC ENCODER ATAC features →hatacFUSED STATE hfusedDISENTANGLEMENT hzzfusedexprreg→,EXPRESSION zexprREGULATION zregJOINT LATENT [;]zzexprregRNA decoder ATAC decoder CONTRASTIVE ALIGNMENT hhrnaatac↔DISENTANGLEMENT LOSS KL + TC + orthogonality SPARSE MAP zzregexpr→̂CAUSAL LOSS comparêzexprwithdetachedzexprhhrnaatacandarefusedzexprkeepsidentityzregstoresregulatoryvariationscDisent model architecture scDisent model architecture Figure 1: Model architecture of scDisent. Multi-omic inputs are encoded into a shared multimodal state and factorized into an expression branch and a regulatory branch. The two branches are concatenated to form the latent used by the RNA and ATAC decoders, while a smaller training-only supervision path constrains how regulation-oriented latents predict a detached copy of the expression branch. 
+
+where m ∈ { rna , atac }. Each encoder returns a hidden state together with variational parameters. In practice, the hidden state is the last 256-dimensional encoder feature, and the modality-specific hidden states are concatenated into 
+
+hf used = [ hrna ; hatac ] ∈ R512 .
+
+The codebase also contains an optional graph-enhancement module based on batch-local k-nearest-neighbor message passing, but this component was disabled in the unified benchmark configuration reported here. 5
+
+.CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint 2.4.2 Dual-branch variational heads 
+
+The fused representation is split into two parallel projections, 
+
+hf used → (μexpr , log σ2
+
+> expr
+
+) → zexpr , hf used → (μreg , log σ2
+
+> reg
+
+) → zreg ,
+
+using reparameterized Gaussian sampling [28]. Concretely, each branch applies a one-layer MLP with ReLU activation, followed by separate linear layers for the posterior mean and log-variance. The latent samples are obtained through 
+
+z = μ + σ ⊙ ϵ, ϵ ∼ N (0 , I ).zexpr is intended to preserve cell identity and cluster geometry, while zreg is reserved for regulation-oriented variation that can be queried separately. 
+
+2.4.3 Disentanglement constraints 
+
+To encourage branch separation, scDisent combines three regularizers. First, it applies KL reg-ularization to both variational branches. The implementation uses a free-bits variant of the KL divergence so that dimensions with very small KL do not collapse too early. Second, it penalizes total correlation using the minibatch-weighted estimator of β-TCVAE [22], which discourages de-pendence among latent dimensions within each branch. Third, it penalizes branch overlap through 
+
+Lorth =
+
+∥∥∥∥
+
+(zexpr − ¯zexpr )⊤(zreg − ¯zreg )
+
+N
+
+∥∥∥∥
+
+> 2
+> F
+
+,
+
+which is the squared Frobenius norm of the cross-correlation matrix between the centered latent branches. In the default configuration, the weights are βKL = 5 × 10 −4, γT C = 5 × 10 −4 and 
+
+λorth = 1 .0.
+
+2.4.4 Causal mapping layer 
+
+The model further includes a sparse linear mapping from the regulatory branch to a predicted expression branch: 
+
+ˆzexpr = zreg (W ⊙ G),
+
+where W ∈ Rdreg ×dexpr contains effect sizes and G is a binary gate matrix sampled with a straight-through Gumbel-Softmax estimator [29]. During training, each edge uses a learnable on/off logit and temperature τ = 1 .0; during evaluation, edges are thresholded at 0.5. This design gives each potential regulatory-to-expression edge an interpretable discrete selection mechanism while remaining differentiable during optimization. The causal objective minimizes mean squared error between the predicted and observed expres-6
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+sion latents, 
+
+Lcausal = ∥ˆzexpr − ztarget expr ∥22,
+
+where ztarget expr is detached from the graph in the default model. This detach operation is central to the method: it allows the causal layer to learn to explain the expression branch without pushing gradients back into the identity-preserving target representation. The mapping is additionally regularized by an L1 penalty on W and, when the weight matrix is square, by a NOTEARS-style acyclicity penalty [30] 
+
+h(W ) = tr (exp( W ◦ W )) − d. 
+
+Although the present zreg → zexpr mapping is bipartite and should not be interpreted as a full causal graph over observed genes, the sparse directed parameterization provides an explicit regulatory interface that can be inspected after training. 
+
+2.4.5 Parameter freezing across phases 
+
+The optimization schedule also imposes architectural roles through parameter freezing. In phase 1 and phase 2, parameters of the causal map are frozen, so the encoders, disentanglement head and decoders must first establish a stable multimodal representation before any directed regulatory prediction is learned. Only in phase 3 is the causal layer unfrozen for end-to-end fine-tuning. This detail matters because it prevents the sparse mapping from absorbing noise too early and makes the final causal atlas easier to interpret. 
+
+2.4.6 Decoders and auxiliary objectives 
+
+For reconstruction, scDisent does not learn a third latent branch. Instead, it simply concatenates the two disentangled branches, 
+
+zjoint = [ zexpr ; zreg ],
+
+and feeds this shared reconstruction latent to two modality-specific decoders with different output heads. The RNA decoder parameterizes a zero-inflated negative binomial distribution with gene-wise dispersion, following count-aware single-cell generative modeling practice [18]: 
+
+xrna ∼ ZINB( μ, θ, π ).
+
+In implementation, μ is obtained from a softmax-normalized decoder output scaled by per-cell library size, θ is a learned gene-level dispersion parameter, and π is the dropout probability. The ATAC decoder uses a Bernoulli head for peak accessibility logits, 
+
+xatac peak ∼ Bernoulli( ρ),
+
+7
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+and, when gene-activity targets are available, a Gaussian head for gene-activity reconstruction, 
+
+xatac ga ∼ N (μga , σ 2
+
+> ga
+
+I).
+
+The same concatenated latent is sent to both decoders; the model does not split it into RNA-specific and ATAC-specific subspaces before decoding. Modality specificity is introduced by decoder parameters and likelihoods rather than by a second latent decomposition. An auxiliary RNA decoder is also applied to [zexpr ; 0] , forcing zexpr to remain informative enough to reconstruct expression without help from zreg .The sparse mapping from zreg to ˆzexpr is used only as a training-time structural supervision path; it is not itself the latent fed into the RNA or ATAC decoders. Its role is to shape the semantics of zreg by asking it to explain a detached copy of the expression branch without overwriting the reconstruction path. 
+
+2.5 Cross-modal alignment objective 
+
+In addition to reconstruction and disentanglement terms, scDisent uses an InfoNCE-style con-trastive objective between hrna and hatac [31]. After cosine normalization, the similarity matrix is 
+
+Sij = ⟨h(i)
+
+> rna
+
+, h (j)
+
+> atac
+
+⟩
+
+T ,
+
+with temperature T = 0 .1. In the benchmark setting used here, positive pairs are matched RNA and ATAC measurements from the same cell. The bidirectional InfoNCE objective is 
+
+Lcontrastive = 12 (Lrna →atac + Latac →rna ) ,
+
+Lrna →atac = − 1
+
+B
+
+> B
+
+∑
+
+> i=1
+
+log exp( Sii )
+
+∑Bj=1 exp( Sij ) , Latac →rna = − 1
+
+B
+
+> B
+
+∑
+
+> i=1
+
+log exp( Sii )
+
+∑Bj=1 exp( Sji ) .
+
+We apply this objective to the modality-specific hidden states rather than to zexpr and zreg because the purpose is to stabilize cross-modal fusion before latent factorization. Aligning the final branches directly would risk re-entangling the two roles that the model is trying to separate. In the default configuration, the contrastive term is weighted by λcontrastive = 2 .5.
+
+2.6 Loss function 
+
+The full objective is 
+
+Ltotal = Lrna recon + Latac recon + βKL LKL + γT C LT C 
+
++ λorth Lorth + λcausal Lcausal + λDAG h(W )+ λCL Lcontrastive + λexpr Lexpr −only .
+
+8
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+Here, Lrna recon is the zero-inflated negative binomial negative log-likelihood on raw RNA counts, 
+
+Latac recon combines binary cross-entropy on peak accessibility with Gaussian negative log-likelihood on gene activity when present, LKL is the sum of branch-wise KL terms with free-bits clipping, and LT C is the sum of total-correlation penalties on the expression and regulatory branches. The auxiliary term Lexpr −only applies the RNA reconstruction objective to the zexpr -only decoder. In phase 3, the causal term is accompanied by a small additional L1 penalty on the causal weights. The corresponding benchmark configuration uses λcausal = 0 .5, λDAG = 0 .1 and λexpr = 1 .0.The reconstruction terms can be written as 
+
+Lrna recon = −
+
+> B
+
+∑
+
+> i=1
+> p
+
+∑
+
+> g=1
+
+log p(xrna ig | μig , θ g, π ig 
+
+) ,
+
+Latac recon = −
+
+> B
+
+∑
+
+> i=1
+> q
+
+∑
+
+> k=1
+
+log p(xatac ik | ρik 
+
+) + ⊮ga 
+
+[
+
+12
+
+> B
+
+∑
+
+> i=1
+> pga
+
+∑
+
+> m=1
+
+( (xga im − μga im )2
+
+σ2
+
+> m
+
+log σ2
+
+> m
+
+)]
+
+,
+
+where ⊮ga denotes inclusion of the optional gene-activity term only when gene-activity targets are present in the processed benchmark inputs. This decomposition makes clear that scDisent reconstructs both observed modalities directly, while the branch structure is enforced through additional regularization rather than through decoder specialization alone. The loss terms are not activated uniformly from the start. Reconstruction dominates the earliest phase, disentanglement-oriented regularizers are introduced once the shared multimodal state is stable, and the causal term is only activated after branch semantics have begun to separate. This ordering is important because the model would otherwise be asked to infer directed regulatory structure from an unstable latent space. 
+
+2.7 Phased training schedule 
+
+Training is staged into three phases totaling 350 epochs. Phase 1 lasts 50 epochs and optimizes reconstruction while keeping the causal layer frozen. Phase 2 lasts 150 epochs and activates KL, total-correlation, orthogonality, contrastive alignment and the auxiliary zexpr -only decoder, while the causal layer remains frozen. Phase 3 lasts another 150 epochs and unfreezes the entire model so that the causal map is optimized jointly with the encoders and decoders. The training schedule is designed to match the semantic intent of the architecture. Phase 1 establishes stable modality-specific reconstruction and prevents the model from trying to learn directed regulatory structure before it has learned a reasonable shared multimodal state. Phase 2 encourages the latent split itself by introducing KL, total-correlation, orthogonality, contrastive alignment and the auxiliary expression-only decoder. Only in phase 3 is the regulatory branch asked to explain part of the expression branch through the sparse mapping layer. Two warmup mechanisms are used to reduce optimization shocks. Let e denote the global epoch, let e2 denote the epoch counted from the start of phase 2, and let e3 denote the epoch counted 9
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+from the start of phase 3. The global KL annealing coefficient is 
+
+αKL (e) = min 
+
+(
+
+1, e
+
+50 
+
+)
+
+,
+
+and the local phase coefficients are 
+
+αphase 2(e2) = min 
+
+(
+
+1, e2
+
+30 
+
+)
+
+, αcausal (e3) = min 
+
+(
+
+1, e3
+
+20 
+
+)
+
+.
+
+During phase 2, branch-separation and alignment terms are multiplied by αphase 2, whereas during phase 3 the causal loss and sparse-structure penalties are multiplied by αcausal . The effective objective therefore changes with training stage: 
+
+L(2) = Lrecon + αKL βKL LKL + αphase 2 (γT C LT C + λorth Lorth + λCL Lcontrastive + λexpr Lexpr −only ) ,
+
+L(3) = L(2) + αcausal (λcausal Lcausal + λDAG h(W ) + λL1∥W ∥1) .
+
+This schedule improves optimization because the causal loss is introduced only after the latent branches have acquired stable semantics. Optimization uses AdamW [32] with learning rate 10 −3,weight decay 10 −5, cosine-annealing warm restarts [33], batch size 512 and gradient clipping at norm 5.0. Early stopping is applied in phase 3 using validation loss with patience 80. 
+
+2.7.1 Phase-specific optimization logic 
+
+The three phases progressively increase model constraints. Phase 1 learns a stable multimodal reconstruction model. Phase 2 encourages partial independence of the two branches. Phase 3 asks whether the structured regulatory branch can explain part of the expression manifold through a sparse directed interface. This sequencing yielded more stable optimization and more interpretable causal atlases than exposing all objectives at full strength from the start. 
+
+2.8 Evaluation protocol 
+
+For fair comparison, all methods were evaluated on the same processed benchmark datasets and scored using a standardized Leiden clustering sweep over thirteen resolutions from 0.1 to 2.0 [34]. We report ARI and NMI as primary metrics and ASW as a cluster compactness reference. Because several baselines achieve their best ARI at different resolutions, the shared sweep avoids resolution-selection bias. We additionally assess biological interpretability through causal-atlas inspection, lineage-specific perturbation analysis, external resource cross-checking, and quantitative branch separation. 
+
+2.8.1 Primary evaluation metrics 
+
+The main quantitative benchmark uses adjusted Rand index (ARI) and normalized mutual infor-mation (NMI) between Leiden clusters and reference benchmark labels [35, 36]. In this study, those 10 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+labels are the internally generated benchmark labels described in Supplementary Methods S1. ARI penalizes chance agreement and is sensitive to both over-splitting and under-merging of cell popu-lations. NMI complements ARI by measuring label agreement in an information-theoretic way and is less sensitive to the absolute number of clusters. We additionally report average silhouette width (ASW) as a cluster compactness reference [37], although the main conclusions are based on ARI and NMI because they align more directly with the benchmark label structure used throughout the study. 
+
+2.8.2 Benchmark philosophy 
+
+This benchmark evaluates more than whether a model produces visually plausible embeddings. Clustering metrics test whether scDisent preserves cell-state geometry; disentanglement summaries test whether branch semantics are separated; and causal-atlas and perturbation analyses test whether the regulatory branch can be used for hypothesis-oriented downstream analysis. Together these readouts match the scientific claim of the paper more closely than clustering metrics alone. 
+
+## 3 Results 
+
+3.1 Overview of the experimental narrative 
+
+The results address three linked questions: whether scDisent remains competitive for integration across immune, neural and developmental datasets; which architectural components account for that gain; and whether the resulting representation supports biological questions that are difficult to ask in entangled latent spaces. Benchmark performance, ablation logic and discovery analyses are therefore presented as mutually supporting evidence that branch-aware representation learning improves both integration and biological interpretability [13, 17]. 
+
+3.2 scDisent resolves cell identity across immune and neural benchmark datasets 
+
+scDisent remained competitive as an integrative model across all three benchmarks and achieved the strongest ARI in every dataset tested. The gain was clearest in PBMC 10k, where scDisent reached ARI 0.627 and NMI 0.610. The same configuration remained competitive in Human Brain 3k (ARI 0.521, NMI 0.626) and Mouse E18 (ARI 0.313, NMI 0.387), indicating that the model does not rely on one tissue-specific operating point. This consistency matters because the three benchmarks differ substantially in biological geom-etry. PBMC contains relatively mature immune lineages, whereas Human Brain and Mouse E18 contain subtler neural and developmental structure [38–41]. The complete resolution sweeps further show that the gain is not driven by one favorable clustering threshold, but persists across a shared evaluation grid. 11 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+Table 2: Benchmark ARI across three paired multi-omic datasets. 
+
+Method PBMC 10k Human Brain 3k Mouse E18 scDisent 0.627 0.521 0.313 
+
+scVI 0.583 0.514 0.279 Seurat WNN 0.516 0.505 0.299 MultiVI 0.476 0.392 0.293 scGLUE 0.516 0.500 0.248 PBMC 10k   
+
+> Human Brain 3k
+> Mouse E18
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> ARI
+> aClustering accuracy
+> PBMC 10k
+> Human Brain 3k
+> Mouse E18
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> NMI
+> bMutual information
+> scVI
+> Seurat WNN
+> MultiVI
+> scGLUE
+> tscDisent scDisent
+
+Figure 2: Cross-dataset benchmark performance. ARI and NMI are shown for PBMC 10k, Human Brain 3k and Mouse E18 under a shared Leiden resolution sweep. scDisent attains the strongest ARI across all three datasets while remaining competitive in NMI, indicating that the disentangled design preserves integration quality across immune, neural and developmental contexts. Numerical values are reported in Table 2. 
+
+3.3 Latent visualizations separate identity-preserving and regulatory structure 
+
+Latent visualizations support the intended semantic split between the two branches. The expres-sion branch preserves recognizable lineage geometry, whereas the regulatory branch is more diffuse and therefore less redundant with coarse population separation. In PBMC, lymphoid and myeloid populations remain sharply organized in zexpr , while zreg retains heterogeneity without simply repro-ducing the same clustering pattern [42, 43]. Supplementary baseline UMAPs show that competing methods can recover reasonable manifolds, but they do not provide the same explicit separation between identity-preserving and regulation-oriented structure. The baseline UMAP panels sharpen this point. Across PBMC, Human Brain and Mouse E18, scVI, MultiVI, scGLUE and WNN all return single manifolds that are useful for neighborhood structure and coarse population recovery. The distinction is not visual quality, but semantics: those methods produce one mixed representation, whereas scDisent returns two coordinated manifolds with different intended roles. 12 
+
+.CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint a Cell identity branch ( zexpr ) b Regulatory branch ( zreg )
+
+> T cells_1
+> T cells_3
+> Monocytes_0
+> NK_2
+> Monocytes_5
+> B cells_4
+
+Figure 3: PBMC latent space visualization. The expression branch preserves clear lineage structure, whereas the regulatory branch is more diffuse and therefore less redundant with coarse population separation. These panels illustrate the central representational aim of scDisent: to preserve identity in one branch while reserving another branch for regulation-oriented variation that can be interrogated separately. Full cross-dataset and baseline UMAP panels are provided in the supplementary material. 
+
+3.4 PBMC ablations identify disentanglement as the dominant contributor 
+
+The PBMC ablation study identifies disentanglement as the main driver of performance and inter-pretability. The full model reaches ARI 0.627. Removing disentanglement causes the largest drop, reducing ARI to 0.514. Removing the causal mapping reduces ARI to 0.564. Removing the detach-based gradient protection yields ARI 0.565. These results indicate that branch separation is the dominant contributor, while causal structure and gradient isolation provide additional gains. The largest failure mode is therefore not the absence of one regularizer, but the collapse back toward an entangled latent space. 
+
+Table 3: PBMC ablation study for the core scDisent components. 
+
+Variant PBMC ARI ∆ vs full scDisent (full) 0.627 +0.000 
+
+Remove disentanglement (TC + orth) 0.514 -0.114 Remove causal mapping 0.564 -0.063 Remove detach protection 0.565 -0.063 
+
+3.5 The learned regulatory atlas is sparse and structured 
+
+The learned regulatory atlas provides a compact summary of how the regulatory branch relates to expression-associated structure. In the current PBMC model, 1,769 of 16,384 possible regulatory-to-expression links remain active, corresponding to an active-edge ratio of approximately 10.8%. 13       
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint 0510 15 20 25 30
+> Number of connected expression factors
+> zreg , 54
+> zreg , 106
+> zreg , 60
+> zreg , 61
+> zreg , 4
+> zreg , 110
+> zreg , 86
+> zreg , 95
+> zreg , 76
+> zreg , 83
+> zreg , 9
+> zreg , 25
+> zreg , 123
+> zreg , 80
+> zreg , 107
+
+a Sparse outgoing connectivity                              
+
+> −0.004 −0.002 0.000 0.002 0.004 0.006
+> Signed causal weight
+> zreg , 42 →zexpr , 23
+> zreg , 7 →zexpr , 52
+> zreg , 106 →zexpr , 19
+> zreg , 18 →zexpr , 34
+> zreg , 106 →zexpr , 81
+> zreg , 124 →zexpr , 4
+> zreg , 70 →zexpr , 114
+> zreg , 4 →zexpr , 46
+> zreg , 39 →zexpr , 48
+> zreg , 68 →zexpr , 7
+> zreg , 97 →zexpr , 75
+> zreg , 70 →zexpr , 44
+
+b Dominant regulatory-to-expression links Figure 4: Sparse causal structure learned in PBMC. Left, regulatory factors are ranked by the number of linked expression factors, showing that the directed interface is structured rather than uniformly dense. Right, the strongest regulatory-to-expression links illustrate that only a limited subset of latent interactions dominates the map. This sparse interface is the central object that enables regulator-centered summaries beyond generic integration outputs. 
+
+This sparse interaction pattern is consistent with the intended inductive bias of scDisent: zreg 
+
+should not act as an uncontrolled shadow copy of zexpr , but as a constrained regulatory interface. The dominant outgoing regulators are not evenly distributed across latent dimensions, and the strongest links are concentrated in a limited subset of regulatory-expression pairs. This argues against the interpretation that the causal layer is merely a diffuse post hoc transform. Standard integration methods mainly return neighborhoods, cluster assignments or joint embeddings [15, 16, 19]; scDisent additionally returns a compact regulatory interface that can be queried in lineage-specific terms. 
+
+3.6 Perturbation analysis reveals lineage-restricted immune programs 
+
+Perturbation analysis on PBMC shows that the regulatory branch captures lineage-restricted im-mune programs rather than a generic latent nuisance signal. In B cells, the dominant regulator 
+
+zreg _30 was linked to shifts in BACH2 , CD79A , MS4A1 , CD74 and HLA-DRA , implicating a program that combines lineage identity with antigen-presentation features. The coexistence of canonical B-cell markers and antigen-presentation genes is notable because it suggests that the latent regulator is capturing a functionally coherent module rather than a single-gene artifact, and the appearance of BACH2 is directionally consistent with established roles of BACH2 in B-cell differentiation [44]. In NK cells, zreg _29 was associated with perturbation of canonical cytotoxic markers including CCL5 , NKG7 , GZMH and CTSW , consistent with a cytotoxic effector program. In monocytes, the strongest regulator signals included zreg _53 and zreg _97 , which were enriched in the monocyte-specific branch and connected to genes such as VCAN , LYZ and AOAH , suggesting sensitivity to inflammatory and myeloid-state programs [42, 43]. 14 
+
+.CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint 0.0 0.2 0.4 0.6 0.8   
+
+> Absolute regulator effect size
+> B cells_4
+> NK_2
+> Monocytes_5
+> z_reg_30
+> z_reg_29
+> z_reg_53
+> aLineage-enriched regulators
+> AC023590.1
+> AFF3
+> AOAH
+> BACH2
+> CCL5
+> CD74
+> EEF1A1
+> IGHV3-21
+> NKG7
+> TCF4
+> Affected genes
+> B cells_4 | z_reg_30 Monocytes_5 | z_reg_53 NK_2 | z_reg_29
+> bRepresentative perturbation-responsive genes
+> −0.003
+> −0.002
+> −0.001
+> 0.000
+> 0.001
+> 0.002
+> Δ expression after knockdown
+
+Figure 5: PBMC perturbation analysis. Left, lineage-enriched regulatory factors identified in B cells, NK cells and monocytes. Right, representative gene-expression shifts after in silico knockdown of those factors. Together, these panels show that the regulatory branch captures lineage-restricted immune programs rather than a generic nuisance signal. 
+
+These patterns support a biological interpretation of the regulatory branch. Rather than merely reflecting generic clustering structure, the learned latent regulators align with recognizable immune-lineage programs and generate perturbation outputs coherent with known marker biology. The DoRothEA cross-check is directionally consistent with this interpretation, although we treat that overlap only as a resource-based plausibility check rather than a one-to-one TF assignment. scDisent therefore supports a more specific question than whether B cells separate from NK cells: which regulation-oriented latent factors are enriched in each lineage, and which expression programs are predicted to move when those factors are suppressed. 
+
+3.7 Discovery analyses extend to neural and developmental datasets 
+
+The same discovery workflow also produced structured outputs in Human Brain and Mouse E18, indicating that biological utility is not restricted to PBMC. In Human Brain, astrocyte-enriched regulator zreg _67 was associated with perturbation shifts in GPC5 , SLC1A2 and SLC1A3 , while an excitatory-neuron regulator zreg _63 was linked to genes including KCNIP4 , ROBO2 and FGF12 .These patterns are consistent with broad human brain cell-state distinctions reported in atlas stud-ies that separate astrocytic, excitatory and oligodendroglial programs [38]. Several oligodendrocyte states also showed distinct regulatory axes. In particular, Oligos_6 displayed large-magnitude reg-ulators, including zreg _115 , whose perturbation affected genes such as SPP1 , OLR1 and MEF2C ,suggesting that scDisent is not merely recovering one generic oligodendrocyte signal but distinguish-ing multiple oligodendrocyte-associated programs. In Mouse E18, discovery outputs similarly aligned with developmental cell states. A GABAergic regulator, zreg _59 , was associated with perturbation shifts in Adarb2 , Erbb4 and Foxp2 , whereas glutamatergic regulators highlighted genes such as Satb2 , Unc5d , Ptprd and Dcc . The involvement 15 
+
+.CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint of Satb2 is notable because Satb2 has a well-established role in corticocortical projection-neuron differentiation [40]. Radial glia showed a separate regulator centered on genes including Tnc , Ptprz1 
+
+and Fabp7 , consistent with molecular programs described for outer radial glia and related develop-mental progenitor states [39]. The GABAergic association is likewise compatible with inhibitory interneuron signatures that include Adarb2 -positive populations [41]. These results should still be interpreted as perturbation-oriented hypotheses rather than validated mechanisms, but they strengthen the central claim of the paper: once expression and regulatory variation are separated, the learned regulatory branch can support biologically specific questions across immune, neural and developmental settings. Taken together, the PBMC, Human Brain and Mouse E18 analyses show that the biological value of scDisent is not restricted to one favorable benchmark. The lineages and state programs dif-fer substantially across these settings, yet the same model structure repeatedly yields interpretable regulator-centric outputs. A compact cross-dataset summary is provided in Supplementary Ta-ble ?? .
+
+3.8 scDisent enables biological questions that are not native to standard inte-gration models 
+
+Across all three datasets, the main added value of scDisent is not that it replaces annotation or differential expression analysis, but that it introduces a branch-aware representational logic. Once expression-associated and regulation-associated variation are separated, one can ask which latent regulators are enriched in a lineage or state and which expression programs are most sensitive to perturbation of those regulators. These questions are difficult to phrase cleanly in standard joint latent spaces, because perturbing the manifold simultaneously changes identity, regulatory context and reconstruction behavior [15, 16, 19]. 
+
+3.9 Quantitative disentanglement analysis supports separation of identity and regulation 
+
+The disentanglement analysis provides a direct quantitative readout of branch separation. Mean absolute cross-block correlation between zexpr and zreg remained modest across datasets, at 0.102 for PBMC, 0.052 for Human Brain, and 0.134 for Mouse E18. At the same time, the strongest mutual-information score between an expression latent and the benchmark labels was much larger than the strongest score in the regulatory branch: 0.451 versus 0.065 in PBMC, 0.486 versus 0.082 in Human Brain, and 0.412 versus 0.078 in Mouse E18. This gap indicates that cell identity is concentrated in zexpr , while zreg retains weaker and more distributed label association. That pattern is exactly what scDisent is designed to produce: a branch that anchors identity and another branch that stays comparatively orthogonal while remaining biologically informative. Importantly, the regulatory branch is not empty; rather, it appears to hold signal that is less directly label-supervised, which is precisely the regime in which 16    
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint PBMC
+> Human Brain
+> Mouse E18
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> 0.12
+> 0.14
+> Mean absolute cross-correlation
+> aBranch separation
+> PBMC
+> Human Brain
+> Mouse E18
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> Best mutual information with cell type
+> bIdentity signal is concentrated in zexpr
+> zexpr
+> zreg
+
+Figure 6: Quantitative summary of latent disentanglement across datasets. Cross-branch correlation re-mains modest, whereas cell-identity information is concentrated in the expression branch rather than the regulatory branch. This separation supports the claim that scDisent is not merely duplicating the same biological signal across two latent branches. 
+
+it may encode subtype-specific or program-specific variation not exhausted by coarse benchmark labels. The branch-separation result is also important for interpreting the perturbation analyses. If the regulatory branch carried the same label structure as the expression branch, then lineage-enriched perturbation outputs could simply reflect duplicated clustering information. Instead, the quanti-tative gap between the two branches argues that scDisent is creating a non-trivial decomposition: 
+
+zexpr remains the main carrier of annotated identity, whereas zreg stores a weaker but still structured residual signal that is available for regulator-centered interrogation. Figure 6 links the architectural claim, the ablation claim and the biological claim by showing that the regulatory branch is neither redundant nor collapsed. 
+
+3.10 Sensitivity analysis supports the default configuration as a robust operat-ing point 
+
+Sensitivity scans across latent dimensionality and loss weights showed that the default configuration is close to a strong compromise across datasets. For PBMC, lower causal weight ( λcausal = 0 .1)remained competitive with ARI 0.604, while larger latent size (256/256) reduced ARI to 0.493. In Human Brain, several nearby settings remained close to the default, with ARI values between 0.503 and 0.520. In Mouse E18, the search surface was relatively flat, with the best alternative in the tested sweep reaching ARI 0.321 under the 256-dimensional setting, only slightly above the default 0.313. This pattern suggests that the default configuration is not an extremely fragile optimum. Some settings modestly improve one dataset while harming another, but the unified benchmark configu-ration remains close to the best cross-dataset tradeoff. 17 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+## 4 Discussion 
+
+Most current multi-omic single-cell methods are optimized for integration quality, not for mecha-nistic decomposition [15, 16, 19]. They can align modalities and recover cell populations, but they do so with entangled latent spaces that are difficult to manipulate or interpret. scDisent instead changes the structure of the representation itself by separating identity-like expression variables from regulatory variables and coupling them through a sparse directed interface. The combined results support this view from three directions. First, scDisent remains compet-itive across immune, neural and developmental benchmarks, so it is not trading performance for interpretability. Second, the PBMC ablations show that the main gain comes from enforcing branch semantics, with disentanglement producing the largest drop when removed and detach-based pro-tection stabilizing the interaction between the two branches. Third, the perturbation outputs and sparse causal atlas show that the regulatory branch can still be read in biologically meaningful ways after training. Existing models may succeed at building an integrated manifold, but they do not naturally provide a branch of the representation that can be read as a candidate regulatory interface [8, 10, 12, 15, 16]. 
+
+4.1 Relationship to current multi-omic modeling practice 
+
+These results also help place scDisent within the current landscape of multi-omic modeling. Meth-ods such as MultiVI, scGLUE and WNN were not built around the requirement that identity-preserving variables and perturbation-oriented regulatory variables should occupy different latent branches [15, 16, 19]. It is therefore unsurprising that they remain strong integration baselines while offering less explicit support for regulator-centered reasoning. The claim here is not that every single-cell analysis requires causal structure, but that once the goal shifts from cell-state summarization toward regulator prioritization or directional latent interpretation, representation semantics become central [14, 17]. 
+
+4.2 From observational integration to perturbation-oriented modeling 
+
+The conceptual shift of scDisent is that it represents multi-omic cells in a form better matched to perturbation-oriented questions, not only observational embedding. In standard joint latent spaces, latent manipulation tends to move cell identity and regulatory context simultaneously, which makes downstream intervention hard to interpret [8, 10, 15, 16]. In scDisent, the expression branch remains the anchor for identity-preserving geometry, whereas the regulatory branch is the place where perturbation hypotheses are read out. This does not make the model experimentally causal in the strict interventional sense, but it does make directional biological questions easier to pose. 18 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+4.3 Biological meaning of the causal layer 
+
+The sparse regulatory atlas is useful precisely because it is not dense. A dense all-to-all coupling would offer little interpretive value and would be difficult to distinguish from a generic latent transformation. By contrast, the current PBMC atlas emphasizes a limited number of dominant links and produces lineage-restricted perturbation outputs. The additional DoRothEA cross-check on PBMC, recorded in results/dorothea_validation_summary.txt , further supports the claim that the perturbation signatures are not arbitrary [45], although the recurrence of the same best-matching TF means this should be interpreted as a coarse plausibility check rather than a one-to-one regulator identification. The most defensible interpretation is therefore that scDisent exposes a structured hypothesis space that can prioritize mechanistically plausible regulators for follow-up analysis. It does not re-place perturbation experiments, but it can help decide which perturbations are most worth testing. 
+
+4.4 Computational tradeoffs and scope 
+
+The added interpretability of scDisent is not free. Relative to a conventional single-latent mul-timodal VAE, the method introduces a second latent branch, explicit total-correlation regular-ization, and a sparse directional map whose optimization must be scheduled carefully. These additions increase training complexity, especially because total-correlation estimation depends on minibatch-wise interactions and therefore scales less favorably than ordinary reconstruction losses. The method is therefore best positioned as a richer analysis model rather than the lightest possible embedding baseline. That tradeoff is justified only if the resulting representation is biologically more useful. The results here suggest that it is: the same architectural additions that increase optimization complexity are the ones that make branch semantics, sparse regulatory summaries and perturbation-oriented outputs possible [14, 17]. Future work should make this tradeoff more explicit through direct runtime benchmarking and by testing how the current architecture behaves in partially observed or unpaired settings. 
+
+4.5 Limitations and future work 
+
+Several limitations remain. First, the current study is validated mainly on transcriptome-accessibility datasets with matched modalities and does not yet test more general partially observed or unpaired settings, which are already an active target of multimodal translation and benchmarking studies [20, 21, 46]. Second, the causal layer should be interpreted as a structured regulatory hypothesis space, not as definitive proof of causal mechanism. Third, the current ablation study is only complete for PBMC. Extending the same experiments to Brain and E18 would strengthen the generality of the architectural claims. Fourth, the present biological valida-tion is strongest in PBMC, where cell identities and marker sets are relatively well characterized. Additional orthogonal validation would be desirable in more weakly annotated developmental settings. Finally, the same representational logic should be tested in protein-aware settings such 19 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+as CITE-seq and totalVI-style protein-RNA modeling [47, 48] and in time-resolved analyses that incorporate RNA velocity [49]. 
+
+## 5 Conclusion 
+
+scDisent introduces a disentangled representation framework with causal structure for single-cell multi-omics. By splitting the latent space into expression and regulatory branches and coupling them through a sparse directed mapping, the model improves both integration performance and biological interpretability. Across PBMC, Human Brain and Mouse E18 [23–25], scDisent achieved the strongest benchmark clustering performance among the tested methods while also producing interpretable perturbation-oriented outputs and quantitative evidence of latent separation. The central claim of the study is not that every inferred edge should be read as established biology, but that the representation itself is more useful for biological reasoning. In conventional entangled models, identity and regulation are mixed together and perturbation-style interpretation becomes structurally ambiguous. In scDisent, the expression branch remains the anchor of cellular identity while the regulatory branch becomes a tractable space for regulator prioritization, lineage-aware interpretation and in silico hypothesis generation. The method therefore narrows the gap between high-performing generative integration and mechanism-aware downstream analysis [14, 17]. 
+
+## Data availability 
+
+The benchmark inputs used in this study are based on public 10x Genomics multiome datasets corresponding to PBMC granulocyte-sorted 10k, Human Brain 3k, and Fresh Embryonic E18 Mouse Brain 5k [23–25]. Within this project workspace, the downloaded raw matrices are stored under 
+
+data/downloads/ and the split raw AnnData objects are stored under data/raw/ . Processed paired AnnData objects and derived evaluation labels used for training and benchmarking are stored under 
+
+data/processed/ . Benchmark outputs, discovery summaries and other derived results are stored under results/ .
+
+## Code availability 
+
+The code used for preprocessing, model training, evaluation and figure generation is available at https://github.com/xiguoren/scDisent . The fixed model implementation is located in 
+
+scdisent/ , while preprocessing and evaluation scripts are located under scripts/ .
+
+## Ethics declaration 
+
+This study used only publicly available, previously released single-cell multi-omic datasets and involved no new human or animal sample collection by the author. 20 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+## Author contributions 
+
+G.X. conceived the study, implemented the computational framework, performed the analyses, generated the figures and tables, and wrote the paper. 
+
+## Competing interests 
+
+The author declares no competing interests. 
+
+## References 
+
+[1] Stephen J Clark, Ricard Argelaguet, Chantriolnt-Andreas Kapourani, Thomas M Stubbs, Heather J Lee, Celia Alda-Catalinas, Felix Krueger, Guido Sanguinetti, Gavin Kelsey, John C Marioni, et al. scnmt-seq enables joint profiling of chromatin accessibility dna methylation and transcription in single cells. Nature communications , 9(1):781, 2018. [2] Song Chen, Blue B Lake, and Kun Zhang. High-throughput sequencing of the transcriptome and chromatin accessibility in the same cell. Nature biotechnology , 37(12):1452–1457, 2019. [3] Sai Ma, Bing Zhang, Lindsay M LaFave, Andrew S Earl, Zachary Chiang, Yan Hu, Jiarui Ding, Alison Brack, Vinay K Kartha, Tristan Tay, et al. Chromatin potential identified by shared single-cell profiling of rna and chromatin. Cell , 183(4):1103–1116, 2020. [4] Elliott Swanson, Cara Lord, Julian Reading, Alexander T Heubeck, Palak C Genge, Zachary Thomson, Morgan DA Weiss, Xiao-jun Li, Adam K Savage, Richard R Green, et al. Simul-taneous trimodal single-cell measurement of transcripts, epitopes, and chromatin accessibility using tea-seq. Elife , 10:e63632, 2021. [5] Eleni P Mimitou, Angela Cheng, Alessia Montalbano, Yuhan Hao, Marlon Stoeckius, Matthew Legut, Tony Roush, Alejandro Herrera, Efthymia Papalexi, Zachary Ouyang, Rahul Satija, and Peter Smibert. Scalable, multimodal profiling of chromatin accessibility, gene expression and protein levels in single cells. Nature biotechnology , 39(10):1246–1258, 2021. [6] Tim Stuart, Andrew Butler, Paul Hoffman, Christoph Hafemeister, Efthymia Papalexi, William M Mauck, Yuhan Hao, Marlon Stoeckius, Peter Smibert, and Rahul Satija. Com-prehensive integration of single-cell data. cell , 177(7):1888–1902, 2019. [7] Tim Stuart and Rahul Satija. Integrative single-cell analysis. Nature reviews genetics , 20(5): 257–272, 2019. [8] Ricard Argelaguet, Damien Arnol, Danila Bredikhin, Yonatan Deloro, Britta Velten, John C Marioni, and Oliver Stegle. Mofa+: a statistical framework for comprehensive integration of multi-modal single-cell data. Genome biology , 21(1):111, 2020. 21 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+[9] Jialin Liu, Chao Gao, Joshua Sodicoff, Velina Kozareva, Evan Z Macosko, and Joshua D Welch. Jointly defining cell types from multiple single-cell datasets using liger. Nature protocols , 15 (11):3632–3662, 2020. [10] Wei Gong, Il-Youp Kwak, Pradeep Pota, Nori Koyano-Nakagawa, and Daniel J Garry. Cobolt: integrative analysis of multimodal single-cell sequencing data. Genome biology , 22(1):351, 2021. [11] Yingxin Lin, Tung-Yu Wu, Sheng Wan, Jean YH Yang, Wing H Wong, and YX Rachel Wang. scjoint integrates atlas-scale single-cell rna-seq and atac-seq data with transfer learning. Nature biotechnology , 40(5):703–710, 2022. [12] Ilya Korsunsky, Nghia Millard, Jean Fan, Kamil Slowikowski, Fan Zhang, Kevin Wei, Yuriy Baglaenko, Michael Brenner, Po-ru Loh, and Soumya Raychaudhuri. Fast, sensitive and accu-rate integration of single-cell data with harmony. Nature methods , 16(12):1289–1296, 2019. [13] Chenxu Zhu, Sebastian Preissl, and Bing Ren. Single-cell multimodal omics: the power of many. Nature methods , 17(1):11–14, 2020. [14] Chenxu Zhu, Sebastian Preissl, and Bing Ren. Methods and applications for single-cell and spatial multi-omics. Nature Reviews Genetics , 24(8):494–515, 2023. [15] Tal Ashuach, Mariano I Gabitto, Rohan V Koodli, Giuseppe-Antonio Saldi, Michael I Jordan, and Nir Yosef. Multivi: deep generative model for the integration of multimodal data. Nature methods , 20(8):1222–1231, 2023. [16] Zhi-Jie Cao and Ge Gao. Multi-omics single-cell data integration and regulatory inference with graph-linked embedding. Nature biotechnology , 40(10):1458–1466, 2022. [17] Ricard Argelaguet, John C Marioni, and Oliver Stegle. New horizons in the stormy sea of multimodal single-cell data integration. Cell , 184(24):5879–5881, 2021. [18] Romain Lopez, Jeffrey Regier, Michael B Cole, Michael I Jordan, and Nir Yosef. Deep gener-ative modeling for single-cell transcriptomics. Nature methods , 15(12):1053–1058, 2018. [19] Yuhan Hao, Stephanie Hao, Erica Andersen-Nissen, William M Mauck, Shiwei Zheng, Andrew Butler, Maddie J Lee, Aaron J Wilk, Charlotte Darby, Michael Zager, et al. Integrated analysis of multimodal single-cell data. Cell , 184(13):3573–3587, 2021. [20] Kevin E Wu, Kathryn E Yost, Howard Y Chang, and James Zou. Babel enables cross-modality translation between multiomic profiles at single-cell resolution. Proceedings of the National Academy of Sciences , 118(15):e2023070118, 2021. [21] Ran Zhang, Laetitia Meng-Papaxanthos, Jean-philippe Vert, and William Stafford Noble. Mul-timodal single-cell translation and alignment with semi-supervised learning. Journal of Com-putational Biology , 29(11):1198–1212, 2022. 22 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+[22] Ricky TQ Chen, Xuechen Li, Roger B Grosse, and David K Duvenaud. Isolating sources of disentanglement in variational autoencoders. Advances in neural information processing systems , 31, 2018. [23] 10x Genomics. Pbmc from a healthy donor - granulocytes removed through cell sorting (10k), 2020. URL https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-g ranulocytes-removed-through-cell-sorting-10-k-1-standard-1-0-0 . Epi Multiome ATAC + Gene Expression dataset page, accessed 2026-04-08. [24] 10x Genomics. Flash-frozen human healthy brain tissue (3k), 2020. URL https://www.10xg enomics.com/datasets/frozen-human-healthy-brain-tissue-3-k-1-standard-1-0-0 .Epi Multiome ATAC + Gene Expression dataset page, accessed 2026-04-08. [25] 10x Genomics. Fresh embryonic e18 mouse brain (5k), 2021. URL https://www.10xgenom ics.com/datasets/fresh-embryonic-e-18-mouse-brain-5-k-1-standard-2-0-0 . Epi Multiome ATAC + Gene Expression dataset page, accessed 2026-04-08. [26] Jeffrey M Granja, M Ryan Corces, Sarah E Pierce, S Tansu Bagdatli, Hani Choudhry, Howard Y Chang, and William J Greenleaf. Archr is a scalable software package for inte-grative single-cell chromatin accessibility analysis. Nature genetics , 53(3):403–411, 2021. [27] Tim Stuart, Avi Srivastava, Shaista Madad, Caleb A Lareau, and Rahul Satija. Single-cell chromatin state analysis with signac. Nature methods , 18(11):1333–1341, 2021. [28] Diederik P Kingma and Max Welling. Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114 , 2013. [29] Eric Jang, Shixiang Gu, and Ben Poole. Categorical reparameterization with gumbel-softmax. 
+
+arXiv preprint arXiv:1611.01144 , 2016. [30] Xun Zheng, Bryon Aragam, Pradeep K Ravikumar, and Eric P Xing. Dags with no tears: Continuous optimization for structure learning. Advances in neural information processing systems , 31, 2018. [31] Aaron van den Oord, Yazhe Li, and Oriol Vinyals. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748 , 2018. [32] Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 , 2017. [33] Ilya Loshchilov and Frank Hutter. Sgdr: Stochastic gradient descent with warm restarts. arXiv preprint arXiv:1608.03983 , 2016. [34] Vincent A Traag, Ludo Waltman, and Nees Jan Van Eck. From louvain to leiden: guaranteeing well-connected communities. Scientific reports , 9(1):5233, 2019. 23 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+[35] Lawrence Hubert and Phipps Arabie. Comparing partitions. Journal of Classification , 2(1): 193–218, 1985. doi: 10.1007/BF01908075. [36] Nguyen Xuan Vinh, Julien Epps, and James Bailey. Information theoretic measures for clus-terings comparison: Variants, properties, normalization and correction for chance. Journal of Machine Learning Research , 11:2837–2854, 2010. URL https://jmlr.org/papers/v11/vinh 10a.html .[37] Peter J Rousseeuw. Silhouettes: a graphical aid to the interpretation and validation of cluster analysis. Journal of computational and applied mathematics , 20:53–65, 1987. [38] Xinyue Chen, Yin Huang, Liangfeng Huang, Ziliang Huang, Zhao-Zhe Hao, Lahong Xu, Nana Xu, Zhi Li, Yonggao Mou, Mingli Ye, et al. A brain cell atlas integrating single-cell transcrip-tomes across human brain regions. Nature medicine , 30(9):2679–2691, 2024. [39] Alex A Pollen, Tomasz J Nowakowski, Jiadong Chen, Hanna Retallack, Carmen Sandoval-Espinosa, Cory R Nicholas, Joe Shuga, Siyuan John Liu, Michael C Oldham, Aaron Diaz, et al. Molecular identity of human outer radial glia during cortical development. Cell , 163(1): 55–67, 2015. [40] Dino P Leone, Whitney E Heavner, Emily A Ferenczi, Gergana Dobreva, John R Huguenard, Rudolf Grosschedl, and Susan K McConnell. Satb2 regulates the differentiation of both callosal and subcerebral projection neurons in the developing cerebral cortex. Cerebral cortex , 25(10): 3406–3419, 2015. [41] Robert Machold, Shlomo Dellal, Manuel Valero, Hector Zurita, Ilya Kruglikov, John Hongyu Meng, Jessica L Hanson, Yoshiko Hashikawa, Benjamin Schuman, György Buzsáki, et al. Id2 gabaergic interneurons comprise a neglected fourth major group of cortical inhibitory cells. 
+
+elife , 12:e85893, 2023. [42] Jenifer Vallejo, Ryosuke Saigusa, Rishab Gulati, Sujit Silas Armstrong Suthahar, Vasantika Suryawanshi, Ahmad Alimadadi, Christopher P Durant, Yanal Ghosheh, Payel Roy, Erik Ehinger, et al. Combined protein and transcript single-cell rna sequencing in human peripheral blood mononuclear cells. BMC biology , 20(1):193, 2022. [43] Yahong Chen, Xin Li, Shuran Liu, Wen Ao, Jing Lin, Zhenting Li, Shouli Wu, Hanhui Ye, Xiao Han, and Dongliang Li. An atlas of immune cell transcriptomes in human immunodefi-ciency virus-infected immunological non-responders identified marker genes that control viral replication. Chinese Medical Journal , 136(22):2694–2705, 2023. [44] Akihiko Muto, Kyoko Ochiai, Yoshitaka Kimura, Ari Itoh-Nakadai, Kathryn L Calame, Dai Ikebe, Satoshi Tashiro, and Kazuhiko Igarashi. Bach2 represses plasma cell gene regulatory network in b cells to promote antibody class switch. The EMBO journal , 29(23):4048, 2010. 24 
+
+> .CC-BY-NC 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 16, 2026. ;https://doi.org/10.64898/2026.04.12.717909 doi: bioRxiv preprint
+
+[45] Luz Garcia-Alonso, Christian H Holland, Mahmoud M Ibrahim, Denes Turei, and Julio Saez-Rodriguez. Benchmark and integration of resources for the estimation of human transcription factor activities. Genome research , 29(8):1363–1375, 2019. [46] Michelle YY Lee, Klaus H Kaestner, and Mingyao Li. Benchmarking algorithms for joint integration of unpaired and paired single-cell rna-seq and atac-seq data. Genome Biology , 24 (1):244, 2023. [47] Marlon Stoeckius, Christoph Hafemeister, William Stephenson, Brian Houck-Loomis, Pratip K Chattopadhyay, Harold Swerdlow, Rahul Satija, and Peter Smibert. Simultaneous epitope and transcriptome measurement in single cells. Nature methods , 14(9):865–868, 2017. [48] Adam Gayoso, Zoë Steier, Romain Lopez, Jeffrey Regier, Kristopher L Nazor, Aaron Streets, and Nir Yosef. Joint probabilistic modeling of single-cell multi-omic data with totalvi. Nature methods , 18(3):272–282, 2021. [49] Gioele La Manno, Ruslan Soldatov, Amit Zeisel, Emelie Braun, Hannah Hochgerner, Viktor Petukhov, Katja Lidschreiber, Maria E Kastriti, Peter Lönnerberg, Alessandro Furlan, et al. Rna velocity of single cells. Nature , 560(7719):494–498, 2018. 25

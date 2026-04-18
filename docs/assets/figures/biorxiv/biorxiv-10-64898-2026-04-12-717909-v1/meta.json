@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-001.webp",
+      "caption": "Figure 5: PBMC perturbation analysis. Left, lineage-enriched regulatory factors identified in B cells, NK cells and monocytes. Right, representative gene-expression shifts after in silico knockdown of those factors. Together, these panels show that the regulatory branch captures lineage-restricted immune programs rather than a generic nuisance signal.",
+      "page": 15,
+      "index": 1,
+      "width": 931,
+      "height": 395
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-002.webp",
+      "caption": "Figure 4: Sparse causal structure learned in PBMC. Left, regulatory factors are ranked by the number of linked expression factors, showing that the directed interface is structured rather than uniformly dense. Right, the strongest regulatory-to-expression links illustrate that only a limited subset of latent interactions dominates the map. This sparse interface is the central object that enables regulator-centered summaries beyond generic integration outputs.",
+      "page": 14,
+      "index": 2,
+      "width": 935,
+      "height": 393
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-003.webp",
+      "caption": "Figure 3: PBMC latent space visualization. The expression branch preserves clear lineage structure, whereas the regulatory branch is more diffuse and therefore less redundant with coarse population separation. These panels illustrate the central representational aim of scDisent: to preserve identity in one branch while reserving another branch for regulation-oriented variation that can be interrogated separately. Full crossdataset and baseline UMAP panels are provided in the supplementary material.",
+      "page": 13,
+      "index": 3,
+      "width": 882,
+      "height": 453
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-004.webp",
+      "caption": "Table 1: Summary of the three paired multi-omic benchmark datasets used in this study.",
+      "page": 4,
+      "index": 4,
+      "width": 885,
+      "height": 199
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-005.webp",
+      "caption": "Figure 6: Quantitative summary of latent disentanglement across datasets. Cross-branch correlation remains modest, whereas cell-identity information is concentrated in the expression branch rather than the regulatory branch. This separation supports the claim that scDisent is not merely duplicating the same biological signal across two latent branches.",
+      "page": 17,
+      "index": 5,
+      "width": 935,
+      "height": 363
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-006.webp",
+      "caption": "Figure 2: Cross-dataset benchmark performance. ARI and NMI are shown for PBMC 10k, Human Brain 3k and Mouse E18 under a shared Leiden resolution sweep. scDisent attains the strongest ARI across all three datasets while remaining competitive in NMI, indicating that the disentangled design preserves integration quality across immune, neural and developmental contexts. Numerical values are reported in Table 2.",
+      "page": 12,
+      "index": 6,
+      "width": 917,
+      "height": 360
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-12-717909-v1/fig-007.webp",
+      "caption": "Figure 1: Model architecture of scDisent. Multi-omic inputs are encoded into a shared multimodal state and factorized into an expression branch and a regulatory branch. The two branches are concatenated to form the latent used by the RNA and ATAC decoders, while a smaller training-only supervision path constrains how regulation-oriented latents predict a detached copy of the expression branch.",
+      "page": 5,
+      "index": 7,
+      "width": 840,
+      "height": 696
+    }
+  ]
+}

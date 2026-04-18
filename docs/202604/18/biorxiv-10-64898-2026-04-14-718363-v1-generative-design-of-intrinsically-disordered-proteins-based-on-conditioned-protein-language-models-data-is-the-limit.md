@@ -1,0 +1,24 @@
+---
+title: "Generative design of intrinsically disordered proteins based on conditioned protein language models: Data is the limit"
+title_zh: 基于条件化蛋白语言模型的固有无序蛋白生成设计：数据是限制因素
+authors: "Carriere, L., Huyghe, A., Pajkos, M., Bernado, P., Cortes, J."
+date: 2026-04-16
+pdf: "https://www.biorxiv.org/content/10.64898/2026.04.14.718363v1.full.pdf"
+tags: ["query:gentcr"]
+score: 7.0
+evidence: 使用Transformer编码器-解码器和蛋白质语言模型的蛋白质序列生成框架
+tldr: 本研究针对内在无序蛋白的复杂设计问题，提出一种利用条件蛋白语言模型的生成框架，将目标构象参数作为输入生成蛋白序列。通过不同数据规模训练，发现只有在大数据条件下才能实现准确的构象和理化性质控制，强调数据在无序蛋白设计中的核心作用。
+source: biorxiv
+selection_source: fresh_fetch
+figures_json: "[{\"url\": \"assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-001.webp\", \"caption\": \"Figure 1: A schematic overview of the architecture and conditioning strategy of the IDP-Prop2seq model. The encoder processes IDR descriptors that define the conditioning signal, while the decoder generates amino acid sequences. Conditioning is achieved through cross-attention between encoder and decoder representations. During training, sequence generation is optimized using a cross-entropy loss.\", \"page\": 3, \"index\": 1, \"width\": 944, \"height\": 194}, {\"url\": \"assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-002.webp\", \"caption\": \"Figure 2: Distribution of absolute error statistics for Rg and Ree. Violin plots showing the distributions of the minimal (A), maximal (B), and variance (C) of the absolute error obtained when generating sequences targeting the conformational descriptors Rg (blue) and Ree (orange). Results are shown for the h-IDR-Prop2Seq model and the b-IDR-Prop2Seq model. The vertical axis represents absolute error on a logarithmic scale. For the b-IDR-Prop2Seq model, minimal errors are typically in the range of 10−3–10−2 for Rg and around 10−2 for Ree, whereas the h-IDR-Prop2Seq model exhibits broader distributions extending from approximately 10−2 up to values near 10. Similar trends are observed for maximal errors and variances, which remain substantially lower and more tightly distributed for the model trained on the larger dataset. Boxes indicate the interquartile range with the median shown as a horizontal line.\", \"page\": 5, \"index\": 2, \"width\": 940, \"height\": 271}, {\"url\": \"assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718363-v1/fig-003.webp\", \"caption\": \"Figure 3: Distribution of SHARK similarity scores for sequences generated in batches of 100 sequences across 1,000 generations conditioned on Ree. Panels show the distributions of the (A) maximal and (B) median SHARK scores. Light brown violins report similarities computed within each generation batch, whereas dark brown violins report similarities between generated sequences and training-set sequences with matching Ree values. Overall, similarity values are low, indicating high diversity among generated sequences and no overlap with training sequences.\", \"page\": 7, \"index\": 3, \"width\": 461, \"height\": 618}]"
+motivation: 由于内在无序蛋白特性复杂，其理性设计仍面临挑战。
+method: 采用基于Transformer的条件蛋白语言模型，将目标构象描述符映射为蛋白序列进行生成。
+result: 模型在大规模数据训练下能够准确控制蛋白的构象和理化性质。
+conclusion: 研究表明，数据规模是实现精确可控的无序蛋白设计的关键限制因素。
+---
+
+## 摘要
+固有无序蛋白及其区域（IDRs）在多种生物过程中起着核心作用。尽管其结构和物理化学性质已被广泛研究，但由于其具有构象集合特性，具有明确定义构象行为的 IDR 的理性设计仍然具有挑战性。在此，我们提出了一种基于蛋白语言模型（pLMs）的生成式框架，用于根据目标构象集合描述符设计无序蛋白序列。我们将 IDR 设计表述为生成预测能实现特定生物物理性质的氨基酸序列的任务，并实现了一种 Transformer 编码器-解码器架构，将数值描述符映射到蛋白序列。通过在跨越两个数量级的数据集上训练模型，我们表明，只有在大规模数据条件下，才能实现对构象和物理化学性质的精确控制。这些结果证明了在 IDR 设计中，将生成模型基于集合级描述符进行条件化的可行性。更广泛地，这些结果支持一种以数据为中心的蛋白工程范式，其中数据可用性成为精确设计 IDR 的关键限制因素。
+
+## Abstract
+Intrinsically disordered proteins and regions (IDRs) are central to a multitude of biological processes. Despite extensive studies of their structural and physicochemical properties, the rational design of IDRs with defined conformational behavior remains challenging due to their ensemble nature. Here we present a generative framework for designing disordered protein sequences conditioned on target conformational ensemble descriptors using protein language models (pLMs). We formulate IDR design as the task of generating amino acid sequences predicted to realize specified biophysical properties and implement a Transformer encoder-decoder architecture that maps numerical descriptors to protein sequences. By training models on datasets spanning two orders of magnitude in size, we show that accurate control of conformational and physicochemical properties is achieved only at large data scale. These results demonstrate the feasibility of conditioning generative models on ensemble-level descriptors for IDR design. More broadly, these results support a data-centric paradigm for protein engineering, in which data availability emerges as a key limiting factor for the accurate design of IDRs.

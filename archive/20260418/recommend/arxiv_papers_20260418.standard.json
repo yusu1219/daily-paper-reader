@@ -1,0 +1,517 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-04-18T19:59:31.588081+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 10,
+    "quick_skim_target": 11,
+    "quick_selected": 10
+  },
+  "deep_dive": [
+    {
+      "id": "2604.13256v1",
+      "source": "arxiv",
+      "title": "Counterfactual Peptide Editing for Causal TCR--pMHC Binding Inference",
+      "abstract": "Neural models for TCR-pMHC binding prediction are susceptible to shortcut learning: they exploit spurious correlations in training data -- such as peptide length bias or V-gene co-occurrence -- rather than the physical binding interface. This renders predictions brittle under family-held-out and distance-aware evaluation, where such shortcuts do not transfer. We introduce \\emph{Counterfactual Invariant Prediction} (CIP), a training framework that generates biologically constrained counterfactual peptide edits and enforces invariance to edits at non-anchor positions while amplifying sensitivity at MHC anchor residues. CIP augments the base classifier with two auxiliary objectives: (1) an invariance loss penalizing prediction changes under conservative non-anchor substitutions, and (2) a contrastive loss encouraging large prediction changes under anchor-position disruptions. Evaluated on a curated VDJdb-IEDB benchmark under family-held-out, distance-aware, and random splits, CIP achieves AUROC 0.831 and counterfactual consistency (CFC) 0.724 under the challenging family-held-out protocol -- a 39.7\\% reduction in shortcut index relative to the unconstrained baseline. Ablations confirm that anchor-aware edit generation is the dominant driver of OOD gains, providing a practical recipe for causally-grounded TCR specificity modeling.",
+      "authors": [
+        "Sanjar Khudoyberdiev",
+        "Arman Bekov"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.GR"
+      ],
+      "published": "2026-04-14T19:40:46+00:00",
+      "link": "https://arxiv.org/pdf/2604.13256v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "TCR-pMHC binding inference using counterfactual edits and invariance objectives",
+      "llm_evidence_cn": "使用反事实编辑和不变性目标进行TCR-pMHC结合推理",
+      "llm_evidence": "使用反事实编辑和不变性目标进行TCR-pMHC结合推理",
+      "canonical_evidence": "使用反事实编辑和不变性目标进行TCR-pMHC结合推理",
+      "llm_tldr_en": "Introduces CIP to improve TCR-pMHC binding prediction by enforcing invariance to non-anchor peptide edits.",
+      "llm_tldr_cn": "引入CIP框架，通过对非锚点肽段编辑实施不变性约束，提升TCR-pMHC结合预测能力。",
+      "llm_tldr": "引入CIP框架，通过对非锚点肽段编辑实施不变性约束，提升TCR-pMHC结合预测能力。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-03-31-715361-v2",
+      "source": "biorxiv",
+      "title": "A structure-informed deep learning framework for modeling TCR-peptide-HLA interactions",
+      "abstract": "The interaction between T cell receptors (TCRs), peptides, and human leukocyte antigens (HLAs) underlies antigen-specific T cell immunity. Despite substantial advances in peptide- HLA presentation prediction, accurate modeling of coupled TCR-peptide-HLA recognition remains underdeveloped, limiting applications such as TCR and neoepitope prioritization in cancer and antigen identification in autoimmunity. Here we present StriMap, a unified framework for predicting TCR-peptide-HLA interactions by integrating physicochemical, sequence-context, and structural features at recognition interfaces. StriMap achieves state-of-the-art performance with improved generalizability and enables applications in both cancer and autoimmunity. As a case study in ankylosing spondylitis (AS), we screened 13 million peptides derived from 43,241 bacterial proteins and identified candidate molecular mimics that were experimentally validated to activate T cells expressing an AS-associated TCR. Notably, a top validated peptide was enriched in patients with inflammatory bowel disease (IBD), suggesting potential shared microbial triggers between AS and IBD. Overall, StriMap provides a generalizable framework for rational immunotherapy design and for dissecting antigenic drivers of autoimmunity.",
+      "authors": [
+        "Cao, K.",
+        "Li, R.",
+        "Strazar, M.",
+        "Brown, E. M.",
+        "Nguyen, P. N. U.",
+        "Pust, M.-M.",
+        "Park, J.",
+        "Graham, D. B.",
+        "Ashenberg, O.",
+        "Uhler, C.",
+        "Xavier, R."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-11T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.03.31.715361v2.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Modeling TCR-peptide-HLA interactions using deep learning",
+      "llm_evidence_cn": "使用深度学习模拟 TCR-肽-HLA 相互作用",
+      "llm_evidence": "使用深度学习模拟 TCR-肽-HLA 相互作用",
+      "canonical_evidence": "使用深度学习模拟 TCR-肽-HLA 相互作用",
+      "llm_tldr_en": "StriMap integrates structural and sequence features to predict TCR-peptide-HLA recognition for cancer therapy.",
+      "llm_tldr_cn": "StriMap 整合了结构和序列特征，以预测癌症治疗中的 TCR-肽-HLA 识别。",
+      "llm_tldr": "StriMap 整合了结构和序列特征，以预测癌症治疗中的 TCR-肽-HLA 识别。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2025-12-19-695451-v2",
+      "source": "biorxiv",
+      "title": "Rapid and Reliable Structural Modeling of Adaptive Immune Receptors Using an Optimized AlphaFold3 workflow",
+      "abstract": "AlphaFold (AF), a deep-learning based protein modelling approach, has revolutionized structural biology by generally achieving near-experimental accuracy in protein structure prediction. An impactful application of AF is the modelling of antibodies (Abs) and T-cell receptors (TCRs), key mediators of cellular immunity, whose structural specificity underlies responses in cancer, infection, and autoimmune diseases. In this work, we analyse AF3 performance by systematically examining how MSA composition, number of inference phases and inference parameters affect prediction accuracy and computational efficiency. We present an acceleration of [~]45-fold of the AF3 MSA phase using reduced UniRef90 subsets, combined with up to a 3.6-fold increase in AF3 inference speed through optimized parameters. We provide a highly accurate variant of the AF3 workflow specifically optimized for the modelling of the Abs and TCRs receptor domains, enabling rapid, reliable structural predictions at a scale suitable for high-throughput immunological studies. Our findings provide a foundation for faster therapeutic discovery and deeper molecular mechanism understanding of immune recognition.\n\nTeaserBy improving key steps in the process, we made AlphaFold3 about 40 times faster at modeling specific immune proteins",
+      "authors": [
+        "Jann, A.",
+        "Perez, M. A. S.",
+        "Zoete, V."
+      ],
+      "primary_category": "immunology",
+      "categories": [
+        "immunology"
+      ],
+      "published": "2026-04-15T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2025.12.19.695451v2.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Structural modeling of TCRs using optimized AlphaFold3 workflow",
+      "llm_evidence_cn": "使用优化的AlphaFold3工作流进行TCR结构建模",
+      "llm_evidence": "使用优化的AlphaFold3工作流进行TCR结构建模",
+      "canonical_evidence": "使用优化的AlphaFold3工作流进行TCR结构建模",
+      "llm_tldr_en": "Optimizes AlphaFold3 for rapid and reliable structural modeling of T-cell receptors (TCRs).",
+      "llm_tldr_cn": "优化AlphaFold3工作流，实现对T细胞受体（TCR）快速且可靠的结构建模。",
+      "llm_tldr": "优化AlphaFold3工作流，实现对T细胞受体（TCR）快速且可靠的结构建模。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.12387v1",
+      "source": "arxiv",
+      "title": "oxo-call: Documentation-grounded Skill Augmentation for Accurate Bioinformatics Command-line Generation with Large Language Models",
+      "abstract": "Command-line bioinformatics tools remain essential for genomic analysis, yet their diversity in syntax and parameterization presents a persistent barrier to productive research. We present oxo-call, a Rust-based command-line assistant that translates natural-language task descriptions into accurate tool invocations through two complementary strategies: documentation-first grounding, which provides the large language model (LLM) with the complete, version-specific help text of each target tool, and curated skill augmentation, which primes the model with domain-expert concepts, common pitfalls, and worked examples. oxo-call (v0.10) ships >150 built-in skills covering 44 analytical categories, from variant calling and genome assembly to single-cell transcriptomics, compiled into a single, statically linked binary. Every generated command is logged with provenance metadata to support reproducible research. oxo-call also provides a DAG-based workflow engine, extensibility through user-defined and community skills via the Model Context Protocol, and support for local LLM inference to address data-privacy requirements. oxo-call is freely available for academic use at https://traitome.github.io/oxo-call/.",
+      "authors": [
+        "Yun Peng",
+        "Yujun Sun",
+        "Jia Ding",
+        "Bin Yan",
+        "Zhangyu Wang",
+        "Chunyang Wang",
+        "Chenyang Shu",
+        "Jian-Guo Zhou",
+        "Shixiang Wang"
+      ],
+      "primary_category": "q-bio.GN",
+      "categories": [
+        "q-bio.GN"
+      ],
+      "published": "2026-04-14T07:20:23+00:00",
+      "link": "https://arxiv.org/pdf/2604.12387v1",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM-based command-line generation for genomic analysis and bioinformatics",
+      "llm_evidence_cn": "基于大语言模型的基因组分析和生物信息学命令行生成",
+      "llm_evidence": "基于大语言模型的基因组分析和生物信息学命令行生成",
+      "canonical_evidence": "基于大语言模型的基因组分析和生物信息学命令行生成",
+      "llm_tldr_en": "A tool using LLMs to translate natural language into accurate bioinformatics command-line calls.",
+      "llm_tldr_cn": "利用大语言模型将自然语言描述转化为准确的生物信息学命令行调用。",
+      "llm_tldr": "利用大语言模型将自然语言描述转化为准确的生物信息学命令行调用。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-08-717332-v1",
+      "source": "biorxiv",
+      "title": "Pipette: Encoding scientific literature into an executable Skill Graph for multi-agent bioinformatics",
+      "abstract": "The cost of genomic sequencing has fallen by several orders of magnitude, yet data analysis remains a bottleneck concentrated among researchers with specialized computational expertise. While Large Language Models can generate bioinformatics code, they frequently produce incoherent multi-step workflows due to the absence of domain-specific analytical constraints. Here, we present Pipette, a multi-agent AI framework that orchestrates end-to-end bioinformatics workflows through natural language interaction, guided by a literature-derived Skill Graph. This directed, edge-weighted knowledge graph, extracted from over 20,000 peer-reviewed publications, constrains workflow generation to biologically valid analytical transitions, preventing incomplete or incoherent workflows. We benchmarked Pipette across four biological domains using published datasets: single-cell RNA-seq analysis of peripheral blood mononuclear cells and a human pancreas atlas, bulk RNA-seq differential expression in rice under environmental stress, and two structure-based computational drug design workflows. In ablation against two LLMs operating without Skill Graph constraints, Pipette matched or exceeded both baselines across all quantitative metrics while uniquely completing multi-step cross-domain transitions. We further evaluated Pipette on a clinical genomics task, where it executed an ACMG/AMP-compliant variant classification on a reference human genome. In all cases, Pipette recapitulated established biological and clinical findings while generating a fully reproducible, machine-readable provenance record. By reducing the computational expertise required to execute standard genomic analyses, Pipette lowers the barrier between sequencing data and biological insight for bench scientists. Pipette is available at https://pipette.bio.",
+      "authors": [
+        "Gupta, C.",
+        "Sharma, A."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-12T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.08.717332v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Multi-agent AI framework for bioinformatics workflows",
+      "llm_evidence_cn": "用于生物信息学工作流的多智能体AI框架",
+      "llm_evidence": "用于生物信息学工作流的多智能体AI框架",
+      "canonical_evidence": "用于生物信息学工作流的多智能体AI框架",
+      "llm_tldr_en": "Develops an AI framework that uses LLMs and skill graphs to orchestrate valid bioinformatics workflows.",
+      "llm_tldr_cn": "开发了一个利用大模型和技能图谱来编排有效生物信息学工作流的AI框架。",
+      "llm_tldr": "开发了一个利用大模型和技能图谱来编排有效生物信息学工作流的AI框架。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-14-718363-v1",
+      "source": "biorxiv",
+      "title": "Generative design of intrinsically disordered proteins based on conditioned protein language models: Data is the limit",
+      "abstract": "Intrinsically disordered proteins and regions (IDRs) are central to a multitude of biological processes. Despite extensive studies of their structural and physicochemical properties, the rational design of IDRs with defined conformational behavior remains challenging due to their ensemble nature. Here we present a generative framework for designing disordered protein sequences conditioned on target conformational ensemble descriptors using protein language models (pLMs). We formulate IDR design as the task of generating amino acid sequences predicted to realize specified biophysical properties and implement a Transformer encoder-decoder architecture that maps numerical descriptors to protein sequences. By training models on datasets spanning two orders of magnitude in size, we show that accurate control of conformational and physicochemical properties is achieved only at large data scale. These results demonstrate the feasibility of conditioning generative models on ensemble-level descriptors for IDR design. More broadly, these results support a data-centric paradigm for protein engineering, in which data availability emerges as a key limiting factor for the accurate design of IDRs.",
+      "authors": [
+        "Carriere, L.",
+        "Huyghe, A.",
+        "Pajkos, M.",
+        "Bernado, P.",
+        "Cortes, J."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-16T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.14.718363v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Generative framework for protein sequences using Transformer encoder-decoder and protein language models",
+      "llm_evidence_cn": "使用Transformer编码器-解码器和蛋白质语言模型的蛋白质序列生成框架",
+      "llm_evidence": "使用Transformer编码器-解码器和蛋白质语言模型的蛋白质序列生成框架",
+      "canonical_evidence": "使用Transformer编码器-解码器和蛋白质语言模型的蛋白质序列生成框架",
+      "llm_tldr_en": "Presents a generative framework using protein language models to design sequences with specific biophysical properties.",
+      "llm_tldr_cn": "提出了一种利用蛋白质语言模型设计具有特定生物物理特性的序列生成框架。",
+      "llm_tldr": "提出了一种利用蛋白质语言模型设计具有特定生物物理特性的序列生成框架。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发生成式大型语言模型用于TCR序列设计和优化",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-10-717770-v1",
+      "source": "biorxiv",
+      "title": "MIMIQ: Fast mutual information calculation and significance testing for single-cell RNA sequencing analysis",
+      "abstract": "Mutual information is a fundamental quantity in information theory that describes the non-linear dependency between two variables, and has numerous applications within bioinformatics and beyond. However, its exploitation is hampered by a trade-off between computational intensity and accuracy. Here we present an adaptive binning approach to computing the pairwise mutual information, optimized for small integer counts such as those observed in single-cell RNA sequencing. By assuming a sampling distribution such as the negative binomial, a {chi}2 test statistic for hypothesis testing can be computed simultaneously via a copula transformation. Using these quantities, we show how gene rewiring of CD4+ naive T-cells during SARS-CoV-2 infection can be studied using a single-cell sequencing dataset of healthy and COVID-19 donors.",
+      "authors": [
+        "O'Hanlon, D.",
+        "Garcia Busto, S.",
+        "Perez Carrasco, R."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-13T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.10.717770v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Mutual information analysis of CD4+ naive T-cells",
+      "llm_evidence_cn": "CD4+ 初始 T 细胞的互信息分析",
+      "llm_evidence": "CD4+ 初始 T 细胞的互信息分析",
+      "canonical_evidence": "CD4+ 初始 T 细胞的互信息分析",
+      "llm_tldr_en": "Provides a fast mutual information calculation method for single-cell RNA sequencing and T-cell analysis.",
+      "llm_tldr_cn": "为单细胞RNA测序和T细胞分析提供了一种快速的互信息计算方法。",
+      "llm_tldr": "为单细胞RNA测序和T细胞分析提供了一种快速的互信息计算方法。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "Immune repertoire",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-14-718511-v1",
+      "source": "biorxiv",
+      "title": "FairTCR: Equity-Aware TCR--pMHC Binding Prediction\\\\Across HLA Alleles and Cohort Strata",
+      "abstract": "Public TCR--pMHC binding databases are heavily skewed toward a handful of well-studied HLA alleles---most prominently HLA-A*02:01, which covers $\\sim$45\\% of curated records---and toward patients from European-ancestry cohorts. Standard empirical risk minimization (ERM) trained on such data achieves strong pooled accuracy but routinely underperforms on rare alleles and underrepresented cohorts, creating systematic disparities that are invisible in single-metric benchmarks. We introduce \\emph{FairTCR}, a group distributionally robust optimization (GDRO) framework that minimizes worst-group loss across HLA supertypes and cohort strata via online exponentiated gradient updates. FairTCR reduces the average--worst-group AUPRC disparity from 0.190 (ERM) to 0.098 on a curated VDJdb--IEDB benchmark, achieving a 48.4\\% disparity reduction while maintaining competitive average AUPRC (0.432 vs.\\ 0.431 for ERM). Per-HLA analysis shows that rare allele groups (B*08:01, B*44:02) gain up to 0.062 AUPRC points, directly improving the equity of computational pre-screening for underrepresented patient populations.",
+      "authors": [
+        "Nowak, P.",
+        "Kowalski, J.",
+        "Lewandowski, T."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-17T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.14.718511v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "TCR-pMHC binding prediction and optimization across HLA alleles",
+      "llm_evidence_cn": "跨HLA等位基因的TCR-pMHC结合预测与优化",
+      "llm_evidence": "跨HLA等位基因的TCR-pMHC结合预测与优化",
+      "canonical_evidence": "跨HLA等位基因的TCR-pMHC结合预测与优化",
+      "llm_tldr_en": "FairTCR improves TCR-pMHC binding prediction fairness and accuracy across diverse HLA alleles using GDRO.",
+      "llm_tldr_cn": "FairTCR通过分布鲁棒优化提高了不同HLA等位基因下TCR-pMHC结合预测的公平性和准确性。",
+      "llm_tldr": "FairTCR通过分布鲁棒优化提高了不同HLA等位基因下TCR-pMHC结合预测的公平性和准确性。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-10-717777-v1",
+      "source": "biorxiv",
+      "title": "Generative design of intrinsically disordered protein regions with IDiom",
+      "abstract": "Intrinsically disordered protein regions are ubiquitous across all kingdoms of life. These structurally heterogeneous regions play central roles in cellular processes such as transcriptional regulation, cellular signaling, and subcellular organization, yet they have remained largely inaccessible to rational design. Structure-based generative methods are not applicable to proteins that lack a stable fold, and existing sequence-based approaches for disordered regions rely on sampling methods that do not capture the evolutionary statistics of natural disordered regions. Here, we introduce IDiom, an autoregressive protein language model trained on 37 million intrinsically disordered region sequences curated from the AlphaFold Database. Trained using a fill-in-the-middle data augmentation, IDiom generates disordered region sequences conditioned on their surrounding structured context, as well as fully disordered proteins without any context. The model generates diverse sequences that recapitulate biologically relevant sequence features of natural disordered regions, and we demonstrate that post-training via reinforcement learning with a subcellular localization reward model produces sequences with features which are consistent with known sequence determinants of compartment-specific localization. These results establish IDiom as a general platform for the generative design of intrinsically disordered proteins and regions.",
+      "authors": [
+        "Liu, J.",
+        "Ibarraran, S.",
+        "Hu, F.",
+        "Park, A.",
+        "Dunn, A.",
+        "Rotskoff, G."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-11T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.10.717777v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Autoregressive protein language model for generative design of protein regions",
+      "llm_evidence_cn": "用于蛋白质区域生成式设计的自回归蛋白质语言模型",
+      "llm_evidence": "用于蛋白质区域生成式设计的自回归蛋白质语言模型",
+      "canonical_evidence": "用于蛋白质区域生成式设计的自回归蛋白质语言模型",
+      "llm_tldr_en": "Introduces IDiom, an autoregressive protein language model for the generative design of disordered regions.",
+      "llm_tldr_cn": "引入IDiom，一种自回归蛋白质语言模型，用于无序区域的生成式设计。",
+      "llm_tldr": "引入IDiom，一种自回归蛋白质语言模型，用于无序区域的生成式设计。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-15-718133-v1",
+      "source": "biorxiv",
+      "title": "GANGE: Achieving Sequencing Without Sequencing With Diffusion Guided Generative Genomic Transformer",
+      "abstract": "The genome of a species is its book of life, but opening that book remains a costly affair due to the limitations the existing sequencing technologies pose. Short reads sequencers struggle to capture long and complex genomes, though have high fidelity rate. To counter that long reads from IIIrd generation sequencers are used, which are full of indel errors. Thus, reads from both approaches are collectively used with very high coverage, making the sequencing projects unreasonably high of cost and unapproachable to majority. Here we present a first of its kind generative deep-learning system, GANGE, which not just recovers the correct sequence with high accuracy from indel prone ONT reads at manifold lesser coverage but also extends it by 4kb, achieving sequencing without sequencing, horizontally as well as vertically while maintaining >92% accuracy consistently. This all makes it possible to drastically pull down sequencing project cost. GANGE was tested across A. thaliana, O. sativa genomes and Human chromosome 1 where it delivered outstanding assembly performance. Besides this, it was also used to accurately generate 2kb upstream promoters of all the genes from 12 different species, demonstrating that one can now also take up regulomics research just using RNA data alone when genome sequence is not available. With this all, GANGE brings a democratic turning point in the area of genomics and sequencing research.",
+      "authors": [
+        "Gupta, S.",
+        "Kumar, A.",
+        "Bhati, U.",
+        "Shankar, R."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-17T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.15.718133v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Generative genomic transformer for sequence recovery",
+      "llm_evidence_cn": "用于序列恢复的生成式基因组Transformer",
+      "llm_evidence": "用于序列恢复的生成式基因组Transformer",
+      "canonical_evidence": "用于序列恢复的生成式基因组Transformer",
+      "llm_tldr_en": "Presents a generative deep-learning system for high-accuracy genomic sequence recovery using transformers.",
+      "llm_tldr_cn": "提出了一种利用Transformer进行高精度基因组序列恢复的生成式深度学习系统。",
+      "llm_tldr": "提出了一种利用Transformer进行高精度基因组序列恢复的生成式深度学习系统。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "开发生成式大型语言模型用于TCR序列设计和优化",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-12-717909-v1",
+      "source": "biorxiv",
+      "title": "scDisent: disentangled representation learning with causal structure for multi-omic single-cell analysis",
+      "abstract": "Single-cell multi-omic technologies measure complementary aspects of cellular identity and regulatory state, yet most integration models compress these signals into one entangled latent space. Such representations are useful for clustering but poorly suited for mechanistic interpretation or perturbation-oriented analysis. We present scDisent (https://github.com/xig uoren/scDisent), a generative framework for disentangled representation learning that separates expression-associated variables (zexpr) from regulation-associated variables (zreg) and links them through a sparse directed mapping. scDisent combines modality-specific encoding, variational disentanglement with total-correlation and orthogonality constraints, and a Gumbelgated causal module protected by detach-based gradient isolation. Evaluated on benchmark datasets with matched modalities, scDisent achieved best-in-benchmark integration performance while exposing regulatory structure that competing integration methods do not model explicitly. The learned causal atlas remained sparse, perturbation analyses recovered biologically coherent lineage-associated programs, and cross-dataset discovery analyses highlighted interpretable immune, neural and developmental signatures. Quantitative branch-separation analyses further showed that benchmark-label information concentrated in zexpr rather than zreg. Together, these results position scDisent as a computational method that improves not only integration quality but also biological interpretability, making single-cell multi-omic representations better suited to biological question answering and in silico hypothesis generation.",
+      "authors": [
+        "Xi, G."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-16T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.12.717909v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "generative framework for disentangled representation learning in multi-omic single-cell analysis",
+      "llm_evidence_cn": "多组学单细胞分析中解耦表示学习的生成框架",
+      "llm_evidence": "多组学单细胞分析中解耦表示学习的生成框架",
+      "canonical_evidence": "多组学单细胞分析中解耦表示学习的生成框架",
+      "llm_tldr_en": "A generative framework for disentangled representation learning in single-cell multi-omic data.",
+      "llm_tldr_cn": "一种用于单细胞多组学数据解耦表示学习的生成式框架，有助于机制解释。",
+      "llm_tldr": "一种用于单细胞多组学数据解耦表示学习的生成式框架，有助于机制解释。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-16-718848-v1",
+      "source": "biorxiv",
+      "title": "A deep learning predictor of bindable protein surfaces toguide generative synthetic biology",
+      "abstract": "The advent of generative machine learning models has revolutionized de novo design of protein binders. However, the wide adoption of this revolution is bottlenecked by computational cost. For many targets, binder design commonly requires computationally intensive sampling across structures, often wasting days of GPU time on unwanted or geometrically inviable regions. Here, IARA (Interface Analysis and Recognition Architecture) is introduced, a deep learning Graph Neural Network designed as a rapid structural filter to triage protein binder generative pipelines. IARA is trained entirely on BindCraft trajectories generated against s RFdiffusion-generated targets. Based on a slim network with only seven residue features, IARA maps the binder designability of input proteins in a matter of seconds. On validation runs using BindCraft, RFdiffusion and BoltzGen, IARA successfully identified the optimal binding interface for practically all targets. By instantly pinpointing the highest-probability binding pockets, IARA democratizes synthetic biology, drastically reducing the exploratory GPU compute required for successful de novo binder generation.",
+      "authors": [
+        "Almeida-Souza, L."
+      ],
+      "primary_category": "synthetic biology",
+      "categories": [
+        "synthetic biology"
+      ],
+      "published": "2026-04-16T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.16.718848v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Deep learning for protein binder design and generative synthetic biology",
+      "llm_evidence_cn": "用于蛋白质结合剂设计和生成合成生物学的深度学习",
+      "llm_evidence": "用于蛋白质结合剂设计和生成合成生物学的深度学习",
+      "canonical_evidence": "用于蛋白质结合剂设计和生成合成生物学的深度学习",
+      "llm_tldr_en": "Introduces IARA, a GNN structural filter to accelerate generative protein binder design pipelines.",
+      "llm_tldr_cn": "引入IARA，一种用于加速生成式蛋白质结合剂设计流程的图神经网络结构过滤器。",
+      "llm_tldr": "引入IARA，一种用于加速生成式蛋白质结合剂设计流程的图神经网络结构过滤器。",
+      "llm_tags": [
+        "query:gentcr:composite"
+      ],
+      "matched_query_tag": "query:gentcr:composite",
+      "matched_query_text": "Papers central to TCR生成模型分析, especially work that connects or combines: Immune repertoire; Artificial Intelligence; 利用逆强化学习生成TCR序列并优化其特异性验证; 应用逆强化学习算法于免疫组库数据建模和生成; 分析和建模大规模免疫组库数据以支持TCR生成; 开发生成式大型语言模型用于TCR序列设计和优化; 如何利用逆强化学习构建和优化生成式TCR模型以实现特异性验证; 结合Integrated Gradients和全局分布度量提升TCR生成模型的解释性和准确性; 开发用于免疫组库分析的生成性语言模型以增强T细胞受体预测能力.",
+      "matched_requirement_id": "req-composite-gentcr",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-04-12-718028-v1",
+      "source": "biorxiv",
+      "title": "CROssBARv2: A Unified Computational Framework for Heterogeneous Biomedical Data Representation and LLM-Driven Exploration",
+      "abstract": "Biomedical discovery is hindered by fragmented, modality-specific repositories and uneven metadata, limiting integrative analysis, accessibility, and reproducibility. To address these challenges, we present CROssBARv2, a provenance-rich biomedical data-and-knowledge integration platform that unifies heterogeneous sources into a maintainable, scalable system. By consolidating diverse data types into an extensive knowledge graph enriched with standardised ontologies, rich metadata, and deep learning-based vector embeddings, CROssBARv2 alleviates the need for researchers to navigate multiple siloed databases and can facilitate downstream tasks, including predictive modelling and mechanistic reasoning, enabling applications such as drug repurposing and protein function prediction. The platform offers interactive graph exploration and embedding-based semantic search with CROssBAR-LLM, an intuitive natural language question-answering system that grounds large language model (LLM) outputs in the underlying knowledge graph to mitigate hallucinations. We assess CROssBARv2 through (i) multiple use-case analyses to test biological coherence and relational validity; (ii) knowledge-augmented biomedical question-answering benchmarks comparing CROssBAR-LLM against generalist LLMs; and (iii) a deep learning-based predictive modelling experiment for protein function prediction leveraging the heterogeneous structure of CROssBARv2. Collectively, CROssBARv2 provides a scalable, AI-ready, and user-friendly foundation that facilitates hypothesis generation, knowledge discovery, and translational research.",
+      "authors": [
+        "Sen, B.",
+        "Ulusoy, E.",
+        "Darcan, M.",
+        "Ergun, M.",
+        "Lobentanzer, S.",
+        "Rifaioglu, A. S.",
+        "Turei, D.",
+        "Saez-Rodriguez, J.",
+        "Dogan, T."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-04-15T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.04.12.718028v1.full.pdf",
+      "tags": [
+        "keyword:GenTCR",
+        "query:GenTCR"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Unified framework for biomedical data representation and LLM exploration",
+      "llm_evidence_cn": "生物医学数据表示与大模型探索的统一框架",
+      "llm_evidence": "生物医学数据表示与大模型探索的统一框架",
+      "canonical_evidence": "生物医学数据表示与大模型探索的统一框架",
+      "llm_tldr_en": "Integrates heterogeneous biomedical data into a knowledge graph for LLM-driven exploration and modeling.",
+      "llm_tldr_cn": "将异构生物医学数据整合到知识图中，用于大模型驱动的探索和建模。",
+      "llm_tldr": "将异构生物医学数据整合到知识图中，用于大模型驱动的探索和建模。",
+      "llm_tags": [
+        "query:gentcr"
+      ],
+      "matched_query_tag": "query:gentcr",
+      "matched_query_text": "分析和建模大规模免疫组库数据以支持TCR生成",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

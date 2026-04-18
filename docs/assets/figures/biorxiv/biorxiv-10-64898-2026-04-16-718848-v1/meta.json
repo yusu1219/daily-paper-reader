@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-16-718848-v1/fig-001.webp",
+      "caption": "Figure 1 – Building a graph neural network to predict bindable protein regions. a, Dataset generation strategy. b, Residue feature extraction and protein conversion to Graphs. c, Architecture of the neural network used for training. d, IARA scoring.",
+      "page": 3,
+      "index": 1,
+      "width": 1094,
+      "height": 430
+    }
+  ]
+}
