@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-14-718564-v1/fig-001.webp",
+      "caption": "Table 2 Comparative performance on CAFA3 in terms of Fmax. Seq, Text, Struct, PPI, and Hom denote sequence, text, structure, PPI, and homology inputs, respectively. Results for sequence-based and homologybased methods are from Oliveira et al. (2023), while those for TransFun, DeepGraphGO, and the DualNetGO variants are from Chen and Luo (2024). Ours denotes a single trained model with dynamic masking. Best values are shown in bold; second-best values are underlined.",
+      "page": 7,
+      "index": 1,
+      "width": 490,
+      "height": 513
+    }
+  ]
+}

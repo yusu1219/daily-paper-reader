@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-001.webp",
+      "caption": "Figure 2: Model hyperparameter searching performances of unconditional generation on the ZINC-hard dataset. The legend denotes the three evaluated models trained on different data splits: Random 2M (the longtailed, unbalanced pool), Diverse 1.5M (the strict Cap50 rebalanced pool), and Diverse 2.9M (the hybrid-capped pool). Individual data points represent temperature settings (T ∈ {0.6, 1.0, 1.4, 1.8}), and the columns correspond to Top-P sampling values (top-p ∈ {0.9, 0.95, 0.99}). The rows display mean molecule validity (%), uniqueness among valid samples (%), and the novelty of valid linkers compared to the training linker set (%), with shared y-axes within each row. Error bars indicate the dispersion across instances and aggregated runs.",
+      "page": 6,
+      "index": 1,
+      "width": 979,
+      "height": 719
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-002.webp",
+      "caption": "Figure 4: Assessment of 3D geometric realism and internal strain on the HiQBind dataset. The violin plots display per-instance distributions for mean fragment RMSD, best fragment RMSD, and mean MMFF ∆E (kcal/mol), following the layout of Figure 3. For the HiQBind random 1k plot specifically, the ∆E column filters out extreme outliers, retaining only instances with |∆E| ≤ 1000 kcal/mol as an MMFF diagnostic cutoff. Both the HiQBind hard plots and all RMSD panels incorporate every valid generated instance.",
+      "page": 11,
+      "index": 2,
+      "width": 766,
+      "height": 378
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-003.webp",
+      "caption": "Table 1: Generative performance comparison on the ZINC random 1k and ZINC hard 1k benchmarks. Validity, uniqueness, novelty, and reasonability are reported as percentages, while QED and SA are dimensionless. For the percentage columns, values represent the instance-aggregated mean ± the bootstrap standard deviation of that mean (using 2000 bootstrap resamples). Reasonability represents the average per-instance pass rate across all instances. QED and SA are reported as the instance-mean ± standard deviation across instances.",
+      "page": 7,
+      "index": 3,
+      "width": 976,
+      "height": 269
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-004.webp",
+      "caption": "Table 2: Constraint satisfaction rates on the ZINC hard 1k dataset. The table displays the percentage of generated molecules that simultaneously satisfy every active constraint for a given condition. All percentages represent the bootstrap mean ± standard deviation calculated over 2000 bootstrapping samples of the instances.",
+      "page": 10,
+      "index": 4,
+      "width": 926,
+      "height": 279
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-005.webp",
+      "caption": "Figure 7: PROTAC linker design for the BRD4-VHL ternary complex (PDB ID 6SIS). (a). 2D chemical structures of the reference macrocyclic PROTAC (targeted linker region in red, VHL ligand in blue, and BRD4 ligand in green) alongside three linear LinkLlama candidates (Resp 38, 49, and 82) and their corresponding docking scores. (b). PROTAC ligand RMSD over 200 ns MD simulations. (c). Protein backbone RMSD over the simulation.",
+      "page": 13,
+      "index": 5,
+      "width": 968,
+      "height": 477
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-006.webp",
+      "caption": "Figure 3: Assessment of 3D geometric realism and internal strain for generated molecules. The violin plots display the per-instance distributions for mean fragment RMSD, best fragment RMSD, and mean MMFF ∆E (kcal mol−1) across the ZINC random (top row) and hard (bottom row) 1k datasets. The three columns correspond to these distinct geometry metrics. The distributions compare the generative outputs of DiffLinker, DeLinker, and LinkLlama, highlighting differences in pose agreement with the reference and the propensity of each method to generate high-strain, energetically unfavorable configurations.",
+      "page": 8,
+      "index": 6,
+      "width": 963,
+      "height": 481
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-007.webp",
+      "caption": "Figure 1: (Top). Schematic representation of the LinkLlama data curation pipeline, illustrating the transition from raw ChEMBL molecules to the filtered SFT corpus via fragmentation and chemical reasonability checks + the prompt construction and result processing. (Bottom). LinkLlama inference process with two parts of input specified in the SFT corpus along with 3 example generated molecules overlayed on crystal fragment poses and the distribution fo QED and SA score for the 100 LinkLlama-generated whole molecules. The LinkLlama cartoon image is generated by Google Gemini.",
+      "page": 4,
+      "index": 7,
+      "width": 786,
+      "height": 908
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-008.webp",
+      "caption": "Figure 5: Distribution of mean docking score differences relative to the reference ligands. The plot displays kernel density estimates of the per-sample mean docking score delta (calculated as the proposed score minus the reference score) on valid instances for the HiQBind random and hard 1k splits.",
+      "page": 12,
+      "index": 8,
+      "width": 767,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-15-718690-v1/fig-009.webp",
+      "caption": "Figure 6: Scaffold hopping case study on the mineralocorticoid receptor (PDB ID 6L88). (a). 2D chemical structures of the reference ligand and three top-performing LinkLlama candidates (Resp 24, 70, and 73), illustrating the successful generation of diverse heterocyclic cores that improve upon the reference docking score. (b). 3D structural overlay of the docked poses of LinkLlama candidates on top of crystal ligand pose.(c). Ligand root-mean-square deviation (RMSD) over 200 ns molecular dynamics simulations.",
+      "page": 12,
+      "index": 9,
+      "width": 932,
+      "height": 425
+    }
+  ]
+}
