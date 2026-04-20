@@ -1,0 +1,546 @@
+Title: CellFluxRL: Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning
+
+URL Source: https://arxiv.org/pdf/2603.21743v1
+
+Published Time: Tue, 24 Mar 2026 02:29:51 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# CellFluxRL : B IOLOGICALLY -C ONSTRAINED VIRTUAL CELL 
+
+# MODELING VIA REINFORCEMENT LEARNING 
+
+A P REPRINT 
+
+Dongxia Wu ∗
+
+Stanford University Stanford, CA dowu@stanford.edu 
+
+Shiye Su ∗
+
+Stanford University Stanford, CA shiye@stanford.edu 
+
+Yuhui Zhang 
+
+Stanford University Stanford, CA yuhuiz@stanford.edu 
+
+Elaine Sui 
+
+Stanford University Stanford, CA esui@stanford.edu 
+
+Emma Lundberg 
+
+Stanford University Stanford, CA emmalu@stanford.edu 
+
+Emily B. Fox 
+
+Stanford University Stanford, CA ebfox@stanford.edu 
+
+Serena Yeung-Levy 
+
+Stanford University Stanford, CA syyeung@stanford.edu 
+
+# ABSTRACT 
+
+# ABSTRACT 
+
+Building virtual cells with generative models to simulate cellular behavior in silico is emerging as a promising paradigm for accelerating drug discovery. However, prior image-based generative approaches can produce implausible cell images that violate basic phys-ical and biological constraints. To address this, we propose to post-train virtual cell mod-els with reinforcement learning (RL), leveraging biologically meaningful evaluators as reward functions. We design seven rewards spanning three categories—biological func-tion, structural validity, and morphological correctness—and optimize the state-of-the-art CellFlux model to yield CellFluxRL . CellFluxRL consistently improves over CellFlux 
+
+across all rewards, with further performance boosts from test-time scaling. Overall, our results present a virtual cell modeling framework that enforces physically-based con-straints through RL, advancing beyond “visually realistic” generations towards “biolog-ically meaningful” ones. 
+
+# 1 Introduction 
+
+Wet-lab experiments have long been the primary bottleneck in drug discovery. To conduct a single experiment, re-searchers must not only purchase expensive reagents, consumables, and equipment, but also wait weeks or even months to synthesize drugs and culture cells. Consequently, biologists have long envisioned building virtual cells [37, 16, 4] to accelerate this process by simulating cell behavior in silico . With recent advances in generative modeling, such as diffusion models [39, 40, 13] and flow matching [22, 23, 26, 27], alongside high-throughput image-based screening technologies [7, 8, 12] that produce terabytes of data, there is growing interest in developing image-based virtual cells to predict morphological responses to perturbations. 
+
+Figure 1: Failure of cell generation. Despite its success, we observe that these image-based virtual cell models can produce im-ages that look realistic yet are biologically implausible. For instance, using the state-of-the-art image-based virtual cell model, CellFlux [47], we observe anomalies such as the cell nucleus being generated outside of the cytoplasm (Figure 1). Such violations greatly limit real-world use of virtual cell models, reducing their practical value. We hypothesize that these failures arise from a mismatch between the pixel-level flow-matching objective and global physical constraints. Flow-based generative models [23] learn  
+
+> ∗
+
+Equal contribution 
+
+> arXiv:2603.21743v1 [cs.LG] 23 Mar 2026
+
+CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Figure 2: Motivation. Current generative models for simulating cellular perturbations can fail to produce physically plausible cell images. For example, nuclei may appear outside the cell membrane. We design a suite of biologically meaningful verifiers in three roles: (1) as evaluators to assess the biological correctness of generated images, (2) as 
+
+reward signals to improve generation via reinforcement learning, and (3) as verification modules to enhance sample quality through test-time scaling. velocity fields that transport samples from one distribution to another. While this objective can encourage visual fidelity, it does not explicitly enforce higher-level constraints on cell structure and properties. This may yield samples that appear plausible locally but are incor-rect globally. To address this issue, we propose CellFluxRL , applying reinforcement learning (RL)-based post-training with biologically-meaningful evaluators as reward functions. Concretely, many constraints of interest admit existing or readily obtained evaluators that can efficiently assign scores to generated images (e.g., whether a sample satisfies structural or functional criteria). Although these evaluators are typically non-differentiable and thus cannot be op-timized via standard backpropagation, they can be used as reward signals for RL [24, 48]. At a high level, our RL procedure alternates between: (1) sampling , where we generate multiple images and evaluate them using biologically-meaningful evaluators; and (2) optimization , where we increase the likelihood of high-reward samples and decrease the likelihood of low-reward samples. This directly penalizes physically invalid generations while reinforcing physi-cally consistent ones. Although our work focuses on improving CellFlux , a flow-based model, the same training ideas can be applied to other generative modeling frameworks. To demonstrate the potential of this approach, we post-train CellFlux to yield CellFluxRL , optimizing seven reward models that assess correctness across three key categories: biological function , such as mode of action; structural properties , including nuclear roundness and containment of the nucleus within the cytoplasm; and morphological properties , like the size and number of nuclei and the size of the cytoplasm. Our overall reward is a weighted linear combination of component rewards. Evaluating the learned model across all reward components, CellFluxRL achieves higher scores than the base model. These results indicate that RL provides an effective mechanism for aligning image-based generative models with biologically-meaningful constraints. We additionally present qualitative case studies and ablations to analyze how RL hyperparameters and reward design influence performance. Moreover, these reward models enable a simple form of test-time scaling. Following the selection strategy of [29], we sample N candidate images for a given condition and select the one with the highest reward. We observe monotonic improvements as N increases, indicating a clear test-time scaling trend, and achieving an additional gain over single-sample generation. Our work also shines a light on limitations of existing evaluation metrics for image-based generative models of cellular morphology. To date, focus has been on image generation quality scores, like FID and KID, rather than biological validity. Our considered rewards not only enable RL-based training, but also new, biologically meaningful evaluation criteria. In summary, our work identifies a key limitation of existing image-based virtual cell modeling: the lack of explicit enforcement of physical correctness under pixel-level training objectives. We address this limitation by incorporating biologically-meaningful evaluators through RL, which substantially improves physical plausibility of generated im-ages. We further show that these gains can be amplified via test-time scaling. Finally, our rewards serve as new metrics for the community to benchmark against. Overall, our results move virtual cell image generation from “looking good” to being biologically consistent , supporting the downstream goal of drug discovery and personalized medicine with reduced reliance on costly wet-lab experiments. 2CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+# 2 Related Work 
+
+Virtual cell modeling. A virtual cell model aims to simulate cellular responses to perturbations in silico . This can be formulated as a generative modeling problem p(x1|x0, c ), where x0 and x1 denote cell states before and after perturbation c. Early virtual cell models relied on mathematical and physics-based frameworks, such as systems of ordinary differential equations (ODEs) [46, 41, 36]. However, their expressiveness is inherently limited by the strict assumptions and simplified dynamics that these formulations require. With recent advances in generative modeling and image-based high-throughput screening, a growing body of work has explored using VAEs, GANs, diffusion models, and flow matching to simulate cellular state transitions [1, 35, 18, 33, 3, 15, 47]. A notable paradigm is 
+
+CellFlux [47], which reformulates the problem as a distribution-to-distribution transformation and leverages flow matching to mitigate batch effects, achieving state-of-the-art performance. Nevertheless, we observe that while these models generate visually plausible cells, the generations can violate fundamental biological constraints. To address this challenge, we introduce RL post-training guided by biologically meaningful rewards, encouraging virtual cell models to generate more physically and biologically plausible cell images. 
+
+Physics-aware generative models. The growing interest in utilizing generative models as “world simulators” or “world models” necessitates strict adherence to physical accuracy [9, 30, 42]. However, recent studies indicate that state-of-the-art image and video generative models still struggle to maintain physical correctness, a limitation that cannot be resolved simply by scaling up data and model parameters [31, 17]. To tackle this challenge, the community has proposed various approaches: modifying architectures to inject physical constraints [14, 45], altering the inference process by using LLMs for generation planning [21, 49], or modifying training objectives to incorporate physical preferences [43, 25, 34, 5]. Our approach aligns with objective-based methods; in virtual cell modeling, we can readily define numerous biologically meaningful constraints. Optimizing these constraints requires minimal architectural modifications while yielding robust results. Furthermore, these rewards facilitate test-time scaling to continuously enhance generation quality. 
+
+Reinforcement learning for generative modeling. While generative models based on diffusion or flow matching achieve high visual fidelity, aligning them with strict physical constraints remains an open challenge. RL has emerged as a powerful solution [2, 11, 24, 44, 19], yet its development is still in its nascent stages. The primary hurdle lies in evaluating the exact likelihood of samples, necessary for adjusting generation probabilities based on rewards, which is generally intractable in diffusion and flow matching frameworks. Prior works, such as FlowGRPO [24] and DanceGRPO [44], formulate this as a Markov Decision Process (MDP) to derive probabilities, whereas recent algorithms like DiffusionNFT [48] introduce forward processes to estimate these likelihoods. Our work builds upon the DiffusionNFT-style forward probability estimation process, which offers rapid estimation and state-of-the-art results. Crucially, it accommodates our distribution-to-distribution flow matching (from original to perturbed states), whereas MDP-based approaches assume a standard Gaussian prior. 
+
+# 3 Cellular Perturbation Modeling 
+
+Our approach takes as input a pretrained generative model for cellular morphology prediction and post-trains it using RL to improve physical correctness. In this section, we describe the perturbation modeling problem and the properties required for the base model. 
+
+Objective. Let X ⊆ RH×W ×C denote the space of multi-channel fluorescence microscopy images, where each channel highlights a distinct cellular structure (e.g., nucleus, cytoskeleton, mitochondria). Let C denote the space of perturbations, encompassing chemical compounds (drugs). Given an unperturbed cell image x0 and a perturbation 
+
+c ∈ C , the goal is to learn a generative model that samples from the conditional distribution p(x1 | x0, c ), where x1
+
+represents the cell’s morphology after treatment. Such a model enables in silico simulation of cellular responses that would otherwise require costly wet-lab experiments. 
+
+Data and batch effects. Cell morphology data are collected via high-content microscopy screening, in which multi-well plates are prepared with both control wells (untreated) and perturbed wells (treated with a chemical compound). Experiments are conducted across multiple batches, each introducing systematic technical variations—differences in staining intensity, illumination, or imaging conditions—that are unrelated to the perturbation itself. Because imaging is destructive (cells are fixed and stained), paired before-and-after observations of the same cell are unavailable. Instead, we observe unpaired sets of control images {x0} and perturbed images {x1} within each batch. 3CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Requirements for the base model. These data characteristics impose two key requirements on the base generative model. First, because observations are unpaired, the model must learn a distributional transformation from control to perturbed cells rather than a pointwise mapping. Second, because batch effects confound perturbation signals, the model should condition on same-batch control images as its source distribution, so that it learns only the perturbation-induced changes rather than technical artifacts. While our approach is compatible with any such base model, we instantiate it as CellFlux [47]. CellFlux , based on flow matching, offers a natural framework satisfying the above requirements: it learns a velocity field vθ : X × [0 , 1] × C → X that continuously transports the control distribution 
+
+p0 to the perturbed distribution p1(· | c) within each batch. Training proceeds by sampling pairs (x0, x 1) from source and target distributions, constructing linear interpolations xt = (1 − t) x0 + t x 1 for t ∼ U [0 , 1] , and minimizing: 
+
+LFM (θ) = Ex0∼p0, x 1∼p1, t ∼U [0 ,1] vθ (xt, t, c ) − (x1 − x0) 22 (1) At inference, a control image x0 is transformed into a predicted perturbed image ˆx1 by solving the ODE dxt =
+
+vθ (xt, t, c ) d t from t=0 to t=1 . We denote the resulting pretrained model as vθ , which serves as the input to our method. 
+
+# 4 Method 
+
+In this section, we present our approach to improving the physical and biological fidelity of virtual cell models. We first introduce the formal objective for reward-driven generation (§4.1). Next, we detail the suite of reward mod-els/evaluators (§4.2) designed to capture biological and structural properties. We then describe the RL algorithm (§4.3) used to post-train the base model via contrastive updates. Finally, we discuss test-time scaling (§4.4) to further enhance generation quality at inference time. 
+
+4.1 Reward-Driven Generation 
+
+While the flow matching objective trains the base model to produce images that are distributionally close to real perturbed cells, it operates at the pixel-level and does not explicitly encourage higher-level physical or biological correctness. In practice, this can lead to generated images that appear visually plausible but violate known cellular properties—for example, producing nuclei of incorrect size, cells with implausible morphology, or images that fail to reflect the expected mode of action (MoA) of a compound (Figure 2). Such violations limit the utility of virtual cell models for downstream applications like drug screening, where physical correctness is essential. We observe that many properties of interest can be assessed by evaluator functions that score generated images along specific axes of physical or biological validity. Formally, let {rk}Kk=1 denote a set of reward functions, where each 
+
+rk : X × C → R measures how well a generated image ˆx1 satisfies a particular property given perturbation c. These rewards capture complementary aspects of cell structure and function, such as whether the nuclear size is consistent with the expected effect of the perturbation, or whether the overall morphological profile matches the correct MoA. We describe the specific reward functions used in this work in §4.2. Given the pretrained base model vθ , our objective is to obtain a post-trained model vθ′ that generates images with higher physical fidelity as measured by {rk}, while remaining close to the pretrained model. Concretely, we seek to solve: 
+
+max  
+
+> θ′
+
+Ex0∼p0, c ∼p(c)
+
+" KX
+
+> k=1
+
+wkrk(ˆ x1, c )
+
+#
+
+s.t. DKL (vθ′ ∥vθ ) ≤ ϵ (2) where ˆx1 is the image generated by vθ′ from input (x0, c ), wk is the weight of each reward rk(.), and DKL (·∥· ) is the KL divergence between the post-trained and pretrained models. This regularization is important both to preserve the visual quality and diversity learned during pretraining, and to mitigate reward hacking —generating images that achieve high scores through degenerate solutions rather than genuine physical correctness. Critically, optimizing these rewards is complementary to, and not in conflict with, the original distributional objec-tive. The reward functions encode properties that the ground truth perturbed distribution satisfies. For instance, real cells treated with a microtubule destabilizer exhibit smaller, fragmented nuclei, and real cells have mode-of-action-consistent morphological profiles. By directly optimizing for these properties, RL can improve the match between generated and real distributions along biologically meaningful axes that the pixel-level flow matching loss may under-weight. In this sense, the rewards provide a form of targeted distributional alignment , focusing model capacity on the aspects of the distribution that matter most for physical correctness. 4CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+4.2 Reward Models 
+
+We design a suite of reward functions that capture complementary aspects of biological validity in generated cell images. These rewards fall into three categories: biological function rewards that assess whether generated images reflect the expected biological effects of a perturbation, structural rewards that enforce known physical relationships between cellular components, and morphological rewards that encourage generated images to match the size and density statistics of real cells. Together, these rewards provide multi-scale supervision—from high-level biological semantics down to low-level geometric properties—that the pixel-level flow matching objective does not explicitly optimize for. 
+
+4.2.1 Biological Function. 
+
+Biological function rewards evaluate whether generated images faithfully reflect the biological effects of the applied perturbation. 
+
+Mode of action (MoA). A drug’s MoA describes the cellular process it targets, such as microtubule destabilization, DNA replication inhibition, or actin disruption. Because different MoAs produce distinct morphological signatures, the ability of a generated image to be correctly classified by MoA serves as a strong indicator of biological fidelity. We leverage an MoA classifier pretrained on real perturbed images [47] and define the reward as the predicted probability of the ground truth MoA class: 
+
+rMoA (ˆ x1, c ) = pcls (yc | ˆx1), (3) where yc is the ground truth MoA label associated with perturbation c and pcls is the pretrained MoA classifier. Higher values indicate that the generated image exhibits the morphological profile expected for the given perturbation. 
+
+4.2.2 Structural Constraints. 
+
+Structural constraint rewards enforce known physical relationships between cellular components. 
+
+Nucleus-in-cytoplasm. In correctly imaged cells, nuclei are fully enclosed within the cytoplasm. Generated im-ages that violate this containment are physically implausible. We segment nuclei and cytoplasm from the generated images using Cellpose [32] and define the reward as the degree to which all detected nuclei are fully enclosed by cyto-plasm. This reward penalizes the failure mode of generative models wherein channel-level structures become spatially inconsistent: 
+
+rNuc-in-Cyto (ˆ x1, c ) = area (nucleus mask ∩ cytoplasm mask )
+
+area (cytoplasm mask ) (4) 
+
+Nuclear roundness. Nuclear shape is a biologically informative feature that varies systematically across MoA classes. For instance, microtubule destabilizers produce fragmented, irregular nuclei, while other perturbations pre-serve smooth, round nuclear morphology. We compute the roundness reward as: 
+
+rRoundness (ˆ x1, c ) = −
+
+h 1
+
+NNu 
+
+> NNu
+
+X
+
+> i=1
+
+4π · area i
+
+perimeter 2
+
+> i
+
+− μ(yc)i2
+
+/[σ(yc)]2, (5) where NNu is the number of identified nuclei, and μ(yc) and σ(yc) are the average and standard deviation roundness of the MoA-conditioned ground truth distribution of ˆx1 with label yc. This encourages the model to produce nuclear shapes consistent with the known morphological effects of each perturbation category. 
+
+4.2.3 Morphological Statistics. 
+
+These rewards ensure that the size and density of cellular components in generated images match those of the ground truth distribution, conditioned on the MoA. Unlike the structural rewards above, which enforce qualitative relation-ships, these rewards target quantitative statistics of the cell population. For each of the following statistics s—maximum nucleus size, maximum cytoplasm size, nucleus count, and cytoplasm count—we compute the value s(ˆ x1) from the generated image and compare it to the ground truth distribution for the corresponding MoA class. Let μ(yc) 
+
+> s
+
+and σ(yc) 
+
+> s
+
+denote the mean and standard deviation of statistic s across real images 5CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Figure 3: CellFluxRL algorithm. RL post-training seeks to increase the likelihood of high-reward samples and de-crease the likelihood of low-reward samples. Therefore, the core training loop of CellFluxRL consists of interleaved phases of sampling and training. (a) Sampling: we generate multiple rollouts from a fixed control image and pertur-bation condition, scoring each with the reward models. (b) Training: because exact likelihoods in flow matching are intractable, we construct positive and negative velocities from the batch of rollouts and optimize them contrastively to achieve this goal, following DiffusionNFT [48]. with MoA label yc. We define the reward as the negative normalised deviation: 
+
+rs(ˆ x1, c ) = −
+
+s(ˆ x1) − μ(yc)
+
+> s
+
+2
+
+σ(yc)
+
+> s
+
+2 , s ∈ { NucSize , CytoSize , NucCount , CytoCount }. (6) This formulation penalises generated images whose statistics deviate from the ground truth mean, scaled by the natural variability within each MoA class. The four statistics capture complementary aspects of cell morphology: • Maximum nucleus size and maximum cytoplasm size reflect the largest cellular components in the image, capturing whether the model produces cells of appropriate scale for the given perturbation. We use the maximum rather than the average to mitigate the potential issue of partially visible cells biasing the statistics. • Nucleus count and cytoplasm count measure cell density, ensuring the model does not hallucinate or omit cells relative to what is observed under each treatment condition. Together, these four rewards encourage the generated cell population to be statistically consistent with real observa-tions in terms of both individual cell size and overall cell density. 
+
+4.3 Reinforcement Learning on Biological Rewards 
+
+We now describe how we optimize the pretrained base model vθ with respect to the reward functions introduced in §4.2. 
+
+Algorithm overview. Our objective is to maximize the combined reward defined in Eq.equation 2 (§4.1). Since these biological reward functions are non-differentiable, standard backpropagation is inapplicable, necessitating an RL approach. The core principle of our RL strategy is to increase the generation likelihood of high-reward samples while penalizing low-reward ones. We adopt DiffusionNFT [48], a state-of-the-art online RL algorithm for flow matching. It operates on the flow’s forward process, avoiding intractable log likelihoods, and is constructed from 
+
+distribution-agnostic components, hence extending naturally to our source-to-target flow matching setting without modification. 
+
+Algorithm detail. At each iteration, DiffusionNFT collects a batch of generated images, evaluates them with respect to the reward functions, and uses the rewards to define an improvement direction over the current policy. The key idea is to split generated samples into positive (high-reward ) and negative (low-reward ) subsets and learn a contrastive update that moves the model towards the positive distribution. Concretely, given a generated image ˆx1 with optimality reward r ∈ [0 , 1] , the training objective is: 
+
+L(θ) = Ec, π old (ˆ x1|c,x 0), t 
+
+h
+
+r ∥v+ 
+
+> θ
+
+(xt, c, t ) − v∥22 + (1 − r) ∥v− 
+
+> θ
+
+(xt, c, t ) − v∥22
+
+i
+
++ β D KL 
+
+ vθ ∥ vold  ,
+
+(7) 6CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+where β is the KL divergence weight, xt = αtx0 + γtx1 is the forward-noised version of the generated image, 
+
+v = ˙ αtx0 + ˙ γtx1 is the corresponding velocity target, and v+ 
+
+> θ
+
+, v− 
+
+> θ
+
+are implicit positive and negative policies defined as: 
+
+v+ 
+
+> θ
+
+(xt, c, t ) := (1 − γ) vold (xt, c, t ) + γ v θ (xt, c, t ) (8) 
+
+v− 
+
+> θ
+
+(xt, c, t ) := (1 + γ) vold (xt, c, t ) − γ v θ (xt, c, t ). (9) Here vold is the data-collection policy (a lagging copy of vθ ), and γ > 0 is a hyperparameter controlling the guidance strength. The implicit parameterization is central to the algorithm: rather than training separate positive and negative models, a single policy vθ is optimized such that its mixture with vold simultaneously fits high-reward samples (via v+ 
+
+> θ
+
+)and avoids low-reward ones (via v− 
+
+> θ
+
+). The optimal solution satisfies vθ∗ = vold + 2 
+
+> γ
+
+∆, where ∆ is the reinforcement guidance direction pointing from the negative towards the positive distribution. This formulation naturally regularizes the post-trained model towards the pretrained policy: when γ is large, the guidance strength 2 
+
+> γ
+
+is small and the model stays close to vold ; when γ is small, the model is allowed to deviate more aggressively. The data-collection policy vold is itself updated via an exponential moving average of vθ .
+
+Rollout and advantage estimation. During sampling, we fix a perturbation condition c and a source control image 
+
+x0, and generate a group of m candidate images {ˆx(i)1 }mi=1 . Since the base model, vθ , augments x0 with Gaussian noise before transporting it via the learned velocity field, diversity within each group arises primarily from this stochastic noise injection as well as any ODE discretization error. We find this yields sufficient variation for DiffusionNFT to distinguish positive from negative generations. Each candidate is scored by the reward functions, and the raw rewards are normalized within the group to obtain optimality probabilities r(i) ∈ [0 , 1] , following the advantage normalization scheme [48]. The forward process is then applied to each generated image, and the loss in Eq.equation 7 is computed over the group. 
+
+4.4 Test-Time Scaling 
+
+A key benefit of having explicit reward functions is that they can not only be used for training, but also to select among candidate generations at inference time. This strategy has proven highly effective in reasoning models, where best-of-
+
+N selection with a reward model or verifier yields consistent improvements that scale predictably with N [10, 20, 38]. We apply the same principle to virtual cell generation. Given a perturbation condition c and a source control image x0, we generate N candidate images {ˆx(i)1 }Ni=1 and select the one with the highest reward: 
+
+ˆx∗ 
+
+> 1
+
+= arg max   
+
+> i∈{ 1,...,N }
+
+r(ˆ x(i)1 , c ) (10) This provides a simple, training-free mechanism to improve generation quality given additional inference compute budget. Moreover, best-of-N selection is complementary to reinforcement learning: RL post-training improves the 
+
+base distribution from which candidates are drawn, so that even modest values of N yield high-quality outputs, while test-time selection contributes additional gains. 
+
+# 5 Results 
+
+In this section, we evaluate CellFluxRL ’s ability to generate biologically faithful cellular images. After detailing our experimental setup (§5.1), we present the main results, demonstrating that RL with biologically-aligned rewards systematically improves performance across all biological metrics (§5.2). We show that test-time scaling enhances performance (§5.3) and provide ablation studies. 
+
+5.1 Experimental details Datasets. We follow the dataset configuration of the base CellFlux model and use the high-content microscopy perturbation dataset BBBC021 [6]. BBBC021 is a chemical perturbation dataset comprising 98K three-channel images at 96 ×96 resolution, collected under 26 chemical perturbations grouped into 12 modes of action (MoA). We follow the train/test split used in CellFlux [47]. 
+
+Baselines. We compare our proposed method against the pretrained base model, CellFlux [47], as well as two prior generative baselines, PhenDiff [3] and IMPA [33]. 7CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Table 1: Quantitative comparison across biological rewards and generative quality metrics. Each row represents a different evaluation metric, and each column represents a different method. TTS is CellFluxRL with test time scaling by best-of-N with N = 4 , where the best sample is selected by the weighted total reward. Bold values indicate the best performance; underlined values indicate the second best.                                                           
+
+> Metric PhenDiff [3] IMPA [33] CellFlux [47] CellFluxRL +TTS
+> Biological Rewards
+> MoA 0.18 0.12 0.26 0.34 0.56
+> Nuc-in-Cyto 0.91 0.79 0.88 0.96 0.97
+> Roundness -0.24 -0.32 -0.34 -0.26 -0.19
+> NucSize -0.88 -1.02 -2.21 -1.04 -0.38
+> CytoSize -0.97 -1.59 -1.09 -0.65 -0.41
+> NucCount -2.61 -1.05 -0.83 -0.53 -0.28
+> CytoCount -3.22 -1.39 -1.03 -0.68 -0.33
+> Overall -5.20 -3.19 -2.44 0.46 3.15
+> Generation Quality
+> FID 41.94 35.70 20.36 24.01 23.19 KID 0.028 0.029 0.015 0.014 0.016
+
+Evaluation metrics. In addition to the rewards reported in §4.2 (higher is better), which measure the biological meaningfulness of the generated cells, we also report standard image quality metrics (FID and KID). These metrics measure the image distribution similarity via Frechet and kernel-based distances between generated images and ground truth images (lower is better). 
+
+Training details. We instantiate our method using a pretrained CellFlux flow matching model. CellFluxRL is post-trained using the online RL algorithm DiffusionNFT [48] to optimize a weighted sum of 7 biologically-constrained rewards: r = 5 .0 rMoA + 2 .0 rNuc-in-Cyto + rRoundness + rNucSize + rCytoSize + rNucCount + rCytoCount . MoA and Nuc-in-Cyto are empirically harder to optimize, motivating their higher weights. The training objective includes a KL divergence weight ( β = 1 ) to regularize the post-trained model against the pretrained policy and prevent reward hacking. All other hyperparameter settings follow DiffusionNFT [48]. At inference, we further enhance performance using test-time scaling (TTS) with a best-of-N selection strategy ( N = 4 ), selecting the generated sample with the highest overall reward. Training is conducted for 1200 steps on 1 H100 GPU for 32 hours. 
+
+5.2 Reinforcement Learning Leads to Better Results 
+
+We compare CellFluxRL against baselines on a suite of biological, structural, and morphological metrics, with results summarized in Table 1. CellFluxRL outperforms its pretrained counterpart CellFlux across all reward metrics, con-firming that RL post-training successfully steers the generative model toward greater physical correctness. The overall reward improves from −4.44 to −1.54 , with gains spanning all three reward categories: biological function, structural constraints, and morphological statistics. 
+
+CellFluxRL rewards also surpass those of PhenDiff and IMPA . The improvements are particularly pronounced on MoA, where CellFluxRL ’s reward of 0.34 substantially exceeds both PhenDiff (0.18 ) and IMPA (0.12 ). To give inter-pretable context to these numbers, the corresponding MoA classification accuracies—the fraction of generated images whose predicted mode of action matches the ground truth label—are 0.56 , 0.53 , 0.61 , and 0.66 for PhenDiff , IMPA ,
+
+CellFlux , and CellFluxRL respectively, indicating that CellFluxRL produces images whose morphological profiles more faithfully distinguish different drug classes. Applying best-of-N selection with N = 4 to CellFluxRL (+TTS) yields further improvements across all metrics, pushing the overall reward from −1.54 to 1.17 . We analyze test-time scaling behavior in further detail in §5.3. In terms of generative quality, while not a primary optimization objective, CellFluxRL achieves a state-of-the-art KID score and a competitive FID score compared to baselines. The quantitative gains are corroborated qualitatively in Figure 4. The baselines generate images that fail to reflect the expected biological response to each perturbation. 
+
+CellFluxRL consistently corrects these failures, and test-time scaling pushes generations further toward the ground truth. 
+
+5.3 Test-time Scaling Further Enhances the Results 
+
+Figure 5 shows how reward scores scale with the number of candidate samples N for both the base model ( CellFlux )and the RL-post-trained model ( CellFluxRL ). We generate N candidates and select the one with the highest overall 8CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Figure 4: Qualitative comparisons. CellFluxRL generates more biologically-grounded images, better capturing drug-induced morphological changes. In these examples, Etoposide-induced cell rounding, Demecolcine-driven micro-tubule destabilization, and AZ138-associated cell shrinkage are all more faithfully reproduced, and cell density more closely matches the ground truth for Cisplatin. Test-time scaling (+TTS) further refines these predictions toward the target images. 
+
+Figure 5: Test-time scaling by best-of-N further improves generation quality. The sample achieving the highest overall (combined) reward is selected from N rollouts, and each individual reward is plotted. RL (orange) consistently exhibits better scaling than the base model (blue) across all rewards. reward, the same weighted combination of individual rewards used during RL post-training, then report the individual reward metrics of the selected samples. Both models exhibit monotonic improvements as N increases across all metrics. RL post-training improves the scaling efficiency: the CellFluxRL curve sits consistently above the base model curve across all metrics, meaning that for any fixed compute budget (i.e., any given N ), the RL-post-trained model achieves higher reward. Because each sample drawn from the improved distribution is more likely to be physically correct, selection is more efficient. The effect is especially pronounced at small N , where the quality of the base distribution matters most. 9CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Figure 6: Sensitivity analysis on KL weight β. Each subplot shows reward sensitivity to β after RL post-training. Table 2: Single-reward optimization with reinforcement learning. Each column shows a model optimized for one reward only or CellFluxRL (all rewards), evaluated across the metrics in each row. Bold values indicate the best performance; underlined values indicate the second best; dashed-underlined values indicate the third best.                                                            
+
+> Metric MoA Nuc-in-Cyto Roundness NucSize CytoSize NucCount CytoCount CellFluxRL
+> MoA 0.412 0.204 0.263 0.301 0.212 0.279 0.277 0.337 Nuc-in-Cyto 0.852 0.977 0.907 0.904 0.976 0.867 0.937 0.956 Roundness -0.342 -0.332 -0.198 -0.298 -0.340 -0.271 -0.304 -0.264 NucSize -3.319 -1.724 -2.328 -0.702 -1.784 -2.909 -2.853 -1.038 CytoSize -1.198 -0.545 -0.919 -0.917 -0.497 -1.113 -0.801 -0.652 NucCount -0.760 -0.904 -0.685 -0.818 -0.881 -0.476 -0.511 -0.528 CytoCount -0.922 -1.074 -0.905 -0.946 -1.063 -0.629 -0.580 -0.677
+
+5.4 Sensitivity Analysis on Kullback–Leibler Divergence Weight 
+
+We study the sensitivity of final model performance on the KL divergence weight, β, varying it from 1.0 to 1.3. The results, presented in Figure 6, show a trade-off: structural and morphological correctness metrics favor a smaller KL weight, whereas biological function rewards slightly improve with a larger weight. This suggests that achieving higher biological accuracy requires more substantial model adjustments than improving structural or morphological fidelity. 
+
+5.5 Ablation Optimizing for a Single Reward 
+
+To isolate the effect of individual rewards, we conduct ablations optimizing for one reward at a time. As shown in Table 2, this targeted optimization significantly improves performance on the chosen metric, but the improvements on other metrics are limited. In contrast, CellFluxRL , optimized with the combined weighted sum of all seven rewards, achieves either the second- or third-best score on every individual metric. This demonstrates that the combined reward strategy enables balanced, multi-faceted improvement across all biological, structural, and morphological criteria simultaneously. 
+
+# 6 Conclusion 
+
+In this work, we tackle a central challenge for virtual cells: encouraging generated images to be physically correct and biologically plausible. We accomplish this by introducing a suite of biologically-informed rewards, which serve a unified role—as evaluation metrics, as training signals for reinforcement learning, and as a tool for test-time scaling. We use these rewards to optimize the state-of-the-art perturbation model CellFlux , yielding CellFluxRL . Across all rewards, our approach consistently improves physical plausibility and maintains overall image quality over the base model. Together, these results evolve virtual cell generation from pixel-level realism toward biological groundedness. 
+
+Limitations and Future Work. Our biological rewards are manually engineered based on domain expertise. Apromising future direction is leveraging Large Language Models to automatically translate scientific literature into executable reward functions, significantly lowering the barrier to entry for novel domains. In this work, our core contribution is the modular multi-reward RL pipeline itself. As new generative architectures and more efficient RL algorithms emerge, they can be seamlessly integrated into this framework to further advance physically grounded 10 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+generation. Finally, while we demonstrate our RL pipeline on virtual cell modeling, our approach provides a domain-agnostic framework for constrained generation. It can be adapted to other scientific fields governed by strict, non-differentiable rules, such as material science or medical imaging. 
+
+# Acknowledgement 
+
+This work was supported in part by ONR Grant N00014-22-1-2110, NSF Grant 2205084, and the Stanford Institute for Human-Centered Artificial Intelligence (HAI). EBF is a Biohub, San Francisco, Investigator. S.Y. is a Chan Zuckerberg Biohub — San Francisco Investigator. 
+
+# References 
+
+[1] Michael Bereket and Theofanis Karaletsos. Modelling cellular perturbations with the sparse additive mechanism shift variational autoencoder. In A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine, editors, 
+
+Advances in Neural Information Processing Systems , volume 36, pages 1–12, 2023. 3 [2] Kevin Black, Michael Janner, Yilun Du, Ilya Kostrikov, and Sergey Levine. Training diffusion models with reinforcement learning. arXiv preprint arXiv:2305.13301 , 2023. 3 [3] Anis Bourou, Thomas Boyer, Marzieh Gheisari, K´ evin Daupin, V´ eronique Dubreuil, Aur´ elie De Thonel, Val´ erie Mezger, and Auguste Genovesio. Phendiff: Revealing subtle phenotypes with diffusion models in real images. In MICCAI , 2024. 3, 7, 8 [4] Charlotte Bunne, Yusuf Roohani, Yanay Rosen, Ankit Gupta, Xikun Zhang, Marcel Roed, Theo Alexandrov, Mohammed AlQuraishi, Patricia Brennan, Daniel B Burkhardt, et al. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell , 2024. 1 [5] Yuanhao Cai, Kunpeng Li, Menglin Jia, Jialiang Wang, Junzhe Sun, Feng Liang, Weifeng Chen, Felix Juefei-Xu, Chu Wang, Ali Thabet, Xiaoliang Dai, Xuan Ju, Alan Yuille, and Ji Hou. Phygdpo: Physics-aware groupwise direct preference optimization for physically consistent text-to-video generation, 2026. 3 [6] Peter D Caie, Rebecca E Walls, Alexandra Ingleston-Orme, Sandeep Daya, Tom Houslay, Rob Eagle, Mark E Roberts, and Neil O Carragher. High-content phenotypic profiling of drug response signatures across distinct cancer cells. Molecular Cancer Therapeutics , 2010. 7, 15 [7] Srinivas Niranj Chandrasekaran, Jeanelle Ackerman, Eric Alix, D Michael Ando, John Arevalo, Melissa Ben-nion, Nicolas Boisseau, Adriana Borowa, Justin D Boyd, Laurent Brino, et al. Jump cell painting dataset: morphological impact of 136,000 chemical and genetic perturbations. BioRxiv , pages 2023–03, 2023. 1 [8] Srinivas Niranj Chandrasekaran, Beth A Cimini, Amy Goodale, Lisa Miller, Maria Kost-Alimova, Nasim Jamali, John G Doench, Briana Fritchman, Adam Skepner, Michelle Melanson, et al. Three million images and morpho-logical profiles of cells treated with matched chemical and genetic perturbations. Nature Methods , pages 1–8, 2024. 1 [9] Chang Chen, Jaesik Yoon, Yi-Fu Wu, and Sungjin Ahn. Transdreamer: Reinforcement learning with transformer world models. In Deep RL Workshop NeurIPS 2021 , 2021. 3 [10] Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, et al. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168 , 2021. 7 [11] Ying Fan, Olivia Watkins, Yuqing Du, Hao Liu, Moonkyung Ryu, Craig Boutilier, Pieter Abbeel, Mohammad Ghavamzadeh, Kangwook Lee, and Kimin Lee. Dpok: Reinforcement learning for fine-tuning text-to-image diffusion models. Advances in Neural Information Processing Systems , 36:79858–79885, 2023. 3 [12] Marta M Fay, Oren Kraus, Mason Victors, Lakshmanan Arumugam, Kamal Vuggumudi, John Urbanik, Kyle Hansen, Safiye Celik, Nico Cernek, Ganesh Jagannathan, et al. Rxrx3: Phenomics map of biology. Biorxiv ,pages 2023–02, 2023. 1 [13] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. In NeurIPS , 2020. 1 [14] Siyuan Huang, Zan Wang, Puhao Li, Baoxiong Jia, Tengyu Liu, Yixin Zhu, Wei Liang, and Song-Chun Zhu. Diffusion-based generation, optimization, and planning in 3d scenes. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR) , pages 16750–16761, June 2023. 3 [15] Albert Z Hung, Charles J Zhang, Jonathan Z Sexton, Matthew James O’Meara, and Joshua D Welch. Lumic: Latent diffusion for multiplexed images of cells. bioRxiv , pages 2024–11, 2024. 3 11 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+[16] Graham T Johnson, Eran Agmon, Matthew Akamatsu, Emma Lundberg, Blair Lyons, Wei Ouyang, Omar A Quintero-Carmona, Megan Riel-Mehan, Susanne Rafelski, and Rick Horwitz. Building the next generation of virtual cells to understand cellular biology. Biophysical Journal , 2023. 1 [17] Bingyi Kang, Yang Yue, Rui Lu, Zhijie Lin, Yang Zhao, Kaixin Wang, Gao Huang, and Jiashi Feng. How far is video generation from world model: A physical law perspective. In International Conference on Machine Learning , pages 28991–29017. PMLR, 2025. 3 [18] Alexis Lamiable, Tiphaine Champetier, Francesco Leonardi, Ethan Cohen, Peter Sommer, David Hardy, Nicolas Argy, Achille Massougbodji, Elaine Del Nery, Gilles Cottrell, et al. Revealing invisible cell phenotypes with conditional generative modeling. Nature Communications , 2023. 3 [19] Junzhe Li, Yutao Cui, Tao Huang, Yinping Ma, Chun Fan, Miles Yang, and Zhao Zhong. Mixgrpo: Unlocking flow-based grpo efficiency with mixed ode-sde. arXiv preprint arXiv:2507.21802 , 2025. 3 [20] Hunter Lightman, Vineet Kosaraju, Yuri Burda, Harrison Edwards, Bowen Baker, Teddy Lee, Jan Leike, John Schulman, Ilya Sutskever, and Karl Cobbe. Let’s verify step by step. In The twelfth international conference on learning representations , 2023. 7 [21] Han Lin, Abhay Zala, Jaemin Cho, and Mohit Bansal. Videodirectorgpt: Consistent multi-scene video generation via llm-guided planning. In COLM , 2024. 3 [22] Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le. Flow matching for generative modeling. In The Eleventh International Conference on Learning Representations , 2023. 1 [23] Yaron Lipman, Marton Havasi, Peter Holderrieth, Neta Shaul, Matt Le, Brian Karrer, Ricky TQ Chen, David Lopez-Paz, Heli Ben-Hamu, and Itai Gat. Flow matching guide and code. arXiv preprint arXiv:2412.06264 ,2024. 1 [24] Jie Liu, Gongye Liu, Jiajun Liang, Yangguang Li, Jiaheng Liu, Xintao Wang, Pengfei Wan, Di Zhang, and Wanli Ouyang. Flow-grpo: Training flow matching models via online rl. arXiv preprint arXiv:2505.05470 , 2025. 2, 3 [25] Jie Liu, Gongye Liu, Jiajun Liang, Ziyang Yuan, Xiaokun Liu, Mingwu Zheng, Xiele Wu, Qiulin Wang, Wenyu Qin, Menghan Xia, et al. Improving video generation with human feedback. arXiv preprint arXiv:2501.13918 ,2025. 3 [26] Qihao Liu, Xi Yin, Alan Yuille, Andrew Brown, and Mannat Singh. Flowing from words to pixels: A framework for cross-modality evolution. arXiv preprint arXiv:2412.15213 , 2024. 1 [27] Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. In ICLR , 2023. 1 [28] Vebjorn Ljosa, Katherine L Sokolnicki, and Anne E Carpenter. Annotated high-throughput microscopy image sets for validation. Nature Methods , 2012. 15 [29] Nanye Ma, Shangyuan Tong, Haolin Jia, Hexiang Hu, Yu-Chuan Su, Mingda Zhang, Xuan Yang, Yandong Li, Tommi Jaakkola, Xuhui Jia, et al. Inference-time scaling for diffusion models beyond scaling denoising steps. 
+
+arXiv preprint arXiv:2501.09732 , 2025. 2 [30] Yutaka Matsuo, Yann LeCun, Maneesh Sahani, Doina Precup, David Silver, Masashi Sugiyama, Eiji Uchibe, and Jun Morimoto. Deep learning, reinforcement learning, and world models. Neural Networks , 152:267–275, 2022. 3 [31] Fanqing Meng, Jiaqi Liao, Xinyu Tan, Wenqi Shao, Quanfeng Lu, Kaipeng Zhang, Yu Cheng, Dianqi Li, Yu Qiao, and Ping Luo. Towards world simulator: Crafting physical commonsense-based benchmark for video generation. arXiv preprint arXiv:2410.05363 , 2024. 3 [32] Marius Pachitariu and Carsen Stringer. Cellpose 2.0: how to train your own model. Nature methods ,19(12):1634–1641, 2022. 5 [33] Alessandro Palma, Fabian J Theis, and Mohammad Lotfollahi. Predicting cell morphological responses to per-turbations using generative modeling. Nature Communications , 2025. 3, 7, 8 [34] Wenxu Qian, Chaoyue Wang, Hou Peng, Zhiyu Tan, Hao Li, and Anxiang Zeng. Rdpo: Real data preference optimization for physics consistency video generation, 2025. 3 [35] Ladislav Ramp´ aˇ sek, Daniel Hidru, Petr Smirnov, Benjamin Haibe-Kains, and Anna Goldenberg. Dr.vae: im-proving drug response prediction via modeling of drug perturbation effects. Bioinformatics , 35(19):3743–3751, 03 2019. 3 [36] Boris M Slepchenko and Leslie M Loew. Use of virtual cell in studies of cellular dynamics. International review of cell and molecular biology , 283:1–56, 2010. 3 12 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+[37] Boris M Slepchenko, James C Schaff, Ian Macara, and Leslie M Loew. Quantitative cell biology with the virtual cell. Trends in cell biology , 2003. 1 [38] Charlie Snell, Jaehoon Lee, Kelvin Xu, and Aviral Kumar. Scaling llm test-time compute optimally can be more effective than scaling model parameters. arXiv preprint arXiv:2408.03314 , 2024. 7 [39] Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli. Deep unsupervised learning using nonequilibrium thermodynamics. In ICML , 2015. 1 [40] Yang Song and Stefano Ermon. Generative modeling by estimating gradients of the data distribution. In NeurIPS ,2019. 1 [41] Dawn C. Walker and Jennifer Southgate. The virtual cell—a candidate co-ordinator for ‘middle-out’ modelling of biological systems. Briefings in Bioinformatics , 10(4):450–461, 03 2009. 3 [42] Philipp Wu, Alejandro Escontrela, Danijar Hafner, Pieter Abbeel, and Ken Goldberg. Daydreamer: World models for physical robot learning. In Karen Liu, Dana Kulic, and Jeff Ichnowski, editors, Proceedings of The 6th Conference on Robot Learning , volume 205 of Proceedings of Machine Learning Research , pages 2226– 2240. PMLR, 14–18 Dec 2023. 3 [43] Jiazheng Xu, Yu Huang, Jiale Cheng, Yuanming Yang, Jiajun Xu, Yuan Wang, Wenbo Duan, Shen Yang, Qunlin Jin, Shurun Li, Jiayan Teng, Zhuoyi Yang, Wendi Zheng, Xiao Liu, Ming Ding, Xiaohan Zhang, Xiaotao Gu, Shiyu Huang, Minlie Huang, Jie Tang, and Yuxiao Dong. Visionreward: Fine-grained multi-dimensional human preference learning for image and video generation, 2024. 3 [44] Zeyue Xue, Jie Wu, Yu Gao, Fangyuan Kong, Lingting Zhu, Mengzhao Chen, Zhiheng Liu, Wei Liu, Qiushan Guo, Weilin Huang, et al. Dancegrpo: Unleashing grpo on visual generation. arXiv preprint arXiv:2505.07818 ,2025. 3 [45] Yandan Yang, Baoxiong Jia, Peiyuan Zhi, and Siyuan Huang. Physcene: Physically interactable 3d scene synthe-sis for embodied ai. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 16262–16272, June 2024. 3 [46] Lingchong You. Toward computational systems biology. Cell Biochemistry and Biophysics , 40(2):167–184, 2004. 3 [47] Yuhui Zhang, Yuchang Su, Chenyu Wang, Tianhong Li, Zoe Wefers, Jeffrey Nirschl, James Burgess, Daisy Ding, Alejandro Lozano, Emma Lundberg, et al. Cellflux: Simulating cellular morphology changes via flow matching. 
+
+arXiv preprint arXiv:2502.09775 , 2025. 1, 3, 4, 5, 7, 8, 15, 17 [48] Kaiwen Zheng, Huayu Chen, Haotian Ye, Haoxiang Wang, Qinsheng Zhang, Kai Jiang, Hang Su, Stefano Ermon, Jun Zhu, and Ming-Yu Liu. Diffusionnft: Online diffusion reinforcement with forward process. arXiv preprint arXiv:2509.16117 , 2025. 2, 3, 6, 7, 8, 14, 15 [49] Hanxin Zhu, Tianyu He, Anni Tang, Junliang Guo, Zhibo Chen, and Jiang Bian. Compositional 3d-aware video generation with llm director. In A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang, editors, Advances in Neural Information Processing Systems , volume 37, pages 131618–131644, 2024. 3 13 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+# A Algorithm of CellFluxRL 
+
+We present the full training procedure of CellFluxRL in Algorithm 1. The algorithm adapts DiffusionNFT [48] to the source-to-target flow matching setting and replaces the generic reward with our suite of biologically grounded reward functions. 
+
+Relation to DiffusionNFT. CellFluxRL adapts DiffusionNFT in three key ways. (i) Source-to-target flow : unlike standard diffusion where the forward process adds Gaussian noise from a fixed prior, our forward process interpolates between the source control image x0 and the generated target ˆx1 (Line 11), matching the CellFlux flow matching formulation. (ii) Biological reward suite : the scalar reward r (Lines 6–8) is the weighted combination of K biologi-cally grounded evaluators covering MoA consistency, structural plausibility, and morphological statistics, rather than a single generic reward. (iii) Group rollouts conditioned on (x0, c ) pairs : each rollout group is conditioned on a fixed control image alongside a perturbation condition, so within-group diversity arises from the stochastic noise injection applied to x0 by CellFlux, rather than from random latent initialization. 
+
+Algorithm 1 CellFluxRL : Biologically-Constrained RL Post-Training for Flow Matching 
+
+Require: Pretrained velocity vref  
+
+> θ
+
+; biological rewards {rk}Kk=1 with weights {wk}; dataset Ddata = {(x0, c )};group size m; hyperparameters β and βKL ; learning rate λ
+
+1: Initialize: data collection policy vold ← vref  
+
+> θ
+
+; training policy vθ ← vref  
+
+> θ
+
+; data buffer D ← ∅ 
+
+2: for each iteration i = 1 , 2, . . . do 
+
+# — Phase 1: Rollout (Data Collection) — 
+
+3: for each (x0, c ) sampled from Ddata do 
+
+4: Generate m candidate perturbed images x1 by from the policy πold (by integrating vold (·| c) from x0): 
+
+ˆx(j)1 
+
+> mj=1
+
+∼ πold (· | x0, c )
+
+5: Compute combined biological reward for each candidate: 
+
+r(j) = PKk=1 wk rk
+
+ ˆx(j)1 , c .
+
+6: Normalize within the group and map to optimality probability r(j) ∈ [0 , 1] :
+
+r(j)norm = r(j) − 1
+
+> m
+
+P 
+
+> j
+
+r(j), r(j)adv = 0 .5 + 0 .5 · clip 
+
+ r(j)norm  
+
+> Zc
+
+, −1, 1
+
+
+
+,
+
+where Zc > 0 is a normalization hyperparameter. 
+
+7: Append   x0, c, ˆx(j)1 , r (j)adv 
+
+ mj=1 to buffer D.
+
+8: end for 
+
+# — Phase 2: Training (Gradient Step) — 
+
+9: for each mini-batch (x0, c, ˆx1, r adv ) ⊂ D do 
+
+10: Sample timestep t ∼ U [0 , 1] 
+
+11: Apply source-to-target forward process: xt = αtx0 + βt ˆx1, vt = ˙ αtx0 + ˙βt ˆx1
+
+12: Construct implicit positive and negative velocities: 
+
+v+ 
+
+> θ
+
+(xt, c, t ) = (1 − β) vold (xt, c, t ) + β v θ (xt, c, t )
+
+v− 
+
+> θ
+
+(xt, c, t ) = (1 + β) vold (xt, c, t ) − β v θ (xt, c, t )
+
+13: Compute contrastive loss: 
+
+L(θ) = radv v+ 
+
+> θ
+
+− v 22 + (1 − radv ) v− 
+
+> θ
+
+− v 22 + βKL DKL 
+
+ vθ ∥ vold 
+
+14: Update parameters: θ ← θ − λ ∇θ L(θ)
+
+15: end for 
+
+# — Phase 3: Policy Update — 
+
+16: EMA update of data collection policy: θold ← ηi θold + (1 − ηi) θ
+
+17: Clear buffer: D ← ∅ 
+
+18: end for 
+
+19: return Post-trained velocity field vθ
+
+14 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+# B Implementation Details 
+
+Training Configurations. Our setup largely follows DiffusionNFT [48] with a learning rate of 2×10 −5. For each col-lected generated image, forward noising and loss computation are performed at the corresponding sampling timesteps. We employ a Heun (2nd-order) ODE sampler for data collection. 
+
+# C Dataset Details 
+
+BBBC021 dataset. We use the BBBC021v1 image set [28, 6] from the Broad Bioimage Benchmark Collection, a standard benchmark for fluorescence-microscopy-based phenotypic profiling. The dataset captures chemical perturba-tions in MCF-7 human breast cancer cells: approximately 97,500 three-channel fluorescence images stained for DNA, F-actin, and beta-tubulin, covering 113 small-molecule compounds administered at eight concentrations each. The compounds span a broad range of biological mechanisms, and each is annotated with a mode-of-action (MoA) label. Following prior work [47], we preprocess images by correcting illumination, cropping to 96 × 96 patches centered on nuclei, and filtering out low-quality frames, yielding approximately 98K images across 26 perturbation conditions. Table 3 lists the MoA assignment for every compound used in our experiments. 
+
+# D Qualitative Comparison 
+
+Figures 7 and 8 provide additional qualitative comparisons between CellFluxRL + TTS and the pretrained CellFlux baseline. Figure 7 highlights cases where the base model fails to reproduce the perturbation-specific morphological profile expected for the given MoA— CellFluxRL + TTS recovers the correct morphological signature by optimizing the MoA reward. Figure 8 shows cases where the base model produces nuclei with implausible shapes; by optimizing the roundness reward, CellFluxRL + TTS generates nuclei whose shape is consistent with the ground-truth MoA-conditioned distribution. 
+
+# E Normalized Reward Analysis 
+
+Table 4 reports min-max normalized scores across all 7 reward components. CellFluxRL + TTS consistently outper-forms the pretrained CellFlux baselines on every reward without requiring manual weight tuning. 15 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Figure 7: MoA reward failure cases. The pretrained CellFlux baseline (left) generates images that do not match the expected morphological profile for the given perturbation, as measured by the MoA reward. CellFluxRL + TTS 
+
+(right) corrects these failures by explicitly optimizing for MoA consistency during RL post-training. Ground-truth target images for the same perturbation conditions are shown in Figure 4 of the main paper. 
+
+Figure 8: Roundness reward failure cases. The pretrained CellFlux baseline (left) produces nuclei with irregular, implausible shapes that deviate from the MoA-conditioned ground-truth distribution. CellFluxRL + TTS (right) gen-erates nuclei with roundness statistics consistent with real cells under the same perturbation condition. Ground-truth target images for the same perturbation conditions are shown in Figure 4 of the main paper. 16 CellFluxRL : Biologically-Constrained Virtual Cell Modeling via Reinforcement Learning A P REPRINT 
+
+Table 3: Modes of action (MoA) for compounds in BBBC021. 
+
+Compound MoA 
+
+Cytochalasin B Actin disruptors Cytochalasin D Actin disruptors Latrunculin B Actin disruptors AZ258 Aurora kinase inhibitors AZ841 Aurora kinase inhibitors Mevinolin/Lovastatin Cholesterol-lowering Simvastatin Cholesterol-lowering Chlorambucil DNA damage Cisplatin DNA damage Etoposide DNA damage Mitomycin C DNA damage Camptothecin DNA replication Floxuridine DNA replication Methotrexate DNA replication Mitoxantrone DNA replication AZ138 Eg5 inhibitors PP-2 Epithelial Alsterpaullone Kinase inhibitors Bryostatin Kinase inhibitors PD-169316 Kinase inhibitors Colchicine Microtubule destabilizers Demecolcine Microtubule destabilizers Nocodazole Microtubule destabilizers Vincristine Microtubule destabilizers Docetaxel Microtubule stabilizers Epothilone B Microtubule stabilizers Taxol Microtubule stabilizers ALLN Protein degradation Lactacystin Protein degradation MG-132 Protein degradation Proteasome inhibitor I Protein degradation Anisomycin Protein synthesis Cyclohexamide Protein synthesis Emetine Protein synthesis DMSO DMSO 
+
+Table 4: Quantitative comparison across biological evaluation metrics (rows) for CellFlux baselines and CellFluxRL 
+
+variants (columns), where CellFluxRL is post-trained with min-max normalized rewards. Bold values indicate the best performance per metric.                  
+
+> Metric CellFlux [47] CellFluxRL
+> Biological Rewards
+> MoA 0.26 0.28
+> Nuc-in-Cyto 0.88 0.96
+> Roundness -0.34 -0.25
+> NucSize -2.21 -1.34
+> CytoSize -1.09 -0.64
+> NucCount -0.83 -0.46
+> CytoCount -1.03 -0.62
+
+17

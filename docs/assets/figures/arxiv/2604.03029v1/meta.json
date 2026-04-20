@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-001.webp",
+      "caption": "Figure 4: STG from initial configuration 111 for Example A in Most Permissive semantics. Only Boolean configurations are shown. Configurations in red are those reachable with Most Permissive semantics, but not with classical semantics. Solid arrows represent transitions that are possible with classical semantics, while dotted arrows are those that pass through the increasing or decreasing level of Most Permissive.",
+      "page": 6,
+      "index": 1,
+      "width": 418,
+      "height": 306
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-002.webp",
+      "caption": "Figure 8: Regulatory graph associated with the model B extended for Fli1.",
+      "page": 11,
+      "index": 2,
+      "width": 714,
+      "height": 390
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-003.webp",
+      "caption": "Figure 5: Encoding with three Boolean variables of the Most Permissive semantics. Green and red edges represent controlled transitions, black edges are guaranteed transitions.",
+      "page": 7,
+      "index": 3,
+      "width": 477,
+      "height": 275
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-004.webp",
+      "caption": "Figure 7: Regulatory graph of Example B.",
+      "page": 10,
+      "index": 4,
+      "width": 594,
+      "height": 363
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-005.webp",
+      "caption": "Table 2: Translation of Most Permissive levels into Boolean triplets.",
+      "page": 14,
+      "index": 5,
+      "width": 1009,
+      "height": 991
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-006.webp",
+      "caption": "Table 1: Most Permissive transitions for Example A.",
+      "page": 13,
+      "index": 6,
+      "width": 856,
+      "height": 429
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-007.webp",
+      "caption": "Figure 2: State transition graphs from configuration 111 for Example A. Left: synchronous STG. Middle: asynchronous STG. Right: Generalized asynchronous STG.",
+      "page": 4,
+      "index": 7,
+      "width": 963,
+      "height": 281
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-008.webp",
+      "caption": "Figure 6: Regulatory graph associated with the extended Example A. Red arrows represent negative regulations, green arrows positive regulations. Blue arrows represent regulations with undetermined sign.",
+      "page": 9,
+      "index": 8,
+      "width": 714,
+      "height": 431
+    },
+    {
+      "url": "assets/figures/arxiv/2604.03029v1/fig-009.webp",
+      "caption": "Figure 3: Left: Schema of transitions between levels for a Boolean variable. Right: Schema of transitions between levels for a variable in Most Permissive semantics. Black arrows indicate a guaranteed transition, green arrows indicate a transition under positive control, and red arrows indicate a transition under negative control.",
+      "page": 5,
+      "index": 9,
+      "width": 868,
+      "height": 366
+    }
+  ]
+}

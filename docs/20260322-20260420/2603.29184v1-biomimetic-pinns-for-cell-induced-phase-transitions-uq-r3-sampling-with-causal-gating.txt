@@ -1,0 +1,2005 @@
+Title: Biomimetic PINNs for Cell-Induced Phase Transitions: UQ-R3 Sampling with Causal Gating
+
+URL Source: https://arxiv.org/pdf/2603.29184v1
+
+Published Time: Wed, 01 Apr 2026 00:25:38 GMT
+
+Number of Pages: 37
+
+Markdown Content:
+# Biomimetic PINNs for Cell-Induced Phase Transitions: UQ-R3 Sampling with Causal Gating 
+
+Anci Lin 1, Xiaohong Liu 4, Zhiwen Zhang 2,3* , Weidong Zhao 1,Wenju Zhao 1* 
+
+1School of Mathematics, Shandong University, Jinan, Shandong, 250100, China. 
+
+2Department of Mathematics, The University of Hong Kong, Pokfulam Road, Hong Kong, Hong Kong SAR, P.R. China. 
+
+3Materials Innovation Institute for Life Sciences and Energy (MILES), HKU-SIRI, Shenzhen, P.R. China. 
+
+4Business School, University of Jinan, Jinan, Shandong, 250022, China. *Corresponding author(s). E-mail(s): zhangzw@hku.hk; zhaowj@sdu.edu.cn; 
+
+Abstract 
+
+Nonconvex multi-well energies in cell-induced phase transitions give rise to sharp interfaces, fine-scale microstructures, and distance-dependent inter-cell coupling, all of which pose significant challenges for physics-informed learn-ing. Existing methods often suffer from over-smoothing in near-field patterns. To address this, we propose biomimetic physics-informed neural networks (Bio-PINNs), a variational framework that encodes temporal causality into explicit spatial causality via a progressive distance gate. Furthermore, Bio-PINNs lever-age a deformation-uncertainty proxy for the interfacial length scale to target microstructure-prone regions, providing a computationally efficient alternative to explicit second-derivative regularization. We provide theoretical guaran-tees for the resulting uncertainty-driven “retain–resample–release” adaptive collocation strategy, which ensures persistent coverage under gating and estab-lishing a quantitative near-to-far growth bound. Across single- and multi-cell benchmarks, diverse separations, and various regularization regimes, Bio-PINNs consistently recover sharp transition layers and tether morphologies, significantly outperforming state-of-the-art adaptive and ungated baselines. 
+
+Keywords: Physics-informed neural networks; deep Ritz method; uncertainty quantification; adaptive collocation; causal distance gating; microstructure formation. 
+
+1
+
+> arXiv:2603.29184v1 [cs.LG] 31 Mar 2026
+
+# 1 Introduction 
+
+Physics-informed neural networks (PINNs) have emerged as a versatile framework for scientific computing, with notable applications in fluid mechanics, transport, and inverse problems [1–4]. Their training is typically most reliable when the target solu-tion exhibits sufficient regularity [5, 6]. However, many physical and biological systems exhibit sharp interfaces, discontinuities, or fine-scale structures that substantially complicate optimization and error control, often leading to stagnation or persistent training failure even under adaptive sampling [7–9]. These difficulties are particularly pronounced in nonconvex variational problems, where microstructure is a genuine fea-ture of the model rather than a numerical artifact, and where classical regularity and well-posedness theory offer limited guidance [10, 11]. We study cell-induced densification phase transitions in fibrous biomaterials, with particular emphasis on the collagen extracellular matrix (ECM). Contractile cells, such as fibroblasts, transmit traction to the surrounding collagen network through focal adhesions, thereby triggering compression-induced fiber microbuckling and producing highly localized densification and alignment patterns. In multicellular settings, coop-erative contraction can generate intercellular tethers, defined as densified bands that mechanically couple distant cells, alongside experimentally observed densified micro-bands [12]. A recent variational formulation captures these phenomena as a phase transition in nonlinear elasticity. This formulation features a nonconvex multi-well (non-rank-one convex) strain-energy density with sparse and densified phases, regu-larized by a higher-gradient term that introduces an intrinsic interfacial length scale [12, 13]. The resulting minima may exhibit sharp interfaces and low-regularity tran-sition layers, and the selected tether morphology can depend strongly on cell spacing and arrangement [10, 11, 14]. Nonconvex multi-well energies are commonly treated using higher-order or mixed discretizations, phase-field, gradient-enhanced, or nonlocal models, continuation schemes, and relaxation-based approximations [11, 14–26]. For cell-induced remodel-ing, these methods face recurring bottlenecks. Ultrathin bands and tethers demand extreme spatial resolution. Nonconvexity amplifies sensitivity to initialization and loading history. Minimizing sequences may refine oscillations as they approach the infimum, which undermines stability and complicates interpretation [13]. Recent deep learning advances have sought to ease these difficulties through adaptive sampling, adaptive loss balancing, and architectures with improved multi-scale expressivity [8, 9, 27–36]. Nevertheless, such approaches can remain fragile for cell-induced nonconvex phase transitions. Error-based indicators can saturate in flat regions and miss energetically decisive microstructure zones. Global loss reweighting does not reflect the near-to-far progression of cell-mediated interactions. Meanwhile, the premature introduction of high-frequency components can destabilize optimization near sharp interfaces. [8, 9, 36, 37]. To address these limitations, we incorporate two priors suggested by cell-mediated mechanical remodelling of the fibrous collagen ECM. The first is a causal progression in which remodelling initiates in the pericellular region and propagates outward from the cell boundary. The second is the presence of an intrinsic microstructural interfa-cial length scale, which controls the thickness of transition layers and the emergence 2of microstructure and is commonly modeled through second-gradient regularization. We operationalize this near-to-far progression by embedding it into the numerical pro-cedure via a progressive distance gate that activates the computational domain from near to far. In parallel, we introduce an uncertainty-quantification (UQ) indicator based on local deformation variability to localize regions that are prone to transition-layer formation and fine-scale patterns. Importantly, this UQ proxy can also serve as a computationally efficient surrogate for explicit second-derivative regularization, substantially reducing the overall cost. Building on these priors, we introduce biomimetic physics-informed neural net-works (Bio-PINNs), an energy-based variational framework that minimizes a Deep Ritz objective with an adaptively updated collocation set. The adaptivity combines a causal distance gate with an uncertainty-driven retain-resample-release (R3) update that concentrates samples in microstructure bearing regions, using low discrepancy proposals [9, 33, 38]. The gate enters the objective as a spatial curriculum so that optimization resolves near-field interactions before expanding outward, which reduces propagation failure associated with spectral bias. We further characterize the resulting adaptive dynamics. We establish three struc-tural properties, Retain, Resample, and Release, which characterize accumulation in informative regions, ensure non-emptiness with mandatory shell injection, and enforce a fixed sampling budget. These properties imply a quantitative near-to-far accumulation driven by the gating progression. Across single-cell and multi-cell configurations that span multiple separations and regularization regimes, Bio-PINNs robustly recover sharp transition zones and capture both the onset and morphology of tether microstructures. Extensive parameter sweeps and ablation studies show consistent gains over ungated and non-adaptive baselines. Figure 1 summarizes the training loop. A distance-gated near-to-far curriculum defines the active region, and an uncertainty proxy drives the retain-resample-release update that reallocates a fixed collocation budget toward interfacial regions and tether-prone zones. Our main contributions are as follows: 
+
+• We introduce Bio-PINNs, which incorporate a causal distance gate that enforces a near-to-far curriculum tailored to cell-induced interactions. 
+
+• We leverage local deformation uncertainty to drive UQ-R3 sampling and to provide a cost-effective surrogate for explicit second derivative regularization. 
+
+• We establish the Retain, Resample, and Release properties and prove a quantitative near-to-far accumulation mechanism induced by the gating progression. 
+
+• We demonstrate consistent recovery of sharp layers and tether morphologies across geometries, separations, and regularization regimes, supported by systematic ablations and sensitivity analyses. Section 2 introduces the biophysical model and the variational formulation. Section 3 reports the numerical experiments and ablation studies. Section 4 discusses the empirical findings and outlines future directions. Section 5 presents the Bio-PINN methodology, including distance gating, uncertainty proxies, and the UQ-R3 scheme, together with the theoretical guarantees. Proofs are collected in Appendix A. 3METHOD LOOP    
+
+> (Curriculum &
+> Adaptive Sampling)
+> update 𝐀 , expand 𝐀 𝐀 , update 𝐀 𝐀
+> PHYSICS
+> COUTCOMES &
+> CONTRIBUTIONS
+
+Fig. 1 : Overview of Bio-PINNs with distance-gated curriculum and UQ-R3 sampling. A logistic distance gate gγ (x) progressively activates the training domain from the near field to the far field, while a deformation-uncertainty proxy guides an R3 retain-resample-release update under a fixed collocation budget. The resulting closed-loop scheme concentrates samples on sharp layers and tether-forming regions across cell separations and regularization regimes. 
+
+# 2 Biomimetic PINN 
+
+We consider a learning regime in which the observed microstructures are genuine fea-tures of the underlying variational problem rather than numerical artifacts. Nonconvex and multi-well energies arising in cell-ECM mechanics can be interpreted through the lens of phase transitions in nonlinear elasticity. Specifically, the loss of rank-one con-vexity is driven by compression-induced fiber microbuckling and buckling instabilities, leading to sharp interfaces, thin transition layers, and fine-scale microstructure. In multicellular configurations, this can manifest as densification microstructures such as intercellular tethers, defined as slender densified bands that mechanically couple neighboring cells, and related tether patterns [10, 12, 13, 39]. In such regimes, classi-cal regularity results for partial differential equations and common physics-informed training heuristics can be unreliable, since the relevant patterns emerge through strong nonlinearity and exhibit pronounced sensitivity to the loading history, cell spacing, and cell arrangement. 
+
+Nonconvex variational target 
+
+Let Ω ⊂ R2 be a bounded Lipschitz domain, and let Bi = {x ∈ Ω : |x − ci| < r i}, i =1, . . . , N c, denote the cell regions. We work on the perforated domain Ω c := Ω \SNc 
+
+> i=1
+
+Bi
+
+4and seek a deformation y : Ω c → R2 by minimizing the energy 
+
+Eε[y] := 
+
+Z
+
+> Ωc
+
+ W (∇y) + Φ( ∇y) dx + ε2
+
+2
+
+Z
+
+> Ωc
+
+∥∇ 2y∥2 dx. (1) We denote the displacement by u := y − Id and the deformation gradient by F := 
+
+∇y = I + ∇u.The strain energy W is multi-well and non-rank-one convex, encoding the coexis-tence of sparse and densified phases and promoting microstructure formation [10, 39]. The resulting variational problem is genuinely nonconvex: minimizing sequences may develop fine-scale oscillations, the relaxed quasiconvex envelope can differ substan-tially from W , and standard lower-semicontinuity and stability properties may fail, leading to non-uniqueness and pronounced path dependence. The penalty Φ enforces orientation preservation and discourages interpenetration (e.g., via steep growth as det ∇y ↓ 0) [40]. The second-gradient term introduces an intrinsic interfacial length scale and leads to a fourth-order Euler-Lagrange system [13, 41, 42]. Cell contraction is imposed on each ∂B i through boundary data, and the resulting minimizers can exhibit sharp interfaces and multiple competing tether morphologies. 
+
+Two biomimetic priors 
+
+Bio-PINNs are built around two basic features of cell-induced ECM remodeling. First, remodeling is causal. Cell-induced reorganization initiates near cell boundaries and propagates outward through the ECM. Second, microstructures carry an interfacial length scale, commonly captured by second derivatives of the displacement. We encode these priors directly into the learning algorithm by (i) converting temporal causal-ity into an explicit spatial causality through a progressive distance gate, and (ii) using a deformation-uncertainty indicator as an interfacial-scale sensor that targets microstructure-prone regions and can act as a surrogate for costly second-derivative regularization. 
+
+Energy-form PINN ansatz 
+
+We represent the deformation by a neural approximation yθ : Ω c → R2 based on a sufficiently regular feed-forward network Nθ and a standard lifting construction for outer Dirichlet data [43]: 
+
+yθ(x) = ℓ(x) + φ(x)Nθ(x), (2) where ℓ = gD and φ = 0 on Γ out = ∂Ω. Inner-boundary conditions on Γ in := ∂Ωc \Γout 
+
+are enforced weakly through a quadratic penalty Pin [yθ]. Training minimizes a vari-ational objective aligned with microstructure selection in nonconvex phase-transition models [33], optionally augmented with weak residual terms [38]. 5Fig. 2 : Mapping temporal causal gating to progressive distance gating. Left: a logis-tic time gate gβ (t) = σ(α(β − t)). Right: the corresponding distance gate gγ ( ˜d) = 
+
+σ
+
+
+
+α(γ − ˜d)
+
+
+
+, where ˜d denotes the normalized distance to the cell. Bottom: spatial snapshots of gγ (x) = σ
+
+
+
+α(γ − ˜d(x)) 
+
+
+
+for increasing γ, illustrating near-to-far activa-tion from the cell neighborhood into the bulk. 
+
+Spatial causality via distance gating 
+
+To enforce a near-to-far curriculum, we introduce a normalized distance ˜d(x) ∈ [0 , 1] to the union of cell regions C = ∪iBi and define a smooth gate 
+
+gγi (x) = σ α(γi − ˜d(x))  ∈ (0 , 1) (3) with steepness α > 0 and gate level γi ∈ (0 , 1]. Points with small ˜d(x) are activated early ( gγi ≈ 1), while the far field is progressively revealed as γi increases. Figure 2 illustrates how temporal causal gating can be mapped to the proposed distance-based gating, together with spatial snapshots of gγ (x) for different gate levels γ. The gate weights the training objective, so optimization prioritizes the currently active region; the gate level is advanced automatically based on a progress signal computed from the gate-weighted objective. This converts physical causality into a numerical schedule that mitigates propagation failure and reduces premature smoothing across interfaces. 
+
+Uncertainty as an interfacial-scale proxy 
+
+Interfaces, sharp layers, and emerging tethers are precisely the regions where the learned deformation is most sensitive to local perturbations during training. Small changes in yθ can switch phases or alter tether topology. We quantify this using an uncertainty-quantification (UQ) proxy based on local deformation variability from an 6Fig. 3 : UQ-proxy evaluation via local probing. For each representative collocation point x⋆, Gaussian probes are sampled in a neighborhood of x⋆ and used to estimate local deformation variability (for example, Var k ∥∇ yθ(k)
+
+> i
+
+(x⋆)∥F ). This yields a normal-ized score eUi(x⋆) ∈ [0 , 1] that highlights interface- and tether-forming regions. independent collocation: 
+
+Ui(x) = Var k
+
+
+
+∥∇ yθ(k)
+
+> i
+
+(x)∥F
+
+
+
+, eUi(x) = N U (∇y) 
+
+> i
+
+(x) ∈ [0 , 1] , (4) where N (·) denotes a stability normalization [44–46]. Other features (e.g. | det ∇y|)can be used in the same manner. Beyond identifying microstructure-prone regions even when residual signals plateau, eUi can act as a computational surrogate for explicit second-derivative regularization. By concentrating sampling where interfacial penalties matter, it provides length-scale control at substantially reduced cost when evaluat-ing ∇2yθ, which is a bottleneck. Figure 3 provides a schematic of the local probing procedure used to evaluate the UQ proxy. 
+
+UQ-R3 adaptive collocation with low-discrepancy proposals 
+
+Bio-PINNs maintain a fixed budget of bulk collocation points Si inside the active region and update them by an uncertainty-driven retain-resample-release (R3) step [9]. At each stage, points with high eUi are retained, low-uncertainty points are released, and new points are resampled to refill the budget. When the gate expands, Bio-PINNs inject samples into the newly revealed shell to ensure exploration of regions not previously trained on. New points are generated using low-discrepancy designs (e.g., Hammersley points) to preserve coverage while focusing on uncertain structures. Figure 4 summarizes the resulting R3 update loop and how retained points and new proposals interact across stages. 7Next Stage i → i + 1 :
+
+> Repeat Scoring & Selection
+
+Fig. 4 : UQ-R3 retain-resample-release update. Step 1 (Resample): propose candidate collocation points within the current active region and, upon gate expansion, within the newly opened shell, using low-discrepancy designs. Step 2 (Evaluate → Retain/Re-lease): evaluate the UQ proxy eUi and retain high-uncertainty points while releasing low-uncertainty points. Step 3 (Refill and iterate): resample to maintain a fixed collo-cation budget and repeat, progressively concentrating points near uncertain interfaces and emerging tethers while preserving global coverage. 
+
+Gate-weighted variational objective and staged training 
+
+At stage i, Bio-PINN optimizes a gate-weighted empirical energy together with boundary penalties: 
+
+Ji(θ) = E(g) 
+
+> ε,i
+
+[yθ] + Pin [yθ ], (5) where E(g) 
+
+> ε,i
+
+is a gated estimator of (1) evaluated on Si . Training alternates between (i) several optimizer steps on Ji at fixed γi and Si, (ii) advancing the gate level γi
+
+based on objective progress, and (iii) updating Si via UQ-R3. This staged loop couples where the model learns, via distance gating, with what it learns next, via uncertainty-driven sample reallocation, thereby providing a robust mechanism for resolving thin transition layers and tether microstructures. 
+
+# 3 Experiments 
+
+We evaluate Bio-PINNs on a nonconvex hyperelastic energy posed over a perforated domain to isolate the empirical roles of (i) causal near-to-far distance gating and (ii) UQ-driven R3 sampling. Unless stated otherwise, we visualize learned deformations via the Jacobian J = det ∇yθ, since it sharply distinguishes the two energetically preferred phases in this model: the undensified well J = 1 and the densified well J = J⋆ ≈ 0.21. The continuum model and the Bio-PINN training objective are described in Secs. 5.1–5.6. Implementation details follow Secs. 5.2–5.6, with default hyperparame-ters listed in Extended Data Table ED1. We further verified that the main qualitative 80.6        
+
+> 0.8
+> 1.0 (a) PINN 0.6
+> 0.8
+> 1.0 (b) RAR-D 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2 (c) R3 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2 (d) Bio-PINN
+
+Fig. 5 : Single-cell benchmark without second-gradient regularization ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for (a) PINN, (b) RAR-D, (c) R3, and (d) Bio-PINN. Bio-PINN more consistently resolves the pericellular densified phase while reducing sampling-induced angular artifacts in the far-field ECM. conclusions reported below are stable under representative sweeps of the resampling cadence, network capacity, and UQ-proxy settings (Extended Data Figs. ED1–ED14). Among these, the UQ probe variance ρuq provides a particularly interpretable control. Smaller ρuq yields more localized probing but can introduce noisier, more transient updates, whereas larger ρuq increases spatial averaging and produces smoother but more diffuse updates while preserving the same interaction morphology. 
+
+3.1 Single-cell experiments 
+
+We begin with a single circular cell C = {x : |x − z| = rc} ⊂ Ωc. This setting mirrors the benchmark in [13] and represents pericellular mechanical remodelling of a fibrous collagen ECM around a contracting cell. It serves as a controlled testbed for two cou-pled difficulties: (i) resolving the intrinsically sharp pericellular densification transition layer in the non-regularized limit, and (ii) avoiding sampling-induced angular artifacts in the far-field ECM. We additionally report representative sensitivity studies for this setting in Extended Data Figs. ED1–ED5, including sweeps over the R3 cadence P ,network capacity, and UQ-proxy hyperparameters. 
+
+3.1.1 Non-regularized limit with ε0 = 0 
+
+We train with an energy-only loss, so the objective omits the H2 term. We compare the Jacobian determinant J = det F with three baselines, namely vanilla PINN [5], RAR-D [47], and residual-driven R3 [9], as shown in Fig. 5. In this regime, cell contraction triggers a localized densification phase transition in the pericellular region. The ener-getic optimum therefore features a pericellular densification ring (high-density phase), with J decreasing toward the densified-well value J⋆, while the far-field ECM remains in the undensified (low-density) state with J = 1. An annulus-like pattern alone is therefore not diagnostic. The relevant indicators are the attained minimum value of J
+
+and the azimuthal coherence of the low-J band. We verify that the qualitative conclu-sions reported below persist under representative sweeps of the R3 cadence and model capacity (Extended Data Figs. ED1–ED3). In Fig. 5, vanilla PINN in panel (a) captures the presence and approximate location of the annulus, but the transition region remains diffuse and exhibits spurious radial streaks extending into the bulk ECM, reminiscent of needle-like microstructures but 9not forming a coherent pericellular densification pattern. The minimum value indicated by the color scale stays significantly larger, remaining around J ≳ 0.6. This indicates that optimization does not reach the neighborhood of the densified well near the cell boundary. RAR-D in panel (b) sharpens the near-boundary structure by enriching regions of large residual. However, a residual-driven strategy alone does not enforce a near-to-far training progression. As a result, the annulus can remain angularly nonuniform, and weak far-field imprinting persists. The minimum value of J again remains elevated at about J ≳ 0.6, indicating that the solution is not driven into the densified-well neighborhood. Residual-driven R3 in panel (c) further concentrates samples in difficult regions. In this energy-only setting, it can lower J and sharpen portions of the front. At the same time, repeated resampling onto thin high-error sets can amplify localized modes. Low-J values tend to appear as non-smooth, spoke-like streaks emanating from the pericellular ring, i.e., spurious needle-like artifacts rather than a coherent, azimuthally uniform pericellular densification front. This reflects an unstable trade-off between fitting a sharp front and sampling-induced anisotropy. In contrast, Bio-PINN in panel (d) combines near-to-far gating with UQ-R3. The gate delays far-field participation and encourages a staged outward propagation from the cell. The uncertainty proxy directs resampling toward the evolving transition layer, rather than repeatedly over-refining narrow and potentially noisy sets. The resulting solution forms a contiguous densified annulus that reaches the densified well, with J
+
+decreasing toward J⋆ as indicated by the color scale. The annulus is more azimuthally uniform and exhibits markedly fewer spoke-like artifacts than panels (a) through (c). Mild oscillations can still appear in localized high-curvature regions, which is expected in the absence of explicit second-derivative regularization. 
+
+Ablations: R3 cadence and UQ proxy 
+
+In the single-cell, non-regularized regime, the observed solution is sensitive to the R3 resampling cadence. With very frequent resampling ( P = 100), the training dynam-ics fail to robustly localize the phase transition, producing strong sampling-induced anisotropy that contaminates the far field (Extended Data Fig. ED1). A moderate cadence ( P = 400) partially recovers the annular transition but still under-resolves the expected microstructure. In contrast, longer periods ( P = 1600-3200) yield the antic-ipated fine-scale alternation between densified and non-densified states concentrated in the interfacial layer, while the far field remains approximately near-incompressible (Extended Data Fig. ED1). Once the network has sufficient capacity to represent a thin front, increasing depth and width beyond this point can instead introduce an optimization bottleneck: the strongly non-convex energy landscape, together with the enlarged parameter space, makes training more susceptible to poor local minima and slower convergence. (Extended Data Figs. ED2–ED3). For the UQ proxy, varying the Monte-Carlo probe count muq yields nearly indis-tinguishable fields, suggesting that the proxy is stable even with modest probing effort (Extended Data Fig. ED4). In contrast, the probe variance ρuq acts as an effective 10 0.6 
+
+> 0.8
+> 1.0
+
+(a) PINN 0.6  
+
+> 0.8
+> 1.0
+
+(b) RAR-D 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) R3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(d) Bio-PINN 
+
+Fig. 6 : Single-cell benchmark with weak second-gradient regularization ( ε0 = 0 .01 rc). The Jacobian determinant J = det F (with F = ∇yθ) is shown for (a) PINN, (b) RAR-D, (c) residual-driven R3, and (d) Bio-PINN. The H2 term damps fine-scale oscillations across methods, while Bio-PINN retains the most azimuthally uniform pericellular densification ring and reaches the pericellular densified phase adjacent to the cell. length-scale knob in local probing: small-to-moderate ρuq preserves fine angular struc-ture and sharper focusing near the evolving front, whereas very large ρuq increases spatial averaging and progressively suppresses the finest patterns, producing smoother but more diffuse updates (Extended Data Fig. ED5). 
+
+3.1.2 Weak second-gradient regularization ( ε0 = 0 .01 rc)
+
+We next include the H2 term and report the corresponding results in Fig. 6. As expected, weak second-gradient regularization selectively damps fine-scale oscillations and attenuates sampling-induced spoke-like textures, while largely preserving near-incompressibility in the far field ( J ≈ 1). Bio-PINN continues to drive the near-cell region into the densified well, forming a dark annulus with J decreasing toward J⋆,and it remains the most azimuthally coherent among the methods considered. We fur-ther verified that the same trends observed in the non-regularized case persist under mild regularization: for both ε0 = 0 and ε0 = 0 .01 rc, overly frequent R3 resampling degrades the localization of the transition and amplifies sampling-induced artifacts, whereas longer periods yield a more stable interfacial layer and microstructure concen-trated near the front. Likewise, once the network can represent a thin front, additional capacity provides limited qualitative benefit, and overly deep models can encounter an optimization bottleneck due to the strongly non-convex energy landscape and the enlarged parameter space (Extended Data Figs. ED1–ED8). 
+
+3.2 Two-cell experiments 
+
+We next consider two circular cells C1 = {x : |x−z1| = rc} and C2 = {x : |x−z2| = rc}
+
+embedded in Ω c with the same bulk model and boundary conditions (Sec. 5.1). Unless stated otherwise, we use a symmetric configuration with z1 = ( −d/ 2, 0), z2 = ( d/ 2, 0) and contraction ratio u0 = 0 .5. We focus on the non-regularized limit ε0 = 0 to emphasize the intrinsic sharp-front difficulty. 11 Top row: d = 5 rc, weak coupling 0.8 
+
+> 1.0
+
+(a) PINN 0.8  
+
+> 1.0
+> 1.2
+
+(b) RAR-D 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+
+(c) R3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(d) Bio-PINN 
+
+Bottom row: d = 2 .5rc, strong coupling 0.6 
+
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) PINN 0.4  
+
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(f ) RAR-D 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(g) R3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(h) Bio-PINN 
+
+Fig. 7 : Two-cell interaction without second-gradient regularization ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for a long-distance regime (top row; d = 5 rc, weak coupling) and a short-distance regime (bottom row; d = 2 .5 rc,strong coupling). Panels (a,e) correspond to PINN, (b,f) to RAR-D, (c,g) to residual-driven R3, and (d,h) to Bio-PINN. Bio-PINN most consistently resolves densification (low J) near cell boundaries and within the intercellular gap while maintaining a cleaner far field. 
+
+3.2.1 Interaction and tether formation without second-gradient regularization with ε0 = 0 
+
+We consider two cell separations, d ∈ { 5rc, 2.5rc}, and compare the Jacobian determi-nant J = det F across methods in Fig. 7. The larger separation probes an interaction regime with weaker tether-mediated intercellular mechanical communication, whereas the smaller separation promotes strong interaction through a localized densification phase transition in the intercellular ECM. Representative sensitivity studies for this two-cell non-regularized regime are reported in Extended Data Figs. ED9-ED12, including sweeps over the R3 cadence P , network capacity, and the UQ probe variance 
+
+ρuq .
+
+Long distance, d = 5 rc : weak coupling 
+
+When d = 5 rc, each cell induces a pericellular densification ring similar to the single-cell pattern, while the intercellular ECM remains predominantly in the undensified state with only minor localized densification, resulting in the formation of fewer and weaker intercellular tethers. In this setting, morphology alone is not decisive. Whether the densified phase is reached is reflected by the minimum attained value of J and by the near-boundary levels indicated by the color scale. In Fig. 7, panels (a) to (c) show that the baselines reproduce two annulus-like structures, yet they plateau at sub-stantially higher minima, with the color scale bottoming out around J ≳ 0.6 to 0 .7. This indicates that optimization fails to reach the neighborhood of the densified well (J ≈ J⋆) near the cell boundaries, even though a ring is visible. In contrast, Bio-PINN 12 in panel (d) drives J toward the densified well, with values approaching J ≈ J⋆ adja-cent to each cell. The resulting annuli are contiguous and more azimuthally uniform, and far-field texturing is reduced. This behavior is consistent with delaying far-field participation and concentrating sampling near the advancing pericellular densifica-tion fronts, and it persists under representative variations of P and network capacity (Extended Data Figs. ED9–ED11). 
+
+Short distance, d = 2 .5rc : strong coupling and tethers 
+
+When d = 2 .5rc, the pericellular remodeling zones overlap, and an intercellular tether forms in the gap, corresponding to the smallest values of J in panels (e) to (h) of Fig. 7 and indicating a localized transition toward the densified-well neighborhood ( J ≈ J⋆)within the intercellular region. All methods indicate the qualitative presence of tethers, but the degree of den-sification differs markedly. PINN and RAR-D remain at elevated minima, with the color scale bottoming out around J ≳ 0.4, which indicates an incomplete transition from the undensified state toward the densified state in the gap and in the pericellular regions near the cell boundaries. R3 can further reduce J by aggressively concentrat-ing samples, yet the smallest values often appear in fragmented bands accompanied by spurious spoke-shaped (needle-like) streaks around the intercellular hotspot. This points to sensitivity when repeatedly resampling on thin high-error sets. Bio-PINN yields a more localized and contiguous densified band in the gap and reaches values approaching the densified-well level J ≈ J⋆, while exhibiting fewer spurious spokes and a cleaner bulk. This behavior is consistent with the intended mechanisms. The near-to-far gate advances the active region outward without premature leakage, and the UQ-R3 update concentrates collocation effort on the two interacting fronts and the intercellular gap rather than chasing thin and transient high-error sets. 
+
+Role of the UQ probe variance 
+
+The role of ρuq is consistent with the single-cell case. Smaller values emphasize sharper, more localized hotspots, whereas larger values produce smoother but more diffuse updates. The qualitative ordering of methods remains stable under representative sweeps of P and network capacity (Extended Data Figs. ED9–ED12). 
+
+3.3 Three-cell experiments 
+
+We conclude with a three-cell configuration as a qualitative stress test of geometric complexity in the non-regularized regime with ε0 = 0. The setup follows the two-cell case described in Methods Sec. 5.1. Three circular cells are embedded in Ω c, share identical boundary conditions, and we use the same training protocol. As before, we consider two representative separation regimes corresponding to weak coupling at long distances and strong coupling at short distances. We further assess the robustness of this stress test to the resampling cadence and UQ-proxy settings (Extended Data Figs. ED13–ED14). 13 Representative fields and comparison using det F
+
+Figure 8 compares three-cell solutions in terms of the Jacobian determinant J = det F
+
+for ε0 = 0 against three baselines in both separation regimes. In the absence of second-gradient regularization, qualitative morphology is informative but not sufficient. The color scale provides a direct diagnosis because the energetic optimum requires a distinct densified phase next to the cell boundaries, with J decreasing toward the densified-well value J⋆. Among the methods considered, only Bio-PINN consistently reaches this low-J band adjacent to each cell while keeping the far field close to J ≈ 1. In the long-distance regime, all methods indicate three pericellular densification rings around the cells. However, the baselines plateau at substantially larger minima, with their color scales bottoming out around J ≳ 0.5 to 0 .6. This suggests that near-cell solutions do not reach the neighborhood of the densified well ( J ≈ J⋆) even when an annulus-like pattern is visible. In contrast, Bio-PINN reaches the densified-well neighborhood around each cell, producing a dark band with J near J⋆, indicating that the near-boundary transition layers are not only localized but also more closely attained. In the short-distance regime, overlap of the three pericellular remodeling zones pro-duces a compact densified multicell core, interpretable as a tether-network junction in the intercellular ECM. The baselines again do not reach the densified-well neigh-borhood near the cell boundaries, and within the narrow interaction region, where typical minima remain around 0 .4 to 0 .5. Bio-PINN attains markedly smaller values, approaching J ≈ J⋆, and maintains a clearer separation between the localized interac-tion hotspot and the bulk. Overall, the three-cell case highlights the central challenge at ε0 = 0: multiple sharp layers and an emergent multicell interaction core must be optimized simultaneously. Bio-PINN is distinguished not only by reduced artifacts but also by reaching the densified-well neighborhood indicated by the color scale. 
+
+Robustness and role of the UQ probe variance 
+
+The qualitative conclusions above persist under representative variations of the resam-pling cadence (Extended Data Fig. ED13). Moreover, the UQ probe variance ρuq 
+
+provides an interpretable control over the effective spatial scale of the probing proxy: smaller ρuq yields sharper, more localized emphasis on the multicell interaction core, but can introduce noisier, more transient updates, whereas larger ρuq increases spatial averaging and produces smoother but more diffuse updates while preserving the same interaction morphology and low-J attainment (Extended Data Fig. ED14). 
+
+# 4 Discussion 
+
+We introduced Bio-PINNs, a biomimetic physics-informed learning framework for cell-induced phase transitions governed by nonconvex multi-well energies. The cen-tral design principle is a near-to-far training curriculum. A causal distance gate focuses learning on the mechanically decisive near field and expands outward only after the near-field response has stabilized. In parallel, an uncertainty-driven retain-resample-release loop reallocates collocation effort toward regions that are sensitive to microstructure, while maintaining global coverage as transition layers and intercellular 14 0.6 
+
+> 0.8
+> 1.0
+> 1.2
+
+(a) PINN 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+
+(b) RAR-D 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+
+(c) R3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(d) Bio–PINN 0.6 
+
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+> 2.6
+
+(e) PINN 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+
+(f) RAR-D 0.4  
+
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+
+(g) R3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+
+(h) Bio–PINN 
+
+Fig. 8 : Three-cell stress test without second-gradient regularization ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is compared across methods for a long-distance regime (top row; weak coupling) and a short-distance regime (bot-tom row; strong coupling). The minimum J indicated by the color scale diagnoses whether the densified phase is reached adjacent to the cell boundaries. Bio-PINN most consistently drives J into the low-J band near each cell while preserving near-incompressibility in the far field. interaction channels develop. Across single-cell and multi-cell benchmarks, this combi-nation enables the robust recovery of sharp transition zones and tether morphologies that remain difficult for nonadaptive or ungated collocation strategies. Bio-PINNs are effective because their optimization and sampling dynamics are aligned with both the physics of cell-mediated remodeling and the failure modes of physics-informed training in low-regularity settings that form microstructure. Distance gating reduces the burden of fitting the far field before the near field has converged. This mitigates the common stagnation pattern in which optimization plateaus behind sharp layers. The uncertainty-driven retain-resample-release mechanism chooses sam-pling locations with an explicit control variable. Retention prevents the premature loss of near-interface information. Resampling restores exploration capacity through low-discrepancy designs. Shell injection ensures that newly activated regions under gate progression are probed systematically rather than relying on incidental cover-age. The structural properties established in the theory, including accumulation for Retain, non-emptiness for Resample, and the budget identity for Release, together with quantitative near-to-far growth under gating, provide a coherent explanation for the empirical behavior. The sampler continues to concentrate on decisive regions until microstructures are resolved, and the sampling mass propagates outward in a stable manner as the active domain expands. 15 Bio-PINNs suggest a general strategy for stabilizing physics-informed learning in microstructure-forming systems by coupling a spatial curriculum with uncertainty-driven adaptive collocation. Beyond cell-induced phase transitions, the same principle may benefit broader classes of nonconvex variational models, including multivariant microstructures, fracture and damage, phase-field models, and free-boundary prob-lems. It may also be valuable in coupled multiphysics settings where decisive features nucleate near interfaces and propagate outward. An important direction is to incorpo-rate operator learning to amortize solutions across parameter families while retaining near-to-far control of sampling. On the uncertainty side, promising alternatives include less expensive surrogates such as calibrated residual statistics and lightweight approx-imations, as well as transport-free resampling rules that retain coverage guarantees under complex geometries. These developments would further strengthen adaptive and physics-aligned sampling as a core ingredient for reliable scientific machine learning in nonconvex and multiscale mechanics. 
+
+# 5 Methods 
+
+We describe the continuum model, the Bio-PINN formulation, and the UQ-R3 sam-pling mechanism with causal distance gating. Proofs of theoretical statements are deferred to Appendix A. 
+
+5.1 Nonconvex variational model on a perforated domain 
+
+Let Ω ⊂ R2 be a bounded Lipschitz domain and let Bi = {x ∈ R2 : |x − ci| < r c}
+
+(i = 1 , . . . , N c) denote circular cell regions with common radius rc > 0. We work on the perforated domain Ωc := Ω \
+
+> Nc
+
+[
+
+> i=1
+
+Bi, Γout := ∂Ω, Ci := ∂B i, Γin := 
+
+> Nc
+
+[
+
+> i=1
+
+Ci.
+
+A deformation is y : Ω c → R2 with displacement u := y − id and deformation gradient 
+
+F := ∇y. We write J := det F > 0 and I1 := tr( F ⊤F ). 
+
+Bulk energy and orientation barrier 
+
+We model the collagen ECM as a random network of fibers and adopt a multiscale, orientation-averaged continuum energy. The resulting strain-energy density is noncon-vex to reflect compression-induced fiber microbuckling and buckling instabilities, along with the associated densification phase transition. In our experiments, the single-fiber force-stretch law is 
+
+S(λ) = w′(λ) = μ(λ5 − λ3), λ > 0, μ > 0,
+
+16 with primitive w(λ) = μ( 16 λ6 − 14 λ4). Assuming isotropic in-plane fiber orientations, the macroscopic energy admits the invariant closed form 
+
+W (F ) = μ
+
+96 
+
+
+
+5I31 − 9I21 − 12 I1J2 + 12 J2 + 8 
+
+
+
+. (6) Owing to compression-induced fiber microbuckling and buckling instabilities, the orientation-averaged bulk energy exhibits a nonconvex multi-well landscape associated with phase transitions. This energy is expressed in terms of the principal stretches λ1
+
+and λ2 of the deformation gradient F up to the addition of a null Lagrangian, which does not affect the Euler-Lagrange equations under fixed boundary data. For standard parameter values used in collagen ECM simulations, two energetically preferred states arise. The first is an undeformed low-density state at λ1 = 1 and λ2 = 1. The second is a densified high-density state where the principal stretches are approximately 0.2 and 1.06. The latter corresponds to strong compression in one direction combined with mild extension in the orthogonal direction. This gives a characteristic volume ratio 
+
+J⋆ = λ1λ2 ≈ 0.21 . Because the model is isotropic, the densified well admits symmetry-related variants obtained by swapping λ1 and λ2 and by rotations. In what follows, we refer to the neighborhood of J ≈ 1 as the undensified or low-density well and to the neighborhood of J ≈ J⋆ as the densified or high-density well. These two wells rep-resent distinct density states of the collagen network associated with the densification phase transition. To discourage loss of orientation and interpenetration, we add a Jacobian barrier Φ( J) = exp A(b − J), A ≫ 1, 0 < b ≪ 1, (7) which is negligible for J ≳ b and grows rapidly as J ↓ b.
+
+Boundary data and contraction penalty 
+
+On the outer boundary, we impose the hard Dirichlet condition y(x) = x for x ∈ Γout .On each cell boundary Ci, we prescribe a radial contraction target map 
+
+gi(x) = ci + (1 − u0) ( x − ci), x ∈ Ci,
+
+where u0 ∈ (0 , 1) is the contraction ratio. We enforce this inner condition softly via a quadratic penalty 
+
+Pin [y] = 
+
+> Nc
+
+X
+
+> i=1
+
+γin 
+
+2
+
+Z
+
+> Ci
+
+∥y − gi∥2 ds, γin > 0. (8) 
+
+Second-gradient regularization and admissible class 
+
+For ε ≥ 0 we consider the energy 
+
+Eε[y] = 
+
+Z
+
+> Ωc
+
+
+
+W (∇y) + Φ(det ∇y)
+
+
+
+dx + ε2
+
+2
+
+Z
+
+> Ωc
+
+∥∇ 2y∥2 
+
+> F
+
+dx + Pin [y], (9) 17 over the admissible class 
+
+Aε := 
+
+n
+
+y ∈ H2(Ω c; R2) : det ∇y > 0 a.e. , y |Γout = x
+
+o
+
+.
+
+The second-gradient term introduces an intrinsic length scale and stabilizes interfaces of width O(ε). 
+
+5.2 Bio-PINN ansatz and weak boundary handling 
+
+We approximate y by a feed-forward network. Let uθ : Ω c → R2 be a fully-connected neural network with differentiable activation σ (we use CELU in all experiments) so that ∇uθ and ∇2uθ exist and are accessible via automatic differentiation. To enforce the hard outer Dirichlet condition y = x on Γ out exactly, we use a lifting construction: 
+
+yθ(x) = x + φ(x) uθ(x), (10) where φ : Ω → R is a smooth shape function satisfying φ|Γout = 0 and therefore yθ = x
+
+on Γ out . Inner boundary contraction on Γ in = ∪iCi is imposed softly by adding Pin [yθ]from (8) to the training objective. 
+
+5.3 Causal distance gating and stage-wise curriculum 
+
+Cell-induced effects are strongest near Γ in and propagate into the bulk. We encode this by a normalized distance field ˜d(x) := dist( x, Γin )
+
+dmax 
+
+∈ [0 , 1] , dmax := max 
+
+> x∈Ωc
+
+dist( x, Γin ). (11) At stage i, we apply a smooth gate 
+
+gγi (x) = σ α(γi − ˜d(x))  ∈ (0 , 1) , (12) where σ is the logistic sigmoid, α > 0 controls steepness, and γi ∈ R controls the revealed region. In experiments, we use α = 5 .0, initialize γ0 = −0.5, and cap per-stage increments by ∆ max = 0 .05. For intuition and analysis, it is convenient to associate each stage with an effective hard-gated set using the clamped gate level ¯ γi := Π [0 ,1] (γi): 
+
+Ai = {x ∈ Ωc : ˜d(x) ≤ ¯γi}, Si+1 = Ai+1 \ Ai. (13) We advance the gate using a near-to-far curriculum driven by the current objective value Li:
+
+γi+1 = γi + min ∆max , η g e−c Li , (14) with ηg > 0 and c > 0. Importantly, gating is applied only to the bulk density terms 
+
+W + Φ and the optional H2 term, and not to the inner boundary penalty Pin , so boundary information is enforced throughout training. 18 5.4 Uncertainty proxy and gated normalization 
+
+Interfaces, thin layers, and tethers are regions where the learned deformation is most sensitive during training. We estimate uncertainty using gradient-based local probing. Given the current parameters at stage i, for each x ∈ Ωc we draw muq i.i.d. Gaussian perturbations δ(k) ∼ N (0 , ρ uq I) and define 
+
+Ui(x) := Var k=1 ,...,m uq 
+
+
+
+∥∇ yθ (x + δ(k))∥F
+
+
+
+. (15) In experiments we use muq = 16 and ρuq = 0 .01. To stabilize scaling and remain consistent with the currently revealed region, we normalize Ui using a gated quantile-shrink rule computed empirically over the current collocation set (Sec. 5.5). Let q(g) 
+
+> α
+
+denote the weighted α-quantile of {Ui(x) : x ∈ S i}
+
+under weights gγi (x). For fixed 0 < α − < α + < 1, define 
+
+eUi(x) = clip [0 ,1] 
+
+Ui(x) − q(g)
+
+> α−
+
+q(g) 
+
+> α+
+
+− q(g)
+
+> α−
+
+!
+
+, (16) which maps scores to [0 , 1] while suppressing extreme outliers. 
+
+5.5 UQ-R3 sampling with low-discrepancy resampling 
+
+At stage i, let Si ⊂ Ωc be the current collocation set with fixed budget N := |S i|. We compute scores si(x) on Si, where Bio-PINN uses the normalized UQ score si(x) = 
+
+eUi(x) and residual-based baselines use a pointwise residual density as si(x). Given retention ratio ρ ∈ (0 , 1), we retain the top ρ fraction of points by score, using gate-weights to define the cutoff. Concretely, let τi be the smallest threshold such that the total gated weight of points with si(x) ≤ τi accounts for at least (1 − ρ)of the total gated weight: 
+
+X
+
+> x∈S i
+
+1{si(x)≤τi} gγi (x) ≥ (1 − ρ) X
+
+> x∈S i
+
+gγi (x), (17) and define the retained set 
+
+Ri := {x ∈ S i : si(x) ≥ τi}, |Ri| ≈ ρN. (18) We release the remaining mi := N − | Ri| points and resample mi new points to form 
+
+Si+1 = Ri ∪ Ci, |Ci| = mi. (19) 
+
+Low-discrepancy resampling and shell injection 
+
+New points are generated from low-discrepancy nodes transported into the cur-rently active region. We draw Hammersley nodes {ui,j }mi 
+
+> j=1
+
+⊂ [0 , 1] 2 and apply a (bi-)Lipschitz transport map Ti : [0 , 1] 2 → Ai to obtain Xi,j = Ti(ui,j ) and 19 Ci = {Xi, 1, . . . , X i,m i }. When shell injection is used, Ti is restricted to map into the newly opened shell Si+1 = Ai+1 \ Ai, ensuring exploration of fresh regions while preserving low-discrepancy coverage up to transport constants. 
+
+5.6 Gate-weighted empirical objective and training loop 
+
+At stage i, we approximate bulk integrals using quasi-Monte Carlo (QMC) quadrature over the collocation set Si with fixed budget N = 10 4 in all experiments. Gating is applied only to bulk densities, and we use a normalized gate-weighted empirical energy: 
+
+E(g) 
+
+> ε,i
+
+[yθ ] := 
+
+P 
+
+> x∈S i
+
+gγi (x) W (∇yθ (x)) + Φ(det ∇yθ (x)) P 
+
+> x∈S i
+
+gγi (x) + ε2
+
+2
+
+P 
+
+> x∈S i
+
+gγi (x)∥∇ 2yθ(x)∥2
+
+> F
+
+P 
+
+> x∈S i
+
+gγi (x) .
+
+(20) The stage objective adds the inner-boundary penalty: 
+
+Ji(θ) = E(g) 
+
+> ε,i
+
+[yθ] + Pin [yθ ], Li := Ji(θi). (21) All derivatives are computed by automatic differentiation. 
+
+Training schedule 
+
+Training alternates between (i) optimizer steps at fixed ( γi, Si), (ii) updating the gate via (14), and (iii) updating the collocation set via UQ-R3 in (19). In practice, we trigger (ii)-(iii) every P optimizer iterations. Boundary points on Γ out and Γ in used to evaluate Pin are sampled randomly and refreshed throughout training. 
+
+Implementation details 
+
+Unless otherwise stated, we use a fully-connected network with three hidden layers and a width of 128, CELU activations, Xavier-uniform initialization, and Adam optimiza-tion with learning rate 10 −3 and ( β1, β 2) = (0 .9, 0.999). The learning rate is decayed by a factor of 0 .9 every 10 ,000 iterations. We use early stopping based on a validation estimate of Ji computed on Nval = 2 ,000 randomly sampled points. All experiments are implemented in PyTorch and run with a fixed random seed. 
+
+5.7 Theoretical properties of UQ-R3 under gating 
+
+This section summarizes the structural guarantees of the UQ-R3 dynamics coupled with monotone gating. All proofs are deferred to Appendix A. For clarity, the state-ments below are given in the hard-gate setting, where μ(·) denotes the Lebesgue measure on R2.Recall the proxy maximizer level and near-optimal band 
+
+eU ⋆i := sup 
+
+> x∈Ai
+
+eUi(x), Bi(ε) := 
+
+n
+
+x ∈ Ai : eU ⋆i − eUi(x) ≤ ε
+
+o
+
+,
+
+20 Algorithm 1: Bio-PINNs with UQ-R3 and causal distance gating 
+
+Input: Initial parameters θ0, initial gate γ0, budget N , retention ratio ρ, UQ parameters ( muq , ρ uq ), transport maps {Ti}, gating parameters (ηg , c, ∆max ), resampling period P .Initialize S0 ⊂ A0 with |S 0| = N (e.g., transported Hammersley nodes); 
+
+for i = 0 , 1, 2, . . . until stopping do 
+
+Perform P optimizer steps to approximately minimize Ji(θ) on Si;Compute Ui by (15) and eUi by (16) on Si;Compute τi by (17), retain Ri by (18), resample mi = N − | Ri| new points 
+
+Ci via Ti, set Si+1 = Ri ∪ Ci;Update gate γi+1 by (14) and update Ai+1 by (13); the retained-set mean 
+
+U i := 1
+
+|S i ∩ Λi|
+
+X
+
+> x∈S i∩Λi
+
+eUi(x),
+
+and the effective tolerance εi := min {ε, eU ⋆i − τi} ∈ (0 , ε ]. 
+
+Assumption 5.1 (Regularity needed for discrepancy bounds) For each stage i:
+
+1. eUi is Lipschitz on Ai.2. Ti : [0 , 1] 2 → Ai is bi-Lipschitz and a.e. differentiable. Writing JTi (x) := 
+
+| det ∇T −1 
+
+> i
+
+(x)|, define the (stage-uniform) transport distortion constant 
+
+CT := sup 
+
+> i
+
+μ(Ai) JTi − 1
+
+μ(Ai) L∞(Ai)
+
+∈ [0 , 1) .
+
+3. The low-discrepancy nodes satisfy a star-discrepancy bound D∗({ui,j }) ≲
+
+(log mi)2/m i (e.g. two-dimensional Hammersley points). 4. The measurable sets used below (in particular Bi(εi), Λi, and the shell Si+1 := Ai+1 \ Ai) have finite perimeter, so that BV-mollification/Koksma-Hlawka estimates apply after pullback by Ti.
+
+Proposition 5.1 (Release : budget identity) Let Si ⊂ Ai be the bulk collocation set with budget N = |S i|. Define the retained set Ri = Si ∩ Λi and update Si+1 = Ri ∪ Ci with 
+
+|Ci| = N − | Ri|. Then the budget is preserved: 
+
+|S i+1 | = N for all stages i. 
+
+Theorem 5.2 (Resample : non-emptiness and discrepancy-controlled coverage) Fix a stage 
+
+i and let B ⊂ Ai be measurable with finite perimeter. Define its relative area 
+
+pB := μ(B)
+
+μ(Ai) ∈ [0 , 1] , eB := T −1 
+
+> i
+
+(B) ⊂ [0 , 1] 2.
+
+21 Under Assumption 5.1, there exists a constant C1 > 0 (depending only on Ti and geometric bounds such as Per( B)) such that, for every mi,
+
+#( Ci ∩ B) ≥ mi
+
+
+
+| eB| − C1
+
+q
+
+D∗({ui,j })
+
+
+
+> +
+
+. (22) 
+
+Moreover, 
+
+| eB| ≥ (1 − CT ) pB . (23) 
+
+In particular, if 
+
+D∗({ui,j }) ≤ (1 − CT )2p 2
+
+> B
+
+4C 21
+
+, mi ≥ 2(1 − CT ) pB
+
+,
+
+then #( Ci ∩ B) ≥ 1. If {ui,j } are two-dimensional Hammersley points with D∗(m) ≤
+
+CHam (log m)2/m , it suffices to take 
+
+mi ≥ κ max 
+
+(
+
+2(1 − CT ) pB
+
+, 4C 21
+
+(1 − CT )2p 2
+
+> B
+
+
+
+log 
+
+ 2C1
+
+(1 − CT ) pB
+
+ 2)
+
+, (κ ≥ 1) ,
+
+which guarantees #( Ci ∩ B) ≥ 1.
+
+Theorem 5.3 (Retain : hit, no-early-exit, and accumulation under good rounds) Fix ε > 0.Under Assumption 5.1, there exists m0(ε) such that for any round with mi := |Ci| ≥ m0(ε)
+
+(a good round ), we have 
+
+#( Ci ∩ Bi(εi)) ≥ 1. (24) (No-early-exit). Fix a good round i and let x ∈ Ci ∩ Bi(εi). If for subsequent rounds j ≥ i
+
+before “success” (i.e. while U j < eU ⋆i − ε) either 
+
+1. ( Fixed proxy ) eUj ≡ eUi, or 2. ( Small drift ) inf y∈Bi(εi) eUj (y) ≥ eU ⋆i − εi and τj ≤ eU ⋆i − εi,
+
+then x ∈ Λj for all such j and hence cannot be released before success. 
+
+(Long-term accumulation). If the set of good rounds {i : mi ≥ m0(ε)} is infinite, then 
+
+lim inf  
+
+> n→∞
+
+U n ≥ eU ⋆ − ε, 
+
+i.e. along infinitely many good rounds, the retained-set mean approaches the optimal proxy level (up to an arbitrarily small slack), where eU ⋆ denotes the corresponding maximizer level. 
+
+Corollary 5.1 (Guaranteed shell injection) Let the gate expand from Ai to Ai+1 and define the shell Si+1 := Ai+1 \ Ai with relative measure pS := μ(Si+1 )/μ (Ai+1 ) ∈ (0 , 1]. Let 
+
+eSi+1 := T −1
+
+> i+1
+
+(Si+1 ) ⊂ [0 , 1] 2 and set C1,S ≲ Lip( T −1
+
+> i+1
+
+) Per( Si+1 ). If the next round uses 
+
+mi+1 two-dimensional Hammersley nodes (so that D∗(m) ≤ CHam (log m)2/m ), it suffices to choose 
+
+mi+1 ≥ κ max 
+
+(
+
+2(1 − CT ) pS
+
+, 4C 21,S 
+
+(1 − CT )2p 2
+
+> S
+
+
+
+log 
+
+ 2C1,S 
+
+(1 − CT ) pS
+
+ 2)
+
+, (κ ≥ 1) ,
+
+which guarantees #( Ci+1 ∩ Si+1 ) ≥ 1. 
+
+Theorem 5.4 (Dynamic injection/accumulation under monotone gating) Let the training budget be fixed at N and define 
+
+νi := 1
+
+N
+
+X
+
+> x∈S i
+
+δx, Ai ⊂ Ai+1 , Si+1 := Ai+1 \ Ai.
+
+22 Then for any measurable B ⊂ Ai+1 , letting pB := μ(B)/μ (Ai+1 ) ∈ [0 , 1] , we have: 
+
+(1) Decomposition identity (retained + resampled). 
+
+νi+1 (B) = #( Si ∩ Λi ∩ B)
+
+N + #( Ci+1 ∩ B)
+
+N . (25) (2) Quantitative lower bound (strong form). There exists C1 > 0 (depending only on geometric bounds for Ti+1 and Per( B)) such that 
+
+νi+1 (B) ≥ #( Si ∩ Λi ∩ B)
+
+N + mi+1 
+
+N
+
+
+
+(1 − CT ) pB − C1
+
+q
+
+D∗({ui+1 ,j })
+
+
+
+> +
+
+. (26) (3) Concise bound (conservative form). After absorbing constants, 
+
+νi+1 (B) ≥ #( Si ∩ Λi ∩ B)
+
+N + mi+1 
+
+N
+
+
+
+˜pB − eC1
+
+q
+
+D∗({ui+1 ,j })
+
+
+
+> +
+
+, ˜pB := (1 − CT )pB .
+
+(27) In particular (shell injection). For B = Si+1 = Ai+1 \ Ai (hence Si ∩ Λi ∩ Si+1 = ∅), 
+
+νi+1 (Si+1 ) ≥ mi+1 
+
+N
+
+
+
+(1 − CT )pS − eC1
+
+q
+
+D∗({ui+1 ,j })
+
+
+
+> +
+
+, pS := μ(Si+1 )
+
+μ(Ai+1 ) . (28) 
+
+Hence, if 
+
+D∗({ui+1 ,j }) ≤
+
+ (1 −CT )pS 
+
+> 2eC1
+
+2
+
+, mi+1 ≥ 2(1 −CT )pS ,
+
+then νi+1 (Si+1 ) ≥ mi+1 
+
+2N (1 − CT )pS > 0, i.e., each round injects a positive mass into the newly opened shell. Remark 5.1 (Where proofs and stronger statements appear) Appendix A contains proofs and refined variants of Theorems 5.2-5.4, including explicit constants and conditions under proxy drift. A companion theory paper further establishes Γ-consistency of decoupled energy evaluation under analogous coverage assumptions. 
+
+# Data availability 
+
+The dataset generation scripts used for the problems studied in this work are available in a publicly available GitHub repository https://github.com/linanci123/Paper-PINN. 
+
+# Code availability 
+
+The code used in this study is released in a publicly available GitHub repository https://github.com/linanci123/Paper-PINN. 
+
+# A Proofs for Section 5.7 
+
+A.1 Proof of Theorem 5.3 
+
+Proof We prove the three claims in turn. The hit property (24) follows immediately from Theorem 5.2. In particular, given a good round i and a point x ∈ Ci ∩Bi(εi). By the definition of Bi(εi) and eU ⋆i , we have 
+
+eUi(x) ≥ eU ⋆i − εi ≥ τi,
+
+23 and thus x ∈ Λi ⊂ S i+1 . Next, we verify no-early-exit. For the same good round i and point 
+
+x ∈ Ci ∩ Bi(εi), let j ≥ i be any round before “success”, i.e., U j < eU ⋆i − ε. We claim that 
+
+x cannot be removed at round j provided either the proxy is fixed across rounds ( eUj ≡ eUi)and τj ≤ eU ⋆i − εi, or the inter-round drift is small in the sense that inf 
+
+> y∈Bi(εi)
+
+eUj (y) ≥ eU ⋆i − εi and τj ≤ eU ⋆i − εi.
+
+Indeed, in the first case we have 
+
+eUj (x) = eUi(x) ≥ eU ⋆i − εi ≥ τj ,
+
+while in the second case the drift condition gives eUj (x) ≥ eU ⋆i − εi ≥ τj directly. In either situation x ∈ Λj , and therefore x ∈ Λj ⊂ S j+1 , which is precisely the no-early-exit property. Finally, we show long-term accumulation. Assume that the set of good rounds Iε := {i :
+
+mi ≥ m0(ε)} is infinite. Suppose, for contradiction, that lim inf  
+
+> n→∞
+
+U n < eU ⋆ − ε. 
+
+Then there exists an infinite subsequence {jℓ} such that U jℓ < eU ⋆ − ε for all ℓ. We choose an increasing infinite subsequence {ik} ⊂ Iε with i1 < j 1 < i 2 < j 2 < · · · . By the hit property, we can select xk ∈ Cik ∩ Bik (εik ) for each k. Since none of the rounds jℓ is successful, we can repeatedly apply no-early-exit to conclude that, for every r ≥ 1, 
+
+{x1, . . . , x r } ⊆ Sjr +1 ∩ Λjr .
+
+Consequently we obtain |S jr +1 ∩ Λjr | ≥ r, which contradicts the fixed budget |S jr +1 | = N
+
+once we take r > N . Therefore, the contradiction shows that lim inf  
+
+> n→∞
+
+U n ≥ eU ⋆ − ε. 
+
+□
+
+A.2 Proof of Theorem 5.2 
+
+Proof Let eB := T −1 
+
+> i
+
+(B) ⊂ [0 , 1] 2. We first relate | eB| to pB . By change of variables, for any measurable E ⊂ Ai, we have 
+
+|T −1 
+
+> i
+
+(E)| =
+
+Z
+
+> E
+
+JTi (x) dx, and 
+
+Z
+
+> Ai
+
+JTi (x) dx = 1 .
+
+Taking E = B and writing pB = μ(B)/μ (Ai) yield 
+
+| eB| − pB =
+
+Z
+
+> B
+
+
+
+JTi (x) − 1
+
+> μ(Ai)
+
+
+
+dx ≤ CT pB ,
+
+which implies 
+
+| eB| ≥ (1 − CT ) pB .
+
+This proves (23). Next we estimate the empirical mass of eB under the points {ui,j }mi
+
+> j=1
+
+. Since 
+
+B has finite perimeter and Ti is bi-Lipschitz, eB has finite perimeter as well. For δ ∈ (0 , 1), we take fδ ∈ C1([0 , 1] 2) to be a BV-mollification of 1 eB satisfying 0 ≤ fδ ≤ 1 eB ,
+
+Z
+
+> [0 ,1] 2
+
+fδ = | eB| − O (δ Per( eB)) , VHK (fδ ) ≤ C Per( eB)
+
+δ .
+
+Applying the Koksma-Hlawka inequality gives 
+
+1
+
+mimiX
+
+> j=1
+
+fδ (ui,j ) −
+
+Z
+
+> [0 ,1] 2
+
+fδ ≤ VHK (fδ ) D∗({ui,j }) ≤ C Per( eB)
+
+δ D∗({ui,j }).
+
+24 Using fδ ≤ 1 eB together with R fδ = | eB| − O (δ Per( eB)), we obtain 1
+
+mimiX
+
+> j=1
+
+1 eB (ui,j ) ≥ | eB| − C2 Per( eB) δ − C1
+
+Per( eB)
+
+δ D∗({ui,j }).
+
+Choosing δ = pD∗({ui,j }) and absorbing Per( eB) into C1 yield 1
+
+mimiX
+
+> j=1
+
+1 eB (ui,j ) ≥ | eB| − C1
+
+q
+
+D∗({ui,j }).
+
+Multiplying by mi gives (22). Finally, we derive the “at least one hit” criterion. From (23) we have | eB| ≥ (1 − CT )pB . If 
+
+D∗({ui,j }) ≤ (1 − CT )2p2
+
+> B
+
+4C 21
+
+and mi ≥ 2(1 − CT )pB
+
+,
+
+then (22) implies #( Ci ∩ B) ≥ 1. The stated Hammersley-node condition follows by inserting the discrepancy estimate D∗(m) ≤ CHam (log m)2/m . □
+
+A.3 Proof of Corollary 5.1 
+
+Proof We apply Theorem 5.2 with B = Si+1 = Ai+1 \ Ai and the next-round transport map 
+
+Ti+1 . We then choose mi+1 sufficiently large so that the sufficient conditions in Theorem 5.2 are satisfied. The conclusion of Theorem 5.2 yields #( Ci+1 ∩ Si+1 ) ≥ 1,
+
+which proves the statement. □
+
+A.4 Proof of Proposition 5.1 
+
+Proof Recall that Ri = Si ∩ Λi and that Ci is chosen to have cardinality |Ci| = N − | Ri|.Consequently, we have Si+1 = Ri ∪ Ci and the union is disjoint by construction. Therefore, we conclude 
+
+|S i+1 | = |Ri| + |Ci| = |Ri| + ( N − | Ri|) = N, 
+
+as desired. □
+
+A.5 Proof of Theorem 5.4 
+
+Proof We begin by proving (25). By construction, the next-round set is the disjoint union 
+
+Si+1 = ( Si ∩ Λi) ∪ Ci+1 .
+
+Therefore, for any B ⊂ Ai+1 , we have #( Si+1 ∩ B) = #( Si ∩ Λi ∩ B) + #( Ci+1 ∩ B).
+
+Dividing by N gives (25). Next, we derive the lower bound (26). Applying Theorem 5.2 on 
+
+Ai+1 and, for a given B ⊂ Ai+1 , defining eB := T −1
+
+> i+1
+
+(B) ⊂ [0 , 1] 2, the Theorem 5.2 yields #( Ci+1 ∩ B) ≥ mi+1 
+
+
+
+| eB| − C1
+
+q
+
+D∗({ui+1 ,j })
+
+
+
+> +
+
+.
+
+On the other hand, the equal-area deviation estimate in the proof of Theorem 5.2 gives 
+
+| eB| ≥ (1 − CT )pB .
+
+Substituting this into the previous inequality, dividing by N , and combining with (25) yields (26). Finally, (27) follows by absorbing fixed multiplicative factors into a new constant eC1.For the shell case, take B = Si+1 = Ai+1 \ Ai. Since 
+
+Si ∩ Λi ∩ Si+1 = ∅,
+
+(28) follows directly from (25). □
+
+25 References 
+
+[1] Raissi, M., Yazdani, A., Karniadakis, G.E.: Hidden fluid mechanics: Learning velocity and pressure fields from flow visualizations. Science 367 (6481), 1026– 1030 (2020) https://doi.org/10.1126/science.aaw4741 [2] Jin, X., Cai, S., Li, H., Karniadakis, G.E.: Nsfnets (navier–stokes flow nets): Physics-informed neural networks for the incompressible navier–stokes equations. Journal of Computational Physics 426 , 109951 (2021) https://doi.org/10.1016/ j.jcp.2020.109951 [3] He, Q., Tartakovsky, A.M.: Physics-informed neural network method for forward and backward advection-dispersion equations. Water Resources Research 57 (7), 2020–029479 (2021) https://doi.org/10.1029/2020WR029479 [4] Yang, L., Meng, X., Karniadakis, G.E.: B-pinns: Bayesian physics-informed neu-ral networks for forward and inverse pde problems with noisy data. Journal of Computational Physics 425 , 109913 (2021) https://doi.org/10.1016/j.jcp.2020. 109913 [5] Raissi, M., Perdikaris, P., Karniadakis, G.E.: Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics 378 ,686–707 (2019) https://doi.org/10.1016/j.jcp.2018.10.045 [6] Karniadakis, G.E., Kevrekidis, I.G., Lu, L., Perdikaris, P., Wang, S., Yang, L.: Physics-informed machine learning. Nature Reviews Physics 3(6), 422–440 (2021) https://doi.org/10.1038/s42254-021-00314-5 [7] Krishnapriyan, A.S., Gholami, A., Zhe, S., Kirby, R.M., Mahoney, M.W.: Charac-terizing possible failure modes in physics-informed neural networks. In: Advances in Neural Information Processing Systems, vol. 34, pp. 26548–26560 (2021). https://doi.org/10.48550/arXiv.2109.01050 . https://arxiv.org/abs/2109.01050 
+
+[8] Wang, S., Yu, X., Perdikaris, P.: When and why pinns fail to train: A neural tangent kernel perspective. Journal of Computational Physics 449 , 110768 (2022) https://doi.org/10.1016/j.jcp.2021.110768 [9] Daw, A., Bu, J., Wang, S., Perdikaris, P., Karpatne, A.: Mitigating propagation failures in physics-informed neural networks using retain-resample-release (R3) sampling. In: Proceedings of the 40th International Conference on Machine Learn-ing. Proceedings of Machine Learning Research, vol. 202, pp. 7264–7302 (2023). 
+
+https://proceedings.mlr.press/v202/daw23a.html 
+
+[10] Ball, J.M.: Convexity conditions and existence theorems in nonlinear elasticity. Archive for Rational Mechanics and Analysis 63 (4), 337–403 (1976) https://doi. org/10.1007/BF00279992 26 [11] Kinderlehrer, D., Pedregal, P.: Characterizations of young measures generated by gradients. Archive for Rational Mechanics and Analysis 115 , 329–365 (1991) https://doi.org/10.1007/BF00375129 [12] Grekas, G., Proestaki, M., Rosakis, P., Notbohm, J., Makridakis, C., Ravichan-dran, G.: Cells exploit a phase transition to mechanically remodel the fibrous extracellular matrix. Journal of the Royal Society Interface 18 (175), 20200823 (2021) https://doi.org/10.1098/rsif.2020.0823 [13] Grekas, G., Koumatos, K., Makridakis, C., Rosakis, P.: Approximations of energy minimization in cell-induced phase transitions of fibrous biomaterials: γ-convergence analysis. SIAM Journal on Numerical Analysis 60 (2), 715–750 (2022) https://doi.org/10.1137/20M137286X [14] Kohn, R.V., Strang, G.: Optimal design and relaxation of variational problems, I. Communications on Pure and Applied Mathematics 39 (1), 113–137 (1986) https://doi.org/10.1002/cpa.3160390107 [15] Arnold, D.N., Brezzi, F., Cockburn, B., Marini, L.D.: Unified analysis of dis-continuous galerkin methods for elliptic problems. SIAM Journal on Numerical Analysis 39 (5), 1749–1779 (2002) https://doi.org/10.1137/S0036142901384162 [16] Brenner, S.C., Sung, L.-Y.: c0 interior penalty methods for fourth order elliptic boundary value problems on polygonal domains. Journal of Scientific Computing 
+
+22 (1–3), 83–118 (2005) https://doi.org/10.1007/s10915-004-4135-7 [17] Argyris, J.H., Fried, I., Scharpf, D.W.: The TUBA family of plate elements for the matrix displacement method. The Aeronautical Journal 72 (692), 701–709 (1968) https://doi.org/10.1017/S000192400008489X [18] Ciarlet, P.G.: The Finite Element Method for Elliptic Problems. Studies in Mathematics and its Applications, vol. 4. North-Holland, Amsterdam (1978) [19] Hughes, T.J.R., Cottrell, J.A., Bazilevs, Y.: Isogeometric analysis: CAD, finite elements, NURBS, exact geometry and mesh refinement. Computer Methods in Applied Mechanics and Engineering 194 (39–41), 4135–4195 (2005) https://doi. org/10.1016/j.cma.2004.10.008 [20] Brezzi, F., Fortin, M.: Mixed and Hybrid Finite Element Methods. Springer Series in Computational Mathematics, vol. 15. Springer, New York, NY (1991). https:// doi.org/10.1007/978-1-4612-3172-1 . https://doi.org/10.1007/978-1-4612-3172-1 
+
+[21] Glowinski, R., Le Tallec, P.: Augmented Lagrangian and Operator-Splitting Methods in Nonlinear Mechanics. SIAM Studies in Applied Mathematics, vol. 9. Society for Industrial and Applied Mathematics, Philadelphia, PA (1989). https: //doi.org/10.1137/1.9781611970838 . https://doi.org/10.1137/1.9781611970838 
+
+27 [22] Allgower, E.L., Georg, K.: Numerical Continuation Methods: An Intro-duction. Springer Series in Computational Mathematics, vol. 13. Springer, Berlin, Heidelberg (1990). https://doi.org/10.1007/978-3-642-61257-2 .
+
+https://doi.org/10.1007/978-3-642-61257-2 
+
+[23] Cahn, J.W., Hilliard, J.E.: Free energy of a nonuniform system. I. interfacial free energy. The Journal of Chemical Physics 28 (2), 258–267 (1958) https://doi.org/ 10.1063/1.1744102 [24] Allen, S.M., Cahn, J.W.: A microscopic theory for antiphase boundary motion and its application to antiphase domain coarsening. Acta Metallurgica 27 (6), 1085–1095 (1979) https://doi.org/10.1016/0001-6160(79)90196-2 [25] Mindlin, R.D.: Micro-structure in linear elasticity. Archive for Rational Mechanics and Analysis 16 , 51–78 (1964) https://doi.org/10.1007/BF00248490 [26] Eringen, A.C.: Nonlocal Continuum Field Theories. Springer, New York, NY (2002). https://doi.org/10.1007/b97697 . https://doi.org/10.1007/b97697 
+
+[27] Lu, L., Meng, X., Mao, Z., Karniadakis, G.E.: Deepxde: A deep learning library for solving differential equations. SIAM Review 63 (1), 208–228 (2021) https:// doi.org/10.1137/19M1274067 [28] Niederreiter, H.: Random Number Generation and Quasi-Monte Carlo Methods. CBMS-NSF Regional Conference Series in Applied Mathematics, vol. 63. Society for Industrial and Applied Mathematics, Philadelphia, PA (1992). https://doi. org/10.1137/1.9781611970081 . https://doi.org/10.1137/1.9781611970081 
+
+[29] Dick, J., Pillichshammer, F.: Digital Nets and Sequences: Discrep-ancy Theory and Quasi-Monte Carlo Integration. Cambridge University Press, Cambridge (2010). https://doi.org/10.1017/CBO9780511761188 .
+
+https://doi.org/10.1017/CBO9780511761188 
+
+[30] Heydari, A.A., Thompson, C.A., Mehmood, A.: SoftAdapt: Techniques for Adap-tive Loss Weighting of Neural Networks with Multi-Part Loss Functions (2019). https://doi.org/10.48550/arXiv.1912.12355 . https://arxiv.org/abs/1912.12355 [31] Chen, Z., Badrinarayanan, V., Lee, C.-Y., Rabinovich, A.: GradNorm: Gra-dient normalization for adaptive loss balancing in deep multitask networks. In: Proceedings of the 35th International Conference on Machine Learn-ing. Proceedings of Machine Learning Research, vol. 80, pp. 794–803 (2018). 
+
+https://proceedings.mlr.press/v80/chen18a.html 
+
+[32] Yu, X., Lu, L., Meng, X., Karniadakis, G.E.: Gradient-enhanced physics-informed neural networks for forward and inverse PDE problems. Computer Methods in Applied Mechanics and Engineering 393 , 114823 (2022) https://doi.org/10.1016/ j.cma.2022.114823 28 [33] E, W., Yu, B.: The deep ritz method: A deep learning-based numerical algorithm for solving variational problems. Communications in Mathematics and Statistics 
+
+6(1), 1–12 (2018) https://doi.org/10.1007/s40304-018-0127-z [34] Jagtap, A.D., Kharazmi, E., Karniadakis, G.E.: Extended physics-informed neu-ral networks (XPINNs): A generalized space-time domain decomposition based deep learning framework for nonlinear partial differential equations. Communi-cations in Computational Physics 28 (5), 2002–2041 (2020) https://doi.org/10. 4208/cicp.OA-2020-0164 [35] Sitzmann, V., Martel, J.N.P., Bergman, A.W., Lindell, D.B., Wetzstein, G.: Implicit neural representations with periodic activation functions. In: Advances in Neural Information Processing Systems, vol. 33, pp. 7462–7473 (2020). https: //doi.org/10.48550/arXiv.2006.09661 . https://arxiv.org/abs/2006.09661 
+
+[36] Tancik, M., Srinivasan, P.P., Mildenhall, B., Fridovich-Keil, S., Raghavan, N., Singhal, U., Ramamoorthi, R., Barron, J.T., Ng, R.: Fourier features let networks learn high frequency functions in low dimensional domains. In: Advances in Neural Information Processing Systems, vol. 33, pp. 7537–7547 (2020). https://doi.org/ 10.48550/arXiv.2006.10739 . https://arxiv.org/abs/2006.10739 
+
+[37] Rahaman, N., Arpit, D., Baratin, A., Draxler, F., Lin, M., Hamprecht, F., Bengio, Y., Courville, A.: On the spectral bias of neural networks. In: Proceedings of the 36th International Conference on Machine Learning. Proceedings of Machine Learning Research, vol. 97, pp. 5301–5310 (2019). 
+
+https://proceedings.mlr.press/v97/rahaman19a.html 
+
+[38] Kharazmi, E., Zhang, Z., Karniadakis, G.E.: hp-vpinns: Variational physics-informed neural networks with domain decomposition. Computer Methods in Applied Mechanics and Engineering 374 , 113547 (2021) https://doi.org/10.1016/ j.cma.2020.113547 arXiv:2003.05385 [math.NA] [39] Ball, J.M., James, R.D.: Fine phase mixtures as minimizers of energy. Archive for Rational Mechanics and Analysis 100 (1), 13–52 (1987) https://doi.org/10.1007/ BF00281246 [40] Ball, J.M.: Global invertibility of sobolev functions and the interpenetration of matter. Proceedings of the Royal Society of Edinburgh: Section A Mathematics 
+
+88 (3-4), 315–328 (1981) https://doi.org/10.1017/S030821050002014X [41] Toupin, R.A.: Elastic materials with couple-stresses. Archive for Ratio-nal Mechanics and Analysis 11 , 385–414 (1962) https://doi.org/10.1007/ BF00253945 [42] Mindlin, R.D.: Micro-structure in linear elasticity. Archive for Rational Mechanics and Analysis 16 , 51–78 (1964) https://doi.org/10.1007/BF00248490 29 [43] Lagaris, I.E., Likas, A., Fotiadis, D.I.: Artificial neural networks for solving ordi-nary and partial differential equations. IEEE Transactions on Neural Networks 
+
+9(5), 987–1000 (1998) https://doi.org/10.1109/72.712178 [44] Efron, B.: Bootstrap methods: Another look at the jackknife. The Annals of Statistics 7(1), 1–26 (1979) https://doi.org/10.1214/aos/1176344552 [45] Gal, Y., Ghahramani, Z.: Dropout as a Bayesian approximation: Representing model uncertainty in deep learning. In: Proceedings of the 33rd International Conference on Machine Learning. Proceedings of Machine Learning Research, vol. 48, pp. 1050–1059 (2016). https://proceedings.mlr.press/v48/gal16.html 
+
+[46] Lakshminarayanan, B., Pritzel, A., Blundell, C.: Simple and scalable predictive uncertainty estimation using deep ensembles. In: Advances in Neural Informa-tion Processing Systems, vol. 30, pp. 6402–6413 (2017). https://doi.org/10.48550/ arXiv.1612.01474 . https://arxiv.org/abs/1612.01474 
+
+[47] Wu, C., Zhu, M., Tan, Q., Kartha, Y., Lu, L.: A comprehensive study of non-adaptive and residual-based adaptive sampling for physics-informed neural networks. Computer Methods in Applied Mechanics and Engineering 403 , 115671 (2023) https://doi.org/10.1016/j.cma.2022.115671 arXiv:2207.10289 [cs.LG] 
+
+# Acknowledgements 
+
+Wenju Zhao was supported by the National Key R&D Program of China (No. 2023YFA1008903-3), Natural Science Foundation of Shandong Province (No. ZR2023ZD38). Weidong Zhao was supported by the National Natural Science Founda-tion of China (Nos. 12371398, 12071261). Zhiwen Zhang was supported by the National Natural Science Foundation of China (project 92470103), the Hong Kong RGC grant (projects 17304324 and 17300325), the Seed Funding Programme for Basic Research (HKU), and the Hong Kong RGC Research Fellow Scheme 2025. 
+
+# Author contributions 
+
+A.L., Z.Z., and W.J.Z. conceived and designed the study. A.L. performed the data col-lection and implementation. All authors contributed to the analysis and interpretation of the data. All authors drafted the manuscript and provided critical revisions. 
+
+# Competing interests 
+
+The authors declare no competing interests. 30 Additional information 
+
+Correspondence and requests for materials should be addressed to Zhiwen Zhang and Wenju Zhao. 31 Table ED1 : Default hyperparameters used in all experiments. Network architecture, optimizer settings, collocation budget, quadrature, gating schedule, R3 policy, and UQ-proxy parameters. 
+
+Component Default setting 
+
+Network 3 hidden layers, width 128, CELU activation Optimizer Adam (10 −3, β1=0 .9, β2=0 .999); LR ×0.9/10k iters Collocation budget N = 10 4 points, updated by R3 Quadrature QMC (Hammersley) for bulk terms Gating gγi (x) = σ(α(γi − ˜d(x))); α=5 .0, γ0= − 0.5, ∆ max =0 .05 R3 policy Retain fraction ρ = 0 .5UQ proxy Var. of ∥∇ yθ ∥F under Gaussian probes ( muq =16, ρuq =0 .01) 0.0 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+
+(a) P = 100 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) P = 400 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(c) P = 1600 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(d) P = 3200 
+
+Fig. ED1 : Effect of the resampling period P in the single-cell non-regularized regime (ε0 = 0). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ ). 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(a) hl = 3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) hl = 5 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) hl = 7 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(d) hl = 9 
+
+Fig. ED2 : Effect of network depth hl in the single-cell non-regularized regime ( ε0 =0). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ ) for different hidden-layer depths. 32 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(a) width = 64 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) width = 128 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) width = 256 
+
+Fig. ED3 : Effect of network width in the single-cell non-regularized regime ( ε0 = 0). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ) for different hidden-layer widths. 0.0 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(a) uq m = 8 0.0  
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) uq m = 16 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) uq m = 32 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(d) uq m = 64 
+
+Fig. ED4 : Effect of the UQ probe count muq in the single-cell non-regularized regime (ε0 = 0). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ). 0.0 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(a) ρuq = 0 .01 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) ρuq = 0 .02 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) ρuq = 0 .04 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(d) ρuq = 0 .08 
+
+Fig. ED5 : Effect of the UQ probe variance ρuq in the single-cell non-regularized regime (ε0 = 0). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ). 33 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(a) P = 100 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(b) P = 400 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(c) P = 1600 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(d) P = 3200 
+
+Fig. ED6 : Effect of the resampling period P in the single-cell weakly regularized regime ( ε0 = 0 .01 rc). Each panel shows the Jacobian determinant J = det F (with 
+
+F = ∇yθ ). 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(a) hl = 3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(b) hl = 5 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) hl = 7 0.25 0.50 0.75  
+
+> x
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> y
+> det F
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(d) hl = 9 
+
+Fig. ED7 : Effect of network depth hl in the single-cell weakly regularized regime (ε0 = 0 .01 rc). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ)for different hidden-layer depths. 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(a) width = 64 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+
+(b) width = 128 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(c) width = 256 
+
+Fig. ED8 : Effect of network width in the single-cell weakly regularized regime ( ε0 =0.01 rc). Each panel shows the Jacobian determinant J = det F (with F = ∇yθ) for different hidden-layer widths. 34 short distance, d = 2 .5rc0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+P =100 P =400 P =1600 P =3200 long distance, d = 5 rc0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+P =100 P =400 P =1600 P =3200 
+
+Fig. ED9 : Effect of the resampling period P in the two-cell non-regularized regime (ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for the short-distance regime ( d = 2 .5 rc; top) and the long-distance regime ( d = 5 rc; bottom). 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(a) hl = 3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(b) hl = 5 0.6  
+
+> 0.8
+> 1.0
+> 1.2
+
+(c) hl = 7 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(d) hl = 9 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) hl = 3 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(f) hl = 5 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(g) hl = 7 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(h) hl = 9 
+
+Fig. ED10 : Effect of network depth hl in the two-cell non-regularized regime ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for the short-distance regime ( d = 2 .5 rc; top row) and the long-distance regime ( d = 5 rc; bottom row). 35 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(a) width = 64 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(b) width = 128 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(c) width = 256 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(d) width = 64 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) width = 128 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(f) width = 256 
+
+Fig. ED11 : Effect of network width in the two-cell non-regularized regime ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ ) is shown for the short-distance regime ( d = 2 .5 rc; top row) and the long-distance regime ( d = 5 rc; bottom row). 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(a) ρuq = 0 .01 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(b) ρuq = 0 .02 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+
+(c) ρuq = 0 .04 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+
+(d) ρuq = 0 .08 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) ρuq = 0 .01 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(f) ρuq = 0 .02 0.0  
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(g) ρuq = 0 .04 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(h) ρuq = 0 .08 
+
+Fig. ED12 : Effect of the UQ probe variance ρuq in the two-cell non-regularized regime (ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for the short-distance regime ( d = 2 .5 rc; top row) and the long-distance regime ( d = 5 rc; bottom row). 36 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+
+(a) P = 100 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+> 2.6
+
+(b) P = 400 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+
+(c) P = 1600 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+
+(d) P = 3200 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) P = 100 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(f) P = 400 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(g) P = 1600 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(h) P = 3200 
+
+Fig. ED13 : Effect of the resampling period P in the three-cell non-regularized regime (ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ) is shown for the short-distance regime ( d = 2 .5 rc; top row) and the long-distance regime ( d = 5 rc; bottom row). 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+
+(a) ρuq = 0 .01 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+> 2.6
+> 2.8
+> 3.0
+
+(b) ρuq = 0 .02 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+> 2.6
+> 2.8
+
+(c) ρuq = 0 .04 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> 2.2
+> 2.4
+> 2.6
+> 2.8
+> 3.0
+
+(d) ρuq = 0 .08 0.2 
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(e) ρuq = 0 .01 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(f) ρuq = 0 .02 0.0  
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+
+(g) ρuq = 0 .04 0.2  
+
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+
+(h) ρuq = 0 .08 
+
+Fig. ED14 : Effect of the UQ probe variance ρuq in the three-cell non-regularized regime ( ε0 = 0). The Jacobian determinant J = det F (with F = ∇yθ ) is shown for the short-distance regime ( d = 2 .5 rc; top row) and the long-distance regime ( d = 5 rc;bottom row). 37

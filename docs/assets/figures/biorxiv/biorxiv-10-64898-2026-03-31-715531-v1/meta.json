@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-001.webp",
+      "caption": "Figure 6: Bar chart showing average perturbation accuracy per test batch, comparing AdaBN with SHOT-CCR. Accuracy improves the most in batches HepG2-09, U2OS-04 and U2OS-05, where data is either distributed differently between the training and test data, and/or is scarce.",
+      "page": 11,
+      "index": 1,
+      "width": 976,
+      "height": 402
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-002.webp",
+      "caption": "Table 6: Perturbation classification accuracy (%) on RxRx1 comparing ablations across multi-domain and single-domain (BEN [20]) training/inference batch settings.",
+      "page": 11,
+      "index": 2,
+      "width": 596,
+      "height": 562
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-003.webp",
+      "caption": "Figure 1: Six-channel faux-colored images from the RxRx1 dataset with a composite image shown on the right. Different stains reveal a range of cellular components across each channel (columns). Each set of images displays the same perturbation class (a knockdown of the VPRBP gene) but imaged in different batches and/or different cell types. The variety of cellular responses to the same perturbation, which can be seen by eye above, show how difficult it can be for a model to adapt to both biological and technical batch effects.",
+      "page": 2,
+      "index": 3,
+      "width": 590,
+      "height": 407
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-004.webp",
+      "caption": "Table 1: Summary of the two datasets used to test batch effect reduction in this work. Genetic perturbations include knock-down (KD) or knock-out (KO). *The JUMP-CP dataset was subset to only include CRISPR genetic perturbations with ≥ 5 replicates, see 3.2 for more details.",
+      "page": 2,
+      "index": 4,
+      "width": 978,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-005.webp",
+      "caption": "Table 2: Perturbation classification accuracy (%) comparing different approaches to batch correction and test-time adaptation. For RxRx1 the model was trained five times using different seeds and tested on the same test set, for comparability with Sypetkowski et al. [30]. For JUMP-CP the model was tested on each of the five different held-out experimental batches. GR = gradient reversal.",
+      "page": 7,
+      "index": 5,
+      "width": 977,
+      "height": 365
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-006.webp",
+      "caption": "Figure 3: Histograms showing the distribution of the number of cells per field-of-view image within RxRx1. Some batches show clearly different cell count distributions (circled pink) when compared to others of the same cell type. Please zoom in for details.",
+      "page": 7,
+      "index": 6,
+      "width": 979,
+      "height": 489
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-007.webp",
+      "caption": "Figure 4: Histograms showing the relatively uniform distribution of number of cells per field-of-view image across the different experimental batches in the JUMP-CP CRISPR subset.",
+      "page": 8,
+      "index": 7,
+      "width": 686,
+      "height": 518
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-008.webp",
+      "caption": "Table 3: Perturbation classification accuracy (%) per cell type. Under each cell type we show how many different batches were in the training set compared with the test set, i.e. for HUVEC “16/8” represents 16 training and 8 test batches.",
+      "page": 8,
+      "index": 8,
+      "width": 540,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-009.webp",
+      "caption": "Figure 2: A diagram of our model architecture. The backbone network can be any pre-trained model which utilizes batch normalization layers, we found both DenseNet161 [13] and EfficientNetV2 [32] to be effective. Feature maps from the backbone are pooled using global averaging before being passed to two fully connected layers, each with batch normalization layers. During training the feature extractor (gs) is connected to a linear layer (the “perturbation classifier”, hs), which predicts the perturbation class, and a cell count regression head which uses gradient reversal to adversarially train the model feature maps to be less aligned to image cell count. At test-time the perturbation classifier is frozen while the feature extractor is trained further in an unsupervised manner using source-hypothesis (SHOT) loss [18]. Unless otherwise stated, all results in this paper utilize the DenseNet-161 backbone, for comparability with Sypetkowski et al. [30].",
+      "page": 4,
+      "index": 9,
+      "width": 976,
+      "height": 396
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-010.webp",
+      "caption": "Figure 5: Plot showing the cell count regression head MSE loss throughout training under different gradient reversal α parameters. 0.0 loss would indicate the model has learned to perfectly predict the number of cells in each image. Increasing the α parameter has a direct impact on how much cell count information is retained in model embeddings.",
+      "page": 9,
+      "index": 10,
+      "width": 490,
+      "height": 375
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-31-715531-v1/fig-011.webp",
+      "caption": "Table 4: Perturbation classification accuracy (%) using different pre-trained backbones. # Parameters refers to full architecture.",
+      "page": 9,
+      "index": 11,
+      "width": 546,
+      "height": 263
+    }
+  ]
+}

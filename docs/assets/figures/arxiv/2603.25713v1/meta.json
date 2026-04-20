@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.25713v1/fig-001.webp",
+      "caption": "Figure 1: Neural components can be imaged with high-dimensional molecular content and nanometer-scale ultrastructure, which can constrain predictions of postsynaptic potentials. (Left) With EM, we can see synapses and their sizes, shapes, and connectivity. Many synaptic responses may be compatible with a given volume reconstruction, including active versus silent. (Middle) With expansion microscopy, we can quantify molecular content and aspects of molecular organization, including nanoscale spatial relationships among synaptic components; fewer physiological regimes will be compatible with such an image. (Right) The Ultrastructure-to-dynamics compiler converts molecular and ultrastructural measurements into model parameters (for example, synaptic conductances and kinetics) and their stochasticity (not shown), enabling forward prediction of physiological responses.",
+      "page": 5,
+      "index": 1,
+      "width": 660,
+      "height": 560
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25713v1/fig-002.webp",
+      "caption": "Figure 2: Rapid exponential growth in anatomical imaging efficiency. Note that the type of data is different across many of these studies, e.g., expansion with potential for multiple molecules imaged or EM with very high",
+      "page": 6,
+      "index": 2,
+      "width": 979,
+      "height": 633
+    },
+    {
+      "url": "assets/figures/arxiv/2603.25713v1/fig-003.webp",
+      "caption": "Figure 3: Obtaining biophysical parameters from imaging. We start with the 3D volume, containing labels for membranes, receptors, synaptic proteins and other markers. There are two paths towards calibrating parameter inference. One is an end-to-end machine learning approach where we simply train with enough data. There is an alternative path where we extract biologically meaningful features, build these into biologically interpretable models, and obtain biophysical parameters by modeling. A compiler would need to choose a timescale: discrete, continuous, or even just feedforward. Either way, we can estimate biophysical parameters based on the imaged structure.",
+      "page": 8,
+      "index": 3,
+      "width": 979,
+      "height": 566
+    }
+  ]
+}

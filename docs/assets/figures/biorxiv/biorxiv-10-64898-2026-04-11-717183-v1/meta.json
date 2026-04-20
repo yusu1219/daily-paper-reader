@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-001.webp",
+      "caption": "Fig. 3. VCHarness discovers non-obvious architectural patterns through search. a, MCTS visualization for the hTERT-RPE1 DEG-classification campaign. Node color encodes validation macro-F1, and the highlighted trajectory shows how search progressively concentrates on higher-performing regions of program space. b, Representative local edits made along the successful branch in a. These ranked modifications illustrate how performance gains arise from sequential architecture and optimization changes rather than from a single one-step jump. c, Architecture recovered at the node marked ⑨ in a. The discovered model combines graph structure, selective fine-tuning, and perturbation-conditioned computation, illustrating how VCHarness assembles executable programs that differ from simpler modality-isolated baselines. d, Correlation between validation and test scores across evaluated nodes. The near-linear agreement indicates that validation-guided selection generalizes reliably to held-out test data. e, Aggregate motif analysis over searched architectures. By grouping discovered models according to frequently occurring design choices, this panel highlights neural-architecture motifs that are repeatedly associated with stronger performance.",
+      "page": 6,
+      "index": 1,
+      "width": 925,
+      "height": 817
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-002.webp",
+      "caption": "Fig. 9. MPRA WTC11 architecture and search summary. a, MCTS search tree for MPRA wtc11 fine-tuning (125 nodes, 2 seeds). Node color encodes validation Pearson r (0.071–0.849). b, Architecture of the bestperforming node (node1-3-2-1-2, val r = 0.849). c, Winning improvement path, selected by validation score. d, Training curves for the best node (node1-3-2-1-2, selected by validation score). e, Validation vs test Pearson r for all nodes in the search tree. Pearson r = 0.975. f, Feature analysis across all nodes. Dual-axis bar charts show node count and mean test Pearson r ± std.",
+      "page": 21,
+      "index": 2,
+      "width": 608,
+      "height": 1121
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-003.webp",
+      "caption": "Fig. 6. Architecture discovery on K562. a, MCTS visualization for the K562 Essential campaign. b, Ranked local modifications along a successful branch. c, Best-discovered K562 model architecture. d, Correlation between validation and test scores across evaluated nodes. e, Aggregate motif analysis over searched architectures, summarizing recurring architectural patterns associated with improved K562 performance. In K562, successful nodes repeatedly combined strong cell-level backbones with graph-based perturbation modules and gated fusion, suggesting a particularly stable interaction between pretrained cellular representations and explicit network priors.",
+      "page": 18,
+      "index": 3,
+      "width": 925,
+      "height": 846
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-004.webp",
+      "caption": "Fig. 7. MPRA K562 architecture and search summary. a, MCTS search tree for MPRA-K562 fine-tuning (37 nodes, 2 seeds). Node color encodes validation Pearson r (0.694–0.876). Seed 1: AlphaGenome pretrained encoder; Seed 2: CNN from scratch. b, Architecture of the best-performing node (node1-3-3-1, val r = 0.876): AlphaGenome CNN encoder with flatten concatenation and 2-layer MLP head, trained with two-stage strategy (frozen encoder then full fine-tuning). c, Winning improvement path. Each row shows one MCTS iteration along the best branch, selected by validation score. d, Training curves for the best node (node1-3-3-1, selected by validation score). Top: validation Pearson r across Stage 1 (head-only training) and Stage 2 (full encoder finetuning). Bottom: training loss. e, Validation vs test Pearson r for all nodes in the search tree. Pearson r = 0.999 between validation and test scores. f, Feature analysis across all nodes. Dual-axis bar charts show node count (blue) and mean test Pearson r ± std (green) for each category of pretrained model, fine-tuning strategy, head type, and learning rate scheduler.",
+      "page": 19,
+      "index": 4,
+      "width": 943,
+      "height": 1116
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-005.webp",
+      "caption": "Fig. 5. Architecture discovery on Jurkat. a, MCTS visualization for the Jurkat Essential campaign. b, Ranked local modifications along a successful branch. c, Best-discovered Jurkat model architecture. d, Correlation between validation and test scores across evaluated nodes. e, Aggregate motif analysis over searched architectures, highlighting recurrent neural-architecture motifs associated with stronger Jurkat performance. Relative to HepG2, the stronger Jurkat nodes more often relied on compact architectures with explicit perturbation modeling and lighter fusion strategies.",
+      "page": 17,
+      "index": 5,
+      "width": 921,
+      "height": 822
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-006.webp",
+      "caption": "Fig. 8. MPRA HepG2 architecture and search summary. a, MCTS search tree for MPRA HepG2 fine-tuning (55 nodes, 2 seeds). Node color encodes validation Pearson r (-0.028–0.888). Seed 1: AlphaGenome pretrained encoder; Seed 2: CNN from scratch. b, Architecture of the best-performing node (node1-3-2, val r = 0.9998). c, Winning improvement path, selected by validation score. d, Training curves for the best node (node1-3-2, selected by validation score). e, Validation vs test Pearson r for all nodes in the search tree. Pearson r = 0.9998. f, Feature analysis across all nodes. Dual-axis bar charts show node count and mean test Pearson r ± std.",
+      "page": 20,
+      "index": 6,
+      "width": 809,
+      "height": 1026
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-007.webp",
+      "caption": "Fig. 2. VCHarness performance and search dynamics across CRISPR perturbation settings. a, VCHarness (blue) outperforms human-designed models grouped by input modality or knowledge source across four differentially expressed gene (DEG) classification tasks on four cell lines (HepG2, K562, Jurkat, and hTERT-RPE1); dashed lines indicate mean performance. Baselines are from the foundation-models-perturbation repository (https://github.com/genbio-ai/foundation-models-perturbation/tree/main/results/ scores). Consistent gains across cell lines demonstrate transferability of the autonomous search loop across cell lines. The y-axis corresponds to test macro-F1 scores. b, Best-so-far trajectories during Monte Carlo tree search (MCTS). Grey dots denote evaluated candidates, and blue lines indicate the running best. Rapid early improvement followed by gradual refinement reflects efficient allocation of search effort. The x-axis represents candidate implementations ordered by evaluation time, and the y-axis denotes validation macro-F1 scores.",
+      "page": 5,
+      "index": 7,
+      "width": 941,
+      "height": 860
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-11-717183-v1/fig-008.webp",
+      "caption": "Fig. 4. Architecture discovery on HepG2. a, MCTS visualization for the HepG2 Essential campaign. b, Ranked local modifications along a successful branch, showing how search improves performance through sequential edits. c, Best-discovered model architecture recovered from the highlighted branch. d, Correlation between validation and test scores across evaluated nodes, supporting the use of validation performance as a practical search objective. e, Aggregate motif analysis over searched architectures, summarizing which neural-architecture choices recur most often among stronger HepG2 models. In this campaign, the best-performing solutions repeatedly favored multimodal fusion centered on graph-based perturbation structure with additional pretrained expression features.",
+      "page": 16,
+      "index": 8,
+      "width": 921,
+      "height": 762
+    }
+  ]
+}

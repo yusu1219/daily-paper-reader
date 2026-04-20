@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.09403v1/fig-001.webp",
+      "caption": "Fig. 6: Ratio between the runtime of the standard analysis and the propagation method. Models are grouped by input size (within each dashed vertical line, labeled by the number of inputs).",
+      "page": 13,
+      "index": 1,
+      "width": 898,
+      "height": 479
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09403v1/fig-002.webp",
+      "caption": "Fig. 4: A BBN network with cycle and corresponding Boolean functions",
+      "page": 8,
+      "index": 2,
+      "width": 390,
+      "height": 344
+    },
+    {
+      "url": "assets/figures/arxiv/2604.09403v1/fig-003.webp",
+      "caption": "Fig. 5: NDCG of KO and KI values and relative RMSE under the Shapley weighting scheme. Models are grouped by input size (within each dashed vertical segment, labeled by the number of inputs). The horizontal line indicates the NDCG threshold of 0.75, while degenerate cases, where all nodes share the same ranking, are marked with red crosses.",
+      "page": 12,
+      "index": 3,
+      "width": 898,
+      "height": 377
+    }
+  ]
+}

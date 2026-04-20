@@ -1,10 +1,15 @@
 {
-  "generated_at": "2026-04-19T19:30:08.285549+00:00",
-  "updated_date": "20260419",
+  "generated_at": "2026-04-20T06:45:13.264737+00:00",
+  "updated_date": "20260322-20260420",
   "carryover_days": 9,
   "tag_states": {
     "GenTCR": {
       "updated_date": "20260419",
+      "carryover_days": 9,
+      "items": []
+    },
+    "VirtCell": {
+      "updated_date": "20260322-20260420",
       "carryover_days": 9,
       "items": []
     }

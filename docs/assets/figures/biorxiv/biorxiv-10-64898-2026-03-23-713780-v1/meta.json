@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713780-v1/fig-001.webp",
+      "caption": "Figure 3 Biological reconstruction of perturbation programs. (a–c) Predicted versus observed expression shifts for top differentially expressed genes under representative perturbations showing best (RPL23), median (MYBL2), and challenging (TERF1) cases. (d–e) Quantitative comparison of pathway and topgene overlap between predicted and observed transcriptional programs. (f–h) Local interaction-network responses illustrating propagation of perturbation signals across neighboring genes. (i–k) Recovery of enriched biological pathways from predicted and observed perturbation programs.",
+      "page": 6,
+      "index": 1,
+      "width": 796,
+      "height": 597
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713780-v1/fig-002.webp",
+      "caption": "Table 1 Comparison of baseline models for predicting transcriptional responses of unseen perturbations on held-out test genes. Higher values indicate better performance. Prec@50 reports the mean precision for the top 50 predicted up- and down-regulated genes (values in parentheses).",
+      "page": 4,
+      "index": 2,
+      "width": 534,
+      "height": 494
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-23-713780-v1/fig-003.webp",
+      "caption": "Table 2 Generalization performance on unseen perturbation genes in the Norman CRISPR perturbation dataset.",
+      "page": 4,
+      "index": 3,
+      "width": 452,
+      "height": 269
+    }
+  ]
+}

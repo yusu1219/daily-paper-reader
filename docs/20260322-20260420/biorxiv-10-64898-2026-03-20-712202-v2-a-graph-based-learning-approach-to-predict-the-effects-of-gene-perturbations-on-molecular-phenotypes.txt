@@ -1,0 +1,1160 @@
+Title: A graph-based learning approach to predict the effects of gene perturbations on molecular phenotypes
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.03.20.712202v2.full.pdf
+
+Number of Pages: 18
+
+Markdown Content:
+# A graph-based learning approach to predict the effects of gene perturbations on molecular phenotypes 
+
+Yiyang Jin 1, Yuriy Sverchkov 1, Anastasiya Sushkova 2, Michael Ohtake 3, Christopher Emfinger 4, Mark Craven 1* 
+
+1 Department of Biostatistics & Medical Informatics, University of Wisconsin, Madison, Wisconsin, U.S.A. 
+
+2 Institute for Immunity, Transplantation and Infection, Stanford University, Stanford, California, U.S.A. 
+
+3 Epic Systems, Verona, Wisconsin, U.S.A. 
+
+4 Barnstable Brown Diabetes Center, University of Kentucky, Lexington, Kentucky, U.S.A. * craven@biostat.wisc.edu 
+
+# Abstract 
+
+Motivation: Large-scale gene knockdown/knockout screens have been used to gain insight into a wide array of phenotypes and biological processes. However, conducting such experiments is expensive and labor-intensive. In this work, we present a general graph-based machine-learning approach that can predict the effects of gene perturbations on molecular phenotypes of interest given some measured phenotypic effects of other gene perturbations. The motivation for learning models that can predict the effects of gene perturbations is fourfold. Such models can (1) predict effects for unmeasured genes in cases in which cost or technical barriers preclude perturbing every gene, (2) prioritize unmeasured genes or sets of genes for subsequent perturbation experiments, (3) hypothesize mechanisms that underlie the relationships between the perturbed genes and their effects, and (4) generalize to other unmeasured phenotypes of interest. 
+
+Results: We evaluate our approach by applying it, in conjunction with four different learning methods, to learn models for four varied phenotypes. Our empirical evaluation demonstrates that the learned models (1) show relatively high levels of predictive accuracy across the four phenotypes, (2) have better predictive accuracy than several standard baselines, (3) can often learn accurate models with small training sets, (4) benefit from having multiple sources of evidence in the input representation, (5) can, in many cases, transfer their predictive value to other phenotypes. 
+
+Data availablity: The assembled data sets and source code for this work are available at: https://github.com/Craven-Biostat-Lab/graph-molecular-phenotype-prediction 
+
+# Author summary 
+
+One general approach for gaining insight into the genes involved in a specific biological process is to conduct an experiment in which individual genes are perturbed and the effect on the process is measured for each perturbation. Large-scale experiments of this type have provided important biological insights, but they are often expensive and labor-intensive to perform. As a result, it is not always feasible to measure the effects of March 21, 2026 1/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+perturbing every gene. In this article, we present a machine-learning approach to predicting the effects of gene perturbations using available experimental data and biological network information. Our method can estimate the effects of genes that have not yet been experimentally measured, helping researchers identify promising genes to study next. In addition, the models can suggest hypotheses about the molecular interactions that link genes to the biological process of interest. Approaches like this may help guide experimental studies and accelerate the discovery of gene–phenotype relationships. 
+
+# Introduction 1
+
+Genetic perturbation methods can reveal causal relationships between genetic elements 2
+
+and molecular or cellular phenotypes of interest. More specifically, methods for either 3
+
+knocking out or knocking down genes, including CRISPR gene editing and RNA 4
+
+interference, can identify the genes and pathways involved in such phenotypes. 5
+
+High-throughput gene-perturbation screens have been used to uncover the genes 6
+
+involved in a broad range of phenotypes including cell morphology (1), cholesterol 7
+
+metabolism (2), host-pathogen interactions (3), and mitochondrial metabolism (4) 8
+
+among many others. 9
+
+Here, we present a general, graph-based machine learning approach developed to 10 
+
+predict the effects of gene perturbations on molecular phenotypes of interest. The 11 
+
+motivation for learning models that can predict the effects of gene perturbations is 12 
+
+fourfold. Such models can (1) predict effects for unmeasured genes in cases in which 13 
+
+cost or technical barriers preclude perturbing every gene, (2) prioritize unmeasured 14 
+
+genes or sets of genes for subsequent perturbation experiments, (3) hypothesize 15 
+
+mechanisms that underlie the relationships between the perturbed genes and their 16 
+
+effects, and (4) generalize to other unmeasured phenotypes of interest. 17 
+
+Several methods have been developed to predict scalar phenotypic changes from gene 18 
+
+perturbations. Among them, DeepEP (5), DeepHE (6), and EPGAT (7) are 19 
+
+knowledge-graph-based, deep learning approaches designed to predict which human 20 
+
+genes are essential. DeepEP and DeepHE extract low-dimensional representations of 21 
+
+genes from a protein-protein interaction (PPI) network using node2vec (8). DeepEP 22 
+
+integrates these representations with gene expression profiles whereas DeepHE combines 23 
+
+them with DNA-sequence features to predict essential genes. EPGAT leverages graph 24 
+
+attention networks to predict essential genes using a PPI network, and orthology and 25 
+
+subcellular localization features. A notable limitation of these methods is that they are 26 
+
+restricted to predicting a single scalar phenotype (cell survival, in the applications 27 
+
+considered). Moreover, each learned model is able to make predictions about only one 28 
+
+phenotype. 29 
+
+Another class of methods have been developed to predict the effects of genetic 30 
+
+perturbations on gene expression. Given pre-perturbation single-cell gene expression 31 
+
+profiles and a set of perturbed genes, these models predict the resulting transcriptomic 32 
+
+responses. GEARS (9) incorporates a Gene Ontology (GO) graph and a gene 33 
+
+coexpression graph with deep neural networks to predict the effects of perturbations. 34 
+
+Similarly, BioDSNN (10) employs a variational autoencoder to generate 35 
+
+post-perturbation gene expression profiles, utilizing the same graphs as GEARS with 36 
+
+the addition of Reactome pathways (11). A limitation of these approaches is that they 37 
+
+focus solely on predicting changes to gene expression profiles and do not generalize to 38 
+
+other phenotypes. 39 
+
+In contrast to all these previously developed methods, our approach generalizes to a 40 
+
+wide range of molecular and cellular phenotypes, and can learn a single model to predict 41 
+
+multiple phenotypes. 42 
+
+March 21, 2026 2/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+We evaluate our approach by applying it, in conjunction with four different learning 43 
+
+methods, to learn models for four phenotypes. The instance labels for training and 44 
+
+testing are derived from large-scale CRISPR screens for these phenotypes, and the 45 
+
+feature vectors are derived from a knowledge graph populated using several publicly 46 
+
+available databases of gene/protein interactions and function. Our empirical analysis 47 
+
+demonstrates that our learned models (1) can predict the effects of gene perturbations 48 
+
+left out of the training set, (2) have better predictive accuracy than several baseline 49 
+
+approaches, (3) can predict the effects of perturbations on other phenotypes not in the 50 
+
+training set, and (4) benefit from multiple sources of evidence in the feature 51 
+
+representation. 52 
+
+# Materials and methods 53 
+
+In this section, we describe our method, the baseline methods we compare against, and 54 
+
+the data sets we use in our empirical evaluation. 55 𝑓 𝒙 (",$) → 0,1
+
+## 𝑔 
+
+## 𝑢 
+
+## 𝑣 
+
+# P
+
+## 𝒏 (")
+
+## 𝒏 ($)
+
+## 𝒆 ("→$)
+
+## 𝒙 (",$) = 𝒏 (") ∥ 𝒆 ("→$) ∥ 𝒏 ($)
+
+Fig 1. Overview of our graph-based learning approach. We populate a knowledge-graph by extracting information from multiple, public databases. A phenotype of interest P is represented by one or more nodes in the graph (here, u and v). To predict whether a perturbation of gene g will significantly affect P , we consider the relationship of g and 
+
+P in the knowledge graph. The feature vector x(g,P ) is constructed by concatenating a vector n(g) representing node g, a vector e(g→P ), representing the paths connecting g to one or more nodes in P , and a vector n(P ), representing the node(s) in P to which g is connected by a path (in this example, just node u). A learned model f (·) takes x(g,P )
+
+as input and outputs a binary value as its prediction. 
+
+## Overiew 56 
+
+The core idea underlying our approach is that the regularities of which gene 57 
+
+perturbations will influence a phenotype can be elicited from a knowledge graph that 58 
+
+March 21, 2026 3/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+incorporates representations of the gene, the phenotype, and the ways in which they are 59 
+
+related via other entities and relationships. We assume that each gene is represented by 60 
+
+a node in the knowledge graph and each phenotype of interest P is indicated by one or 61 
+
+more surrogate nodes, which we refer to as targets . For example, one of the phenotypes 62 
+
+we consider is cholesterol uptake, and we represent it by a single target node 63 
+
+corresponding to the LDLR gene. We aim to learn a model to predict whether a 64 
+
+perturbation of a source gene g will significantly affect P . The model can consider 65 
+
+attributes of g, attributes of P , and how they are related through paths in the graph. 66 
+
+Fig 1 provides an overview of the approach. 67 
+
+The knowledge graph employed in our approach represents biomolecular entities and 68 
+
+their interactions within a cell. For the experiments reported here, each node in the 69 
+
+graph corresponds to a gene and the protein it encodes. More generally, the nodes could 70 
+
+include other molecular entities such as metabolites and complexes. The edges in the 71 
+
+graph represent interactions between the nodes. The nodes and edges both have 72 
+
+attributes describing specific properties of the genes and interactions. The knowledge 73 
+
+graph we assemble incorporates information from multiple, publicly available databases. 74 
+
+The edges come from the human physical subnetwork of the STRING database (12) 75 
+
+which contains physical and functional associations between pairs of proteins. The 76 
+
+attributes on each edge characterizes the sources of evidence and associated confidence 77 
+
+values that support the interaction. The attributes on the nodes describe multiple 78 
+
+properties of each gene/protein including its subcellular localization, its abundance in 79 
+
+various cell lines and cell types, and its functional annotations. Subcellular localization 80 
+
+information is extracted from UniProt ( 13 ) and Reactome ( 11 ), abundance information 81 
+
+is extracted from the Human Protein Atlas (14), and functional annotations are from 82 
+
+the Gene Ontology (15). 83 
+
+The learning task we consider is to infer a model f (·) that takes a feature vector 84 
+
+x(g,P ) as input and outputs a binary value as its prediction, f (x(g,P )) → { 0, 1}, where 1 85 
+
+indicates that a perturbation of g will have a significant impact on P , and 0 indicates 86 
+
+otherwise. The feature vector x(g,P ) is constructed by concatenating a feature vector 87 
+
+n(g) representing attributes of source node g, a feature vector e(g→P ) characterizing the 88 
+
+relationship between g and P and the paths that connect them, and a feature vector 89 
+
+n(P ), representing attributes of the node(s) in P to which g is connected by a path. 90 
+
+In this setting, a model can be trained on a set of gene-phenotype pairs and then 91 
+
+potentially be used to make predictions for genes not in the training set, phenotypes not 92 
+
+in the training set, or both. The models can be learned using a broad range of learning 93 
+
+algorithms that assume feature vector input representations. 94 
+
+## Feature Representation 95 
+
+As noted above, the feature vector x(g,P ) is constructed by concatenating a vector n(g) 96 
+
+representing node g, a vector n(P ), representing the nodes in P to which g is connected 97 
+
+by paths, and a vector e(g→P ) characterizing the relationship between g and P and the 98 
+
+paths that connect them. We refer to these three constituent vectors as the source 99 
+
+features , target features , and the source-target relation features , respectively. The 100 
+
+features are computed using the diverse types of information represented in the 101 
+
+knowledge graph. 102 
+
+The source features n(g) and target features n(P ) are computed from the same types 103 
+
+of information and have the same dimensionality. There are three types of source and 104 
+
+target features. The first, which we refer to as the cellular abundance features, represent 105 
+
+each gene product’s abundance in the relevant cell line, and when available, cell type. 106 
+
+RNA abundances for the cell line and cell type and protein abundance for the cell type 107 
+
+are all extracted from the Human Protein Atlas. 108 
+
+March 21, 2026 4/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+The second set of source and target features are the subcellular localization features. 109 
+
+We use 41 binary features to represent a hierarchical taxonomy of subcellular 110 
+
+compartments. These features are instantiated for each gene by extracting localization 111 
+
+annotations from both UniProt and Reactome. 112 
+
+The third set of source and target features provides an embedded representation of 113 
+
+the Gene Ontology (GO) annotations for each gene. We adopt the same approach used 114 
+
+in GEARS ( 9) to construct a graph representing gene-gene functional relationships, and 115 
+
+then infer an embedded representation of each node in this graph. Let Nu be the set of 116 
+
+GO annotations for gene u. The Jaccard index between a pair of genes u, v can be 117 
+
+calculated by Ju,v = |Nu∩Nv ||Nu∪Nv | , measuring the fraction of shared annotations between two 118 
+
+genes. A GO graph is constructed by selecting the top k genes with highest values of 119 
+
+Ju,v for each gene u, and adding a directed edge from u to each of these genes. We then 120 
+
+apply node2vec (8; 16) to the GO graph and represent each gene by a 64-dimensional 121 
+
+vector resulting from the learned node2vec embedding. We add to this representation a 122 
+
+binary feature indicating the gene’s existence in the GO graph, and in cases in which a 123 
+
+gene is not present in the graph (due to an absence of GO annotations), the 124 
+
+64-dimensional vector is set to all zero values. 125 
+
+When a phenotype is associated with multiple target nodes, the target feature vector 126 
+
+is determined by aggregating the vectors derived for the individual target nodes. The 127 
+
+cellular abundance and the GO features are aggregated by taking element-wise averages 128 
+
+across the target nodes. The subcellular localization features are aggregated by taking 129 
+
+the element-wise OR of the binary values in these features. 130 
+
+The source-target relation features are intended to represent various aspects of how 131 
+
+the source gene node and the target nodes are related in the knowledge graph. One 132 
+
+subset of these features captures the level of evidence supporting a path between the 133 
+
+source node and a target node. Specifically, for a path of length k, we extract an 134 
+
+n-gram of length k that itemizes the strongest level of evidence supporting each 135 
+
+interaction in the path. Interactions in the STRING physical network are labeled using 136 
+
+three evidence categories: those annotated with ’E’ are collected from biochemical, 137 
+
+biophysical and genetic interaction experiments, those annotated with ’D’ are curated 138 
+
+from pathway databases, and those annotated with ’T’ are obtained by performing 139 
+
+statistical co-occurrence analysis across the scientific literature. As an example, for a 140 
+
+path consisting of three interactions with the strongest level of evidence supporting each 141 
+
+being experimental, database, and experimental, respectively, we would extract the 142 
+
+n-gram ’EDE’. The e(g→P ) vector includes an element for each such n-gram up to a 143 
+
+maximum length. These features are set to counts that tally the n-gram occurrences for 144 
+
+all paths between the source and a target node up to a maximum length, and then 145 
+
+normalized to [0,1] using min-max scaling. 146 
+
+Each interaction in STRING is also associated with a “combined score” indicating 147 
+
+confidence in the interaction given all sources of evidence. We compute a feature 148 
+
+representing the product of these scores for the most confident path. Denoting a path 149 
+
+by its sequence of nodes ( u1, . . . u k), its confidence is computed as Qk−1 
+
+> i=1
+
+score (ui, u i+1 ) 150 
+
+where score (ui, u i+1 ) indicates the STRING combined score for the interaction between 151 
+
+ui and ui+1 . 152 
+
+We also calculate a set of features that are based on the topology of paths in the 153 
+
+graph. We include features that provide a thermometer encoding of the shortest path 154 
+
+length, and features that record the number of paths, and an indicator as to whether 155 
+
+there is a path between the source node and a target node. Another feature is based on 156 
+
+the degree of the nodes on each path. We compute Qki=2 1degree( ui) for each path 157 
+
+(u1, . . . u k) and take the maximum as the feature value. 158 
+
+We also consider how a source relates to the target nodes in the graph by running 159 
+
+diffusion processes. Specifically, we apply random walk with restart (RWR) to calculate 160 
+
+March 21, 2026 5/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+a set of diffusion scores for each node. The scores are calculated by 161 
+
+pt = α(I − (1 − α)W−1)p0, W = AD −1 (1) where pt is a vector for post-diffusion scores in which each element corresponds to the 162 
+
+diffusion score at time step t of each node in the graph, A denotes the adjacency matrix 163 
+
+of the graph, D denotes the diagonal degree matrix of the graph, p0 is the pre-diffusion 164 
+
+score vector, and α is a hyperparameter indicating the restart probability. In our 165 
+
+approach, p0 is a binary vector in which elements corresponding to target nodes are 1 166 
+
+and other elements are 0 to realize the process of diffusion from the targets. We include 167 
+
+three features representing the diffusion scores calculated by RWR with α set to 0.2, 0.4, 168 
+
+and 0.6. 169 
+
+The final set of source-target relation features measures the similarity between the 170 
+
+subcellular localization , GO , and the cellular abundance features for the source and the 171 
+
+targets. Specifically, there are two features which represent the cosine similarity 172 
+
+between the source and the target for each of the subcellular localization and GO feature 173 
+
+groups. There is also a set of features representing the difference and the absolute 174 
+
+difference between the source and target cellular abundance features. When a phenotype 175 
+
+is represented by multiple target proteins, the resulting source-phenotype similarity is 176 
+
+an aggregation (largest similarity or mean similarity) between the source and each of 177 
+
+the targets. 178 
+
+## Data sets 179 
+
+We focus on four phenotypes of interest in our empirical analysis: cholesterol 180 
+
+homeostasis, cholesterol uptake, influenza A virus replication, and mitochondrial protein 181 
+
+abundance. We compile published experimental results from genome-scale CRISPR 182 
+
+screens available in the literature, select target proteins for each phenotype, and 183 
+
+construct data sets tailored for machine learning methods. An instance in one of our 184 
+
+data sets is defined as a source-phenotype pair, where the source is a perturbed gene. 185 
+
+We only consider instances for which the perturbed gene exists in the knowledge graph. 186 
+
+Table 1 summarizes the four data sets we use in this study. 187 
+
+For the cholesterol homeostasis phenotype, we use data from two genome-wide 188 
+
+CRISPR screens that were conducted in HeLa cells using an SREBP2-dependent 189 
+
+transcriptional reporter ( 17 ), and by measuring plasmid membrane LDL levels mediated 190 
+
+by SREBP pathway activation (18). We select SREBP2 as the target node for this 191 
+
+phenotype. For the cholesterol uptake phenotype, we use data from a genome-wide 192 
+
+screen in which the reporter was fluorescently labeled LDL-C bound to LDL receptors 193 
+
+(LDLR) ( 19 ). We select LDLR as the target node for this phenotype. For the influenza 194 
+
+A virus replication phenotype, we use data from three CRISPR screens that were 195 
+
+conducted in A549 cells to identify essential host factors (20; 21; 22). Consulting the 196 
+
+STRING database, we select eight human proteins that directly interact with 197 
+
+influenza A proteins as the targets for this phenotype. 198 
+
+The set of instances for each data set is specified by pooling the genes screened 199 
+
+across the studies. To determine which instances have positive labels, we use the 200 
+
+following procedure. All the studies mentioned above identified genes that had a 201 
+
+significant effect on the phenotype using MaGeCK analysis (23). We apply a uniform 202 
+
+criterion to classify instances as positive or negative across these phenotypes and 203 
+
+studies. Specifically, we label an instance as positive if the perturbed gene was identified 204 
+
+as affecting the phenotype in any of the associated screens at a false discovery rate 205 
+
+(FDR) of less than 0.1 in the reported MaGeCK analysis. Thus, when we have multiple 206 
+
+studies per phenotype, we pool the positives identified across the studies, based on the 207 
+
+premise that a lack of overlap in the identified positives by the studies is primarily due 208 
+
+March 21, 2026 6/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+to false negatives rather than false positives ( 24 ). All other instances are designated as 209 
+
+negatives. 210 
+
+For the mitochondrial protein abundance phenotype, we derive the data from a study 211 
+
+that knocked out 115 genes whose products localize to mitochondria and then measured 212 
+
+the resulting changes in abundances of 57 mitochondrial proteins ( 4). Each instance in 213 
+
+this data set corresponds to a knocked out gene (the source) and one of the measured 214 
+
+proteins (the target). We label an instance as positive if the associated q-value (as 215 
+
+reported in the study (4)) is below 0.05. All other instances are labeled as negatives. 216 
+
+Table 1. Detailed description of data sets for each phenotype. 
+
+Phenotype Targets # Perturbed genes # Instances # Positives Cell type Cholesterol homeostasis SREBP2 18,224 18,224 191 HeLa Cholesterol uptake LDLR 17,768 17,768 473 HepG2 Influenza A virus replication 8 host proteins w/ virus PPIs 17,856 17,856 196 A549 Mitochondrial protein abundance 57 mitochondrial proteins 115 6,555 546 HAP1 
+
+## Model Training 217 
+
+In this study, we apply four machine-learning algorithms to learn models to predict the 218 
+
+effects of gene perturbations: elastic net logistic regression (25), random forest (26), 219 
+
+XGBoost ( 27 ), and neural networks (NN). We set the maximum of number of iterations 220 
+
+to 5000 for elastic net, and the number of trees to 1,000 for random forest. Due to the 221 
+
+imbalance of our data sets, we use balanced class weights during training of elastic net 222 
+
+logistic regression, random forest, and XGBoost. 223 
+
+The neural networks are fully connected between layers, and consist of one input 224 
+
+layer, either one or two hidden layers, and one output unit. The hidden units use either 225 
+
+the rectified linear unit (ReLU) activation function or the sigmoid activation function. 226 
+
+After each hidden layer, a dropout layer is used with a dropout rate 0.3. The output unit 227 
+
+uses a sigmoid activation function, and the loss function is binary cross-entropy loss. 228 
+
+A set of hyperparameters for each alogrithm are tuned using internal 5-fold stratified 229 
+
+cross-validation within each training set. The hyperparameters are tuned using a grid 230 
+
+search over a manually-defined parameter space with the default value of the 231 
+
+hyperparameter covered. For elastic net logistic regression, we tune the inverse of 232 
+
+regularization strength (C), and the elastic net mixing parameter L1. For random forest, 233 
+
+we tune the maximum tree depth, minimum number of samples for internal node 234 
+
+splitting, and minimum number of samples for a leaf node. For XGBoost, we tune the 235 
+
+learning rate, maximum tree depth, minimum sum of instance weight for a child, 236 
+
+subsampling ratio of training set, subsampling ratio of features for each tree, and L1 237 
+
+regulariztion on weights. For neural networks, we tune batch size, learning rate, number 238 
+
+of training epochs, size of the hidden layer, number of the hidden layers, and the 239 
+
+activation function used by the hidden layers. We allow the neural networks to have 240 
+
+either one or two hidden layers, with all units using either a sigmoid or ReLU activation 241 
+
+function. For two-layer neural networks, we set the size of the second hidden layer to be 242 
+
+a quarter of the first hidden layer, and the first hidden layer has the same size range as 243 
+
+the hidden layer in single-layer neural networks. 244 
+
+## Baseline Methods 245 
+
+We compare the predictive acccuracy of our learned models with two types of baseline 246 
+
+methods: one based on path lengths, and the other based on diffusion processes. Both 247 
+
+of these baselines are aimed at quantifying how “close” a source node is to a target node 248 
+
+March 21, 2026 7/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+for the given phenotype. The first baseline is simply the length of the shortest path 249 
+
+between the source node and the nearest target node in the knowledge graph. The 250 
+
+second group of baselines we consider consists of several diffusion-process methods. 251 
+
+Starting from a designated set of nodes, these methods propagate information through 252 
+
+the edges to nearby nodes in an iterative manner for a fixed number of steps or until 253 
+
+convergence (28). Each node in the graph ends up with a score after the diffusion 254 
+
+process, and these scores can be used to rank source nodes according to their predicted 255 
+
+effect on target nodes. 256 
+
+We evaluate three diffusion kernels: random walk (RW), random walk with restart 257 
+
+(RWR), and the heat kernel. We calculate RWR scores as we do for the RWR-based 258 
+
+features described in the Feature Representation section. We calculate RW diffusion 259 
+
+scores for nodes in the knowledge graph by 260 
+
+pt = Wtp0, W = AD −1 (2) and heat diffusion scores by: 261 
+
+pt = e−αWp0, W = D − A (3) where pt, p0 are post and pre-diffusion score vectors, A and D are the adjacency and 262 
+
+diagonal degree matrix of the graph, α is a hyperparameter, and t is the number of 263 
+
+propagation steps. 264 
+
+For all three diffusion methods, we apply two different approaches that vary in how 265 
+
+the pre-diffusion vectors p0 are initialized. The first, which we refer to as target 266 
+
+diffusion , sets elements in p0 that correspond to target nodes as 1 and all other elements 267 
+
+to 0. In effect, the diffusion process starts only from the target nodes. In the second 268 
+
+approach, which we refer to as positive diffusion , the elements of p0 that correspond to 269 
+
+the positive instances in the training set, in addition to the targets, are initialized to 1, 270 
+
+and all other elements are set to 0. We can think of this diffusion process as starting 271 
+
+from known positive source genes in addition to the targets for the phenotype. 272 
+
+# Results 273 
+
+In this section, we present a set of experiments designed to evaluate the predictive 274 
+
+accuracy and generality of our approach. 275 
+
+## Learned models show high predictive accuracy 276 
+
+We first test the ability of the learned models to predict the effects of held-aside gene 277 
+
+perturbations on the phenotypes of interest by performing 5-fold cross-validation within 278 
+
+each data set. For the phenotypes cholesterol homeostasis, cholesterol uptake, and 279 
+
+influenza A virus replication, the cross validation is done using stratified sampling so 280 
+
+that each fold contains approximately the same number of positive and negative 281 
+
+instances. Each training set also includes a special instance for each target node in 282 
+
+which the target itself is treated as the source node, given that we know that the target 283 
+
+nodes are always important for the phenotype. For the mitochondrial protein 284 
+
+abundance data set, we divide the 115 knocked-out genes into five folds so that each 285 
+
+fold contains the same number of source genes. We construct ROC curves by pooling 286 
+
+the test-set predictions across the folds for each data set. 287 
+
+We learn models by applying four machine learning methods – elastic net logistic 288 
+
+regression, random forest, XGBoost, and neural networks – to each data set. For all 289 
+
+four phenotypes, we use internal 5-fold cross-validation within each training set to select 290 
+
+the hyperparameters for that training set. 291 
+
+March 21, 2026 8/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+Fig 2 presents the ROC curves for all four learning methods across the four 292 
+
+phenotypes. With an average AUROC of 0.72, the learned models demonstrate strong 293 
+
+predictive performance across different phenotype scenarios. Moreover, the varied 294 
+
+learning methods demonstrate comparable predictive accuracy across all phenotypes. 295 
+
+Both of these results provide evidence of the generality of our approach. 296 ACBD
+
+Fig 2. Predictive accuracy of the four learning algorithms for the four phentoypes. Each panel shows the ROC curves and AUROC values for each learning method on the given phenotype. 
+
+## Learned models have better predictive accuracy than baselines 297 
+
+To further benchmark our approach’s predictive accuracy, we compute learning curves 298 
+
+and compare learned models to the baseline methods described in the Baseline Methods 299 
+
+section. For each instance, we define its shortest-path-length baseline score as the 300 
+
+shortest path length from the source to the nearest target. For the diffusion baselines, 301 
+
+we define an instance’s score as the post-diffusion score of the instance’s source node. 302 
+
+We compute target diffusion and positive diffusion scores using a range of 303 
+
+hyperparameters: for the RW kernel, we set t to 10, 20, and 30; for the RWR kernel, we 304 
+
+set α to 0.2, 0.4, and 0.6; and for the heat kernel, we set α to 0.1, 0.2, and 0.3. For each 305 
+
+baseline method we report only the best result across the hyperparameter settings. 306 
+
+For the learning methods, we adopt the same hyperparameter tuning strategy as in 307 
+
+the previous section, conducting internal 5-fold cross-validation for each training set size 308 
+
+March 21, 2026 9/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+for each phenotype. To analyze how predictive accuracy changes as a function of the 309 
+
+amount of training data, we generate training sets of varying sizes by randomly 310 
+
+sampling instances from each complete training set without stratification. We plot 311 
+
+learning curves for the learning methods and for the positive diffusion baseline methods. 312 
+
+Fig 3 shows the learning curves for the baseline methods and our machine-learning 313 
+
+approach. The x-axis shows the fraction of the available training set used and the y-axis 314 
+
+shows the pooled AUROC from cross validation. Because the target diffusion scores and 315 
+
+shortest path length baseline do not make use of a training set, their AUROC values 316 
+
+remain constant across the x-axis. We observe several interesting results in these plots. 317 
+
+First, the learning methods generally show increasing trends in AUROC values as the 318 
+
+training set size grows, sometimes reaching near-maximum AUROC even with a 319 
+
+relatively small subset of the available data. 320 
+
+Second, the learning methods exceed the predictive performance of the shortest path 321 
+
+length and the target diffusion baselines for all phenotypes. Recall that the target 322 
+
+diffusion approaches start the diffusion process only from the target nodes. 323 
+
+Third, the highest predictive accuracy is achieved by a learned model in three out of 324 
+
+the four phenotypes. However, the RWR positive diffusion and the heat positive 325 
+
+diffusion baselines demonstrate competitive predictive accuracy for most phenotypes 326 
+
+and superior accuracy for the influenza A virus replication phenotype. Recall that the 327 
+
+positive diffusion approaches make use of a training set by starting the diffusion process 328 
+
+from positive instances in the training set in addition to the target nodes. The relatively 329 
+
+high predictive accuracy of these two baselines suggests that the genes that are involved 330 
+
+in these phenotypes may be in close proximity in the knowledge graph, and thus 331 
+
+especially amenable to prediction via diffusion. 332 
+
+We note again that the diffusion baselines are advantaged in this analysis because we 333 
+
+report the best predictive performance over a range of hyperparameter settings for each. 334 
+
+Moreover, we note that a significant limitation of the the positive diffusion methods 335 
+
+relative to our approach is that they cannot generalize to other phenotypes without 336 
+
+having training sets specifically for those phenotypes. In contrast, our approach can be 337 
+
+applied to make predictions for the effects of perturbations on phenotypes that were not 338 
+
+represented in the training set. We explore this setting in detail in a subsequent section. 339 
+
+Overall, we conclude that our learning approach provides a way to predict the impact of 340 
+
+gene perturbations on a phenotype with a high degree of accuracy and generality. 341 
+
+## Models benefit from multiple sources of evidence 342 
+
+The feature vector comprises features representing properties of the source node n(g) 343 
+
+and target node(s) n(P ), along with source-target relation (ST-relation) features e(g→P ) 344 
+
+characterizing the relationship between g and P and the paths that connect them. 345 
+
+These features are derived from diverse data types including protein-protein interactions, 346 
+
+cellular abundances, subcellular localizations, and GO annotations. In this section, we 347 
+
+evaluate the predictive value of various aspects of this feature representation. 348 
+
+We decompose x(g,P ) into distinct feature groups and evaluate the predictive 349 
+
+accuracy of models learned from each group separately. We consider two types of 350 
+
+feature groupings. First, we consider what we refer to as the three subgraph feature 351 
+
+groups, which are the source node features n(g), the target node features n(P ), and the 352 
+
+source-target relationship (ST-relation) features e(g→P ). Second, we consider what we 353 
+
+refer to as the evidence-type feature groups which are based on the type of evidence 354 
+
+from which they were derived. These groups are the cellular abundance features, 355 
+
+subcellular localization features, GO annotation features, and the features that are based 356 
+
+on the PPI network, including those that characterize paths between the source and 357 
+
+target nodes and the diffusion features. To systematically evaluate the predictive power 358 
+
+March 21, 2026 10/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+## ACBDFig 3. Learning curves for baseline methods and the learning methods. Each panel shows the results for one phenotype. The x-axis shows the fraction of the available training set used and y-axis shows the resulting AUROC values. of these feature groups, we learn models for each group using the same 5-fold 359 
+
+cross-validation method for all four phenotypes, as before. 360 
+
+Fig 4 shows the predictive accuracy of models learned from individual subgraph 361 
+
+feature groups. For comparison, the figure also shows the accuracy of models trained on 362 
+
+all of the features. Bars are not shown for the cases in which the resulting AUROC 363 
+
+≤ 0.5. Error bars represent the AUROC variation across the 5-fold cross-validation. 364 
+
+We observe that models trained with all features either achieve the highest or second 365 
+
+highest mean AUROC values in all cases, indicating that the learning approach benefits 366 
+
+from incorporating information about source nodes, target nodes, and the relationships 367 
+
+between them. 368 
+
+We further observe that target features are highly predictive for mitochondrial 369 
+
+protein abundance, whereas source features are more informative for the other three 370 
+
+phenotypes. This observation aligns with the fact that the target features remain 371 
+
+unchanged for cholesterol homeostasis, cholesterol uptake, and influenza A virus 372 
+
+replication, making them less useful for distinguishing between instances in these 373 
+
+phenotypes. Conversely, source features are not predictive for mitochondrial protein 374 
+
+abundance due to the fact that many instances share the same source nodes in this data 375 
+
+set. 376 
+
+Notably, the source-target relation features consistently contribute to predictive 377 
+
+March 21, 2026 11/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+accuracy across all phenotypes, highlighting their importance in capturing interactions 378 
+
+between genes and the phenotypes they influence. We note that this result is especially 379 
+
+compelling because these features, and the models learned from them, do not encode 380 
+
+any information about specific source and target nodes, and thus can potentially 381 
+
+generalize across phenotypes. We explore this issue further in the next section. 382 
+
+Fig 5 presents the predictive accuracy of models learned from individual 383 
+
+evidence-type feature groups. The figure also shows the accuracy of models trained on 384 
+
+all of the features as a baseline for comparison. From these results we observe that, for 385 
+
+most learning methods and phenotypes, using all of the features provides the best 386 
+
+predictive accuracy. Moreover, the relative predictive value of individual feature groups 387 
+
+varies across the phenotypes. For example, whereas subcellular localization is the most 388 
+
+predictive individual feature group for cholesterol homeostasis, GO annotations are the 389 
+
+most predictive group for mitochondrial protein abundances. We also observe that every 390 
+
+evidence-type feature group has predictive value. 391 
+
+In summary, the results presented in this section illustrate that our learning 392 
+
+approach gains predictive value and generality by incorporating features that are 393 
+
+derived from multiple sources of evidence and that represent properties of the source 394 
+
+node, the target nodes, and the relationships between them. 395 ACBD
+
+Fig 4. Predictive accuracy of learned models trained on individual subgraph feature groups versus models trained on all features. Each panel shows the results for a learning algorithm applied to all four phenotypes. 
+
+## Models can predict the effects of perturbations on other 396 
+
+## phenotypes 397 
+
+One advantage of our approach is that a model can be trained on one phenotype and 398 
+
+then applied to make predictions for a different phenotype. In this section, we evaluate 399 
+
+the effectiveness of our approach in this setting by training and testing on different 400 
+
+pairs of the phenotypes considered in the previous experiments. We do this using 401 
+
+models that are trained using nearly the full set of features as well as models trained 402 
+
+using only the ST-relation features. In both cases, we exclude a few of the features. 403 
+
+March 21, 2026 12/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+## ACBDFig 5. Predictive accuracy of learned models trained on individual evidence-type feature groups versus models trained on all features. Each panel shows the results for a learning algorithm applied to all four phenotypes. which are not available across all phenotypes (e.g. some of the cellular abundance 404 
+
+features) or are phenotype-specific (e.g. the diffusion features). 405 
+
+To learn models for each phenotype, we perform internal 5-fold cross-validation with 406 
+
+stratification to select hyperparameters, and then train on the entire data set for the 407 
+
+phenotype using the selected hyperparameters. We plot the AUROC for each learned 408 
+
+model when it is tested on each of the other phenotypes. As a baseline for comparison, 409 
+
+we also report within-phenotype predictive accuracy as determined in the 5-fold 410 
+
+cross-validation experiments reported earlier. 411 
+
+Fig 6 shows the predictive accuracy of the trained models when tested on each other 412 
+
+phenotype. The models generally exhibit significant predictive value in this transfer 413 
+
+learning setting. The exception is that the mitochondrial protein abundance phenotype 414 
+
+does not lend itself to transfer with the other phenotypes. The models trained on other 415 
+
+phenotypes do not predict well on mitochondrial protein abundance, and vice versa. 416 
+
+This result is perhaps due to fact that the models for this phenotype rely heavily on the 417 
+
+target feature groups, as shown in the previous section, whereas the other phenotypes 418 
+
+do not. 419 
+
+Models trained using only ST-relation features also demonstrate transferable 420 
+
+predictive ability in most cases, although their performance is generally lower than that 421 
+
+of models trained on all features. 422 
+
+## Predictive accuracy is not overly sensitive to the definition of 423 
+
+## negative instances or target nodes 424 
+
+Two key aspects of assembling a data set for our approach are assigning class labels to 425 
+
+instances and specifying the target nodes that represent the phenotype. In this section, 426 
+
+we explore the sensitivity of our models to choices in how these steps are done. 427 
+
+When forming the data sets for three of the phenotypes (those with studies that 428 
+
+used the MaGeCK method), we specified negative instances for all of the knocked-out 429 
+
+March 21, 2026 13/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+## A
+
+## CBDFig 6. Predictive accuracy of learned models trained and tested on different phenotypes. Each panel shows the results for one learning method. Test-set phenotypes are grouped along the x-axis, training-set phenotypes are indicated by colored bars, and the feature sets used are distinguished by bar fill styles: solid for all features and hatched for ST-relation features .genes in the study that did not meet the FDR < 0.1 criterion. However, this criterion 430 
+
+might be too stringent in defining positives and too lenient in defining negatives. Here 431 
+
+we consider data sets in which we attempt to stringently define both positive and 432 
+
+negative instances, and leave out of the data set the instances in the excluded middle. 433 
+
+To explore the impact of different definitions of the negatives, we assembled new 434 
+
+data sets for the phenotypes of cholesterol homeostasis, cholesterol uptake, and 435 
+
+influenza A virus replication. For the cholesterol homeostasis and cholesterol uptake 436 
+
+phenotypes, we define the negatives as those with MaGeCK reported FDR > 0.9. For 437 
+
+the influenza A virus replication phenotype, two rounds of CRISPR screening were 438 
+
+conducted. Therefore, we define negative instances as those with genes which were 439 
+
+perturbed in the first round but failed to be included in the second round. Our 440 
+
+definition of the positives in these data sets is not changed. With the more stringent 441 
+
+criterion for defining negatives, we end up with 15,488 instances for cholesterol 442 
+
+homeostasis, 683 instances for cholesterol uptake, and 16,689 for influenza A virus 443 
+
+replication. We evaluate random forest models on these data sets using 5-fold 444 
+
+cross-validation and compare the predictive accuracy to the original models. 445 
+
+Panels A-C in Fig 7 show the ROC curves of random forest models across three 446 
+
+phenotypes with both definitions of negative instances. We observe that the ROC 447 
+
+curves for the original negatives and the stringently defined negatives are very close for 448 
+
+the influenza A phenotype, with a small decay in accuracy for the former in the 449 
+
+cholesterol homeostasis phenotype and a small boost for the latter in the cholesterol 450 
+
+uptake phenotype. We conclude that the predictive accuracy of our learned models is 451 
+
+not especially sensitive to the specification of negative instances. 452 
+
+To explore the impact of different definitions of targets for a given phenotype, we 453 
+
+assemble three variations of the data set for the cholesterol uptake phenotype that differ 454 
+
+March 21, 2026 14/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+ACBDFig 7. ROC curves for random forest models learned on different definitions of negative instances across three phenotypes (panels A to C), and on different target definitions of target nodes for the cholesterol uptake phenotype (panel D). in the set of targets used to compute feature vectors. Our original representation is 455 
+
+based on one target, LDLR. A second representation uses 27 target nodes consisting of 456 
+
+genes annotated with two relevant Gene Ontology terms. A third, intermediate, 457 
+
+representation uses six targets. We evaluate these different target representations by 458 
+
+running 5-fold cross validation with the random forest method. 459 
+
+Panel D in Fig 7 shows the predictive accuracy of random forest models learned with 460 
+
+these different target definitions for cholesterol uptake. We observe that the three ROC 461 
+
+curves are nearly coincident, and thus we conclude that our approach is not especially 462 
+
+sensitive to the exact specification of the targets, at least for the phenotype considered. 463 
+
+# Discussion 464 
+
+We have proposed a knowledge graph-based and learning method-agnostic approach 465 
+
+that can predict the effects of gene perturbations on phenotypes of interest. The core 466 
+
+idea underlying our approach is that the regularities of which gene perturbations will 467 
+
+influence a phenotype can be elicited from a knowledge graph that incorporates 468 
+
+representations of the gene, the phenotype, and the ways in which they are related via 469 
+
+other entities and relationships in the graph. Our knowledge graph is assembled from 470 
+
+diverse sources of evidence including protein-protein interactions, cellular abundances of 471 
+
+gene products, protein subcellular localizations, and Gene Ontology annotations. 472 
+
+We conducted an empirical evaluation applying four machine-learning methods to 473 
+
+four data sets, each of which characterizes the effects of gene knockouts on a phenotype 474 
+
+March 21, 2026 15/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+of interest. Our evaluation demonstrated that the learned models (1) show relatively 475 
+
+high levels of predictive accuracy across the four, diverse phenotypes, (2) have better 476 
+
+predictive accuracy than several standard baselines, (3) can often learn accurate models 477 
+
+with small training sets, (4) benefit from having multiple sources of evidence in the 478 
+
+input representation, (5) can, in many cases, transfer their predictive value to other 479 
+
+phenotypes. Additionally, we showed that our approach is not especially sensitive to 480 
+
+how we define negative instances, or to how a phenotype is represented as a set of target 481 
+
+nodes. 482 
+
+The key limitations of our approach are twofold. First, there is much room for 483 
+
+improvement in the accuracy of the predictions the models make. We posit that this is 484 
+
+due, in part, to noise in the genome-wide screens and their propensity to output many 485 
+
+false negatives (24). However, we hypothesize that the predictive accuracy of the 486 
+
+approach can be improved by augmenting the knowledge graph and by training models 487 
+
+with more data. A second limitation of the approach is that it assumes that a 488 
+
+phenotype can be represented by a set of surrogate target nodes in the knowledge graph. 489 
+
+There are several directions that we will pursue in future research to address the 490 
+
+limitations of our approach. First, we plan to expand the types of interactions and 491 
+
+attributes included in the knowledge graph. For example, transcriptional regulatory 492 
+
+relationships and gene orthology information are additional types of evidence that we 493 
+
+could include. Second, we plan to assemble additional data sets for training and 494 
+
+evaluating models. Third, we plan to investigate extensions to our approach for 495 
+
+handling phenotypes that do not obviously map to a small number of target nodes. One 496 
+
+idea here is to extend the graph to incorporate process or pathway nodes. Fourth, we 497 
+
+will investigate the utility of interpretability methods for gaining mechanistic insight 498 
+
+into the relationships between genes and the phenotypes they influence. Fifth, we plan 499 
+
+to adapt the approach to learn models based on graph neural networks. We believe that 500 
+
+these extensions will advance this work towards the goal of being able to predict the 501 
+
+effects of arbitrary gene perturbations on virtually any molecular or cellular phenotype. 502 
+
+# Competing Interests 503 
+
+No competing interest is declared. 504 
+
+# Author Contributions Statement 505 
+
+YJ, YS and MC devised the overall approach. NS and MO contributed to knowledge 506 
+
+graph construction, data set assembly, and some of the initial experiments. YJ carried 507 
+
+out the computational experiments. YJ and MC led the writing of the manuscript. CE 508 
+
+contributed to the review of experimental results and the manuscript. 509 
+
+# Acknowledgments 510 
+
+We gratefully acknowledge research support from NIH/NHGRI grant U01 HG012039. 511 
+
+# References 
+
+1. Haghighi M, Caicedo J, Cimini B, Carpenter A, Singh S. High-dimensional gene expression and morphology profiles of cells across 28,000 genetic and chemical perturbations. Nature Methods. 2022;19:1550–1557. doi:10.1038/s41592-022-01667-0. March 21, 2026 16/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+2. Shan H, Fei T. CRISPR screening in cardiovascular research. Frontiers in Cell and Developmental Biology. 2023;11:1175849. doi:10.3389/fcell.2023.1175849. 3. Srivastava K, Pandit B. Genome-wide CRISPR screens and their applications in infectious disease. Frontiers in Genome Editing. 2023;5:1243731. doi:10.3389/fgeed.2023.1243731. 4. Rensvold JW, Shishkova E, Sverchkov Y, Miller IJ, Cetinkaya A, Pyle A, et al. Defining mitochondrial protein functions through deep multiomic profiling. Nature. 2022;606(7913):382–388. 5. Zeng M, Li M, Wu FX, Li Y, Pan Y. DeepEP: a deep learning framework for identifying essential proteins. BMC bioinformatics. 2019;20:1–10. 6. Zhang X, Xiao W, Xiao W. DeepHE: Accurately predicting human essential genes based on deep learning. PLOS Computational Biology. 2020;16(9):e1008229. 7. Schapke J, Tavares A, Recamonde-Mendoza M. EPGAT: gene essentiality prediction with graph attention networks. IEEE/ACM Transactions on Computational Biology and Bioinformatics. 2021;19(3):1615–1626. 8. Grover A, Leskovec J. node2vec: Scalable feature learning for networks. In: Proceedings of the 22nd ACM SIGKDD international conference on Knowledge discovery and data mining; 2016. p. 855–864. 9. Roohani Y, Huang K, Leskovec J. Predicting transcriptional outcomes of novel multigene perturbations with GEARS. Nature Biotechnology. 2024;42(6):927–935. 10. Tan Y, Xie L, Yang H, Zhang Q, Luo J, Zhang Y. BioDSNN: a dual-stream neural network with hybrid biological knowledge integration for multi-gene perturbation response prediction. Briefings in Bioinformatics. 2025;26(1):bbae617. 11. Milacic M, Beavers D, Conley P, Gong C, Gillespie M, Griss J, et al. The Reactome Pathway Knowledgebase 2024. Nucleic Acids Research. 2024;52(D1):D672–D678. doi:10.1093/nar/gkad1173. 12. Szklarczyk D, Gable AL, Nastou KC, Lyon D, Kirsch R, Pyysalo S, et al. The STRING database in 2021: customizable protein–protein networks, and functional characterization of user-uploaded gene/measurement sets. Nucleic acids research. 2021;49(D1):D605–D612. 13. The UniProt Consortium. UniProt: the Universal Protein Knowledgebase in 2025. Nucleic Acids Research. 2025;53(D1):D609–D617. doi:10.1093/nar/gkad1185. 14. Uhl´ en M, Fagerberg L, Hallstr¨ om BM, Lindskog C, Oksvold P, Mardinoglu A, et al. Tissue-based map of the human proteome. Science. 2015;347(6220):1260419. doi:10.1126/science.1260419. 15. Gene Ontology Consortium. The Gene Ontology (GO) database and informatics resource. Nucleic acids research. 2004;32(suppl 1):D258–D261. 16. Fey M, Lenssen JE. Fast graph representation learning with PyTorch Geometric. arXiv:190302428. 2019;. 17. van den Boomen DJ, Sienkiewicz A, Berlin I, Jongsma ML, van Elsland DM, Luzio JP, et al. A trimeric Rab7 GEF controls NPC1-dependent lysosomal cholesterol export. Nature communications. 2020;11(1):5559. March 21, 2026 17/18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 25, 2026. ;https://doi.org/10.64898/2026.03.20.712202 doi: bioRxiv preprint
+
+18. Xiao J, Xiong Y, Yang LT, Wang JQ, Zhou ZM, Dong LW, et al. POST1/C12ORF49 regulates the SREBP pathway by promoting site-1 protease maturation. Protein & cell. 2021;12(4):279–296. 19. Hamilton MC, Fife JD, Akinci E, Yu T, Khowpinitchai B, Cha M, et al. Systematic elucidation of genetic mechanisms underlying cholesterol uptake. Cell Genomics. 2023;3(5). 20. Han J, Perez JT, Chen C, Li Y, Benitez A, Kandasamy M, et al. Genome-wide CRISPR/Cas9 screen identifies host factors essential for influenza virus replication. Cell reports. 2018;23(2):596–607. 21. Li B, Clohisey SM, Chia BS, Wang B, Cui A, Eisenhaure T, et al. Genome-wide CRISPR screen identifies host dependency factors for influenza A virus infection. Nature communications. 2020;11(1):164. 22. Yi C, Cai C, Cheng Z, Zhao Y, Yang X, Wu Y, et al. Genome-wide CRISPR-Cas9 screening identifies the CYTH2 host gene as a potential therapeutic target of influenza viral infection. Cell reports. 2022;38(13). 23. Li W, Xu H, Xiao T, Cong L, Love MI, Zhang F, et al. MAGeCK enables robust identification of essential genes from genome-scale CRISPR/Cas9 knockout screens. Genome biology. 2014;15:1–12. 24. Hao L, He Q, Wang Z, Craven M, Newton MA, Ahlquist P. Limited Agreement of Indepdendent RNAi Screens for Virus-Required Host Genes Owes More to False-Negative than False-Positive Factors. PLoS Computational Biology. 2013;9(9):e1003235. 25. Zou H, Hastie T. Regularization and variable selection via the elastic net. Journal of the Royal Statistical Society Series B: Statistical Methodology. 2005;67(2):301–320. 26. Breiman L. Random forests. Machine learning. 2001;45:5–32. 27. Chen T, Guestrin C. XGBoost: A scalable tree boosting system. In: Proceedings of the 22nd acm sigkdd international conference on knowledge discovery and data mining; 2016. p. 785–794. 28. Cowen L, Ideker T, Raphael BJ, Sharan R. Network propagation: a universal amplifier of genetic associations. Nature Reviews Genetics. 2017;18(9):551–562. March 21, 2026 18/18

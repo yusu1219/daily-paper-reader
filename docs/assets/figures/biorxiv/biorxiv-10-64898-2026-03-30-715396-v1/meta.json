@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-001.webp",
+      "caption": "Fig. 4. Interpretability analysis revealed context-specific specialization of attention heads and higher attention to central regulators. (A) Aging timelapse prediction for held-out cell types was significantly damaged by shuffling gene order within the rank value encoding, indicating that relative gene expression levels in each cell state",
+      "page": 11,
+      "index": 1,
+      "width": 976,
+      "height": 1264
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-002.webp",
+      "caption": "Fig. 6. In silico perturbation predicted pro-aging perturbations that were experimentally verified in cardiac cell types. (A) Predicted impact of in silico inhibition vs. slope of expression change across human aging for genes in cardiac fibroblasts. (B) Concordant genes whose inhibition was predicted to be rejuvenating were upregulated across",
+      "page": 15,
+      "index": 2,
+      "width": 981,
+      "height": 1270
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-003.webp",
+      "caption": "Fig. 2. Generated cell states were consistent with the prompted cell context. (A) Cells generated in response to a prompted contextual trajectory were annotated by an external cell type classifier model with 82% concordance with annotations of ground truth cells of that cell type (n=87,083). (B) Generated and ground-truth cells of the same cell",
+      "page": 7,
+      "index": 3,
+      "width": 979,
+      "height": 1256
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-004.webp",
+      "caption": "Fig. 5. MaxToki inferred age acceleration of cell states in age-related conditions. (A) Inferred age acceleration of disease cell states vs. age-matched controls in donors exposed to heavy smoking (lung mucous secretory epithelial cells) or affected by pulmonary fibrosis (lung fibroblasts) (n=5000). (B) Matched donor ages for disease vs. control query cells used for analysis shown in (A). Lines indicate comparison subgroups. (C) Inferred age acceleration of disease cell states vs. age-matched controls in patients affected by Alzheimer dementia, mild cognitive impairment, or resilient patients who have the same neuropathology as Alzheimer patients with no cognitive impairment (dataset 1: microglia, n=5000; dataset 2: homeostatic microglia, n=2507). (D) Matched donor ages for",
+      "page": 13,
+      "index": 4,
+      "width": 868,
+      "height": 545
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-005.webp",
+      "caption": "Fig. 1. MaxToki learned to generate cell states and predict the timelapse needed to induce cell states across long trajectories of human aging. (A) Two-stage training strategy of MaxToki. The model is trained in total on nearly 1 trillion gene tokens (non-trivial tokens, excluding non-expressed genes). MSE=mean-squared error,",
+      "page": 4,
+      "index": 5,
+      "width": 974,
+      "height": 1276
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-30-715396-v1/fig-006.webp",
+      "caption": "Fig. 3. MaxToki generated cell states capturing non-monotic gene activation in held-out inflection intervals within short timelapse trajectories. (A) Diagram of held-out inflection intervals across partial reprogramming pseudotime trajectories in the indicated cell types. The plots indicate the proportion of cells at each point in pseudotime representing cells annotated by cell markers for each stage of partial reprogramming. While the proportion of cells in each stage may appear monotonic, gene expression levels may change non-monotonically within the held-out intervals, as indicated in (D). (B) Pseudo-timelapse prediction for held-out intervals compared to baseline of predicting most common pseudo-timelapse for that cell type. *p<0.05, Wilcoxon rank sums (n=25,000). (C) Correlation of predicted vs. ground truth pseudotime for each cell type in held-out intervals (n=100). (D) Ground truth differential expression of top 100 upregulated or downregulated genes by rank within generated (top) or ground truth (bottom) cells from inflection intervals 2-3 in cytotoxic T lymphocytes. (E) Generated vs. ground truth differential ranking of genes vs. interval 2-3 in cytotoxic T lymphocytes (n=4463). (F) Ground truth differential expression vs.",
+      "page": 9,
+      "index": 6,
+      "width": 976,
+      "height": 1045
+    }
+  ]
+}

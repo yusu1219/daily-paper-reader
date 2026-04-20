@@ -1,0 +1,2574 @@
+Title: PACMON: Pathway-guided Multi-Omics data integration for interpreting large-scale perturbation screens
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.03.20.713295v1.full.pdf
+
+Number of Pages: 46
+
+Markdown Content:
+# PACMON: Pathway-guided Multi-Omics data integration for interpreting large-scale perturbation screens 
+
+Arber Qoku 1,2,3 , Tyra Stickel 2,3,4 , Sareh AmeriFar 2,3,4 , Thomas Oellerich 2,5 , Sebastian Wolf 2,5 , and Florian Buettner 1,2,3,4,6,* 1German Cancer Research Center (DKFZ), Heidelberg, Germany 
+
+2German Cancer Consortium (DKTK), partner site Frankfurt/Mainz, a partnership between DKFZ and UCT Frankfurt-Marburg, Frankfurt am Main, Germany 
+
+3Institute of Informatics, Goethe University Frankfurt, Frankfurt am Main, Germany 
+
+4Department of Medicine, Goethe University Frankfurt, Frankfurt am Main, Germany 
+
+5Department of Medicine II, Hematology and Oncology, Goethe University Frankfurt, University Hospital Frankfurt, Frankfurt am Main, Germany 
+
+6Frankfurt Cancer Institute (FCI), Frankfurt am Main, Germany 
+
+*Corresponding author, email: florian.buettner@dkfz-heidelberg.de 
+
+Abstract 
+
+High-throughput perturbation screens coupled with single-cell molecular profiling enable sys-tematic interrogation of gene function, yet interpreting the resulting data in terms of biological pathways remains challenging. Existing approaches either identify latent gene modules without linking them to perturbations, or model perturbation effects without incorporating prior biologi-cal knowledge, limiting interpretability and scalability. Here, we introduce PACMON (Pathway-guided Multi-Omics data integration for interpreting large-scale perturbation screens), a Bayesian latent factor model that jointly infers pathway-level programs and their modulation by experi-mental perturbations. PACMON decomposes multimodal molecular measurements into shared latent factors aligned with known biological pathways through structured sparsity priors, while simultaneously estimating how each perturbation activates or represses these pathway programs. The framework naturally accommodates multiple data modalities and employs stochastic varia-tional inference for scalable application to large datasets. We evaluate PACMON in three set-tings of increasing complexity. On synthetic data with known ground truth, PACMON achieves near-perfect recovery of pathway structure and perturbation effects, outperforming existing meth-ods in both accuracy and computational scalability. Applied to a multimodal Perturb-CITE-seq screen of melanoma cells, PACMON recovers coherent interferon-signaling and cell-cycle programs spanning RNA and surface-protein modalities and identifies interpretable perturbation–pathway associations consistent with known immune-evasion mechanisms. Finally, we apply PACMON to the Tahoe-100M perturbation atlas — approximately 100 million cells and over 1,000 drug–dose combinations — producing the first pathway-level latent factor analysis at this scale and revealing biologically meaningful drug-response landscapes across Hallmark pathway programs. PACMON provides a unified, scalable and interpretable framework for mapping perturbation effects onto biological pathways in modern large-scale perturbation experiments. 
+
+1
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint 1 Introduction ×≈
+
+> ≈
+
+×      
+
+> genes
+> proteins perturbations
+> factors
+> coe ffi cients
+> loadings
+> pathway database pathway mask
+> di ff erential expression
+> gene 1
+> gene 2
+> gene j
+> …
+> path 1path 2path 3path k
+> pert 1
+> pert 2
+> pert 3
+> pert 4
+> pert c
+> eff ect size
+> latent clustering
+> cells
+> cells
+> pert 1
+> pert c
+> path 1
+> path k
+> associations
+> gene 1
+> gene 2
+> …
+> gene 4
+> pathway re fi nement
+> annotated
+> inferred gene j
+> input decomposition analysis
+> path 1
+> path 2
+> path 3
+> path k
+> …
+> variance explained
+> inform
+> '  '      
+> $#&
+> 
+> 
+> 
+> 
+> 
+>   
+> 
+>   
+> 
+>   
+>   
+> 
+>   
+>   
+> 
+>   
+> 
+>   
+>   
+> 
+>   
+>  
+> 
+> 
+> $  #%"!" $#
+> '
+> '
+> '
+> 
+> 
+> 
+> 
+> $#&
+> eff ect size
+> pert 2
+> pert 3
+
+Figure 1: Overview of PACMON. Multimodal measurements, here RNA, surface proteins and perturbation identities, are decomposed into shared latent factors, modality-specific loadings and perturbation-to-factor coefficients under pathway-informed structured sparsity. This representa-tion enables downstream analyses including variance decomposition, latent clustering, perturba-tion–pathway association analysis, differential expression and pathway refinement. High-throughput perturbation experiments have become a cornerstone of modern functional genomics. Complementing single-cell readouts with targeted genetic or chemical interventions enables the sys-tematic interrogation of how molecular systems respond to controlled perturbations [Dixit et al., 2016, Datlinger et al., 2017, Replogle et al., 2022]. Recent technical advances have further expanded the scale and scope of such experiments, making it possible to profile millions of cells across hundreds to thousands of perturbations in a single study, and increasingly across multiple molecular modali-ties [Mimitou et al., 2019, Norman et al., 2019, Zhang et al., 2025]. Interpreting these data in a biologically meaningful way remains challenging. Cellular regulatory sys-tems are organised in a modular manner, with biological functions carried out by coordinated gene programs rather than isolated genes [Hartwell et al., 1999, Segal et al., 2003]. At the same time, per-turbation responses are often sparse and modular, with most perturbations influencing only a limited number of co-regulated gene programs rather than inducing widespread, unstructured changes across the whole transcriptome [Yao et al., 2023, Zhou et al., 2023]. Despite this structure, perturbation analyses are often performed at the level of individual genes, typically yielding long lists of affected genes that are difficult to interpret while ignoring coordinated responses across gene modules. In addition, noise, sparsity and limited numbers of cells per perturbation reduce statistical power in single-cell settings [Finak et al., 2015, Srivatsan et al., 2020, Replogle et al., 2022]. Latent variable models provide a principled framework for addressing this challenge by representing high-dimensional molecular measurements in terms of a smaller number of latent factors that capture shared structure across genes or proteins and can be interpreted as gene modules [Stegle et al., 2015, Buettner et al., 2015, 2017, Qoku et al., 2025]. Recent work has extended this framework by explicitly linking perturbations to latent modules. For example, Factorize-Recover for Perturb-seq analysis (FR-Perturb) first identifies modules via a sparse PCA and, in a second step, links modules to perturbations via LASSO [Yao et al., 2024]. Guided sparse factor analysis (GSFA) consolidates these individual steps into a single framework and jointly infers factors and the effects of individual perturbations on modules [Zhou et al., 2023]. While these advances better account for the intrinsic correlation structure of the transcriptome, they still have important limitations. First, interpretation of inferred latent factors can be cumbersome, since they require 2
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint careful analysis of factor weights and post-hoc annotation to pathways via enrichment tools [Reimand et al., 2019]. Second, these approaches are restricted to transcriptomic data and do not naturally accommodate multimodal perturbation assays. Finally, GSFA relies on Markov chain Monte Carlo (MCMC) for model inference, which prohibits application to modern large-scale perturbation screens due to poor computational scalability and prolonged runtimes. In parallel, advances in interpretable factor analysis have demonstrated that incorporating prior bi-ological knowledge directly into the model can yield latent factors that are interpretable by design, reducing the need for post-hoc explainability analysis of factor weights. For example, structured spar-sity priors, strong regularisation and network based approaches have been introduced to explicitly align individual latent factors with specific pathways [Qoku and Buettner, 2023, Qoku et al., 2025, Kunes et al., 2024, Lotfollahi et al., 2023b]. However, these approaches are unsupervised and do not model perturbations, limiting their ability to directly quantify pathway-level perturbation effects. Here, we introduce PACMON, a Bayesian latent factor model designed to infer associations between pathways and perturbations from large-scale perturbation screens. PACMON represents molecular measurements through latent factors linked to specific biological pathways and models these factors as functions of experimental perturbations. By combining perturbation-aware latent modelling with pathway-informed structured sparsity, PACMON directly quantifies how perturbations modulate a small number of biological programs rather than individual genes. The framework naturally extends to multimodal data and employs variational inference, enabling scalable application across a wide range of perturbation experiments. 
+
+## 2 Results 
+
+We evaluated PACMON in three increasingly complex settings. First, using synthetic perturbation data with known ground truth, we assessed recovery of pathways, perturbation effects and downstream differential-expression signals, while benchmarking scalability against existing methods (Fig. 2). Sec-ond, we applied PACMON to a multimodal Perturb-CITE-seq melanoma screen and showed that it recovers coherent pathway programs and interpretable perturbation-pathway associations across RNA and surface proteins (Fig. 3). Third, we analysed the Tahoe-100M perturbation atlas to demonstrate that PACMON scales to atlas-level data while preserving pathway-level interpretability and revealing biologically meaningful drug-response structures (Fig. 4). 
+
+2.1 PACMON provides an interpretable and scalable framework for mul-timodal perturbation analysis 
+
+PACMON is a Bayesian latent factor model that integrates multimodal molecular measurements with prior biological knowledge to infer interpretable perturbation–pathway associations from large-scale perturbation screens (Fig. 1). The model takes as input high-dimensional molecular profiles from one or more data modalities (e.g., RNA expression and surface-protein abundance) together with a perturbation design matrix encoding the experimental condition of each cell. These inputs are decom-posed into three core components: (i) a shared set of latent factors representing pathway-level gene programs, (ii) modality-specific loading matrices that map latent factors to observed features in each data view, and (iii) a perturbation-to-factor coefficient matrix that quantifies how each perturbation modulates each latent program. A key design principle of PACMON is the incorporation of prior bi-ological knowledge directly into the model structure. Specifically, pathway annotations from curated databases such as Hallmark, Reactome, and Gene Ontology are encoded as a structured sparsity prior on the loading matrices (Sec. 4.3) [Liberzon et al., 2015, Milacic et al., 2024, Ashburner et al., 2000]. This prior encourages each latent factor to align with a specific biological pathway by strongly 3
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+shrinking loadings for genes outside the annotated gene set, while allowing genes within the pathway to contribute freely. Crucially, the regularised horseshoe prior permits genes outside the annotation to acquire non-zero loadings when strongly supported by the data, enabling data-driven refinement of pathway definitions beyond the initial prior knowledge [Qoku and Buettner, 2023]. The latent fac-tors are modelled as functions of the experimental perturbations through a linear regression module (Sec. 4.2), such that each entry captures the signed effect of a given perturbation on each pathway program. This parametrisation directly links perturbations to interpretable biological programs rather than to individual genes, yielding a compact, low-dimensional summary of perturbation effects that facilitates downstream analyses including perturbation clustering, dose–response characterisation, and cross-condition comparison. To ensure biological interpretability, PACMON uses a nonnegative con-figuration for factor scores and loadings (Sec. 4.4), so that latent factors can be interpreted as additive biological programs with nonnegative feature contributions. Statistical significance of inferred effects—including perturbation–pathway associations, perturba-tion–gene effects, and other derived quantities—is assessed through a unified posterior-significance framework based on the variational local false sign rate (vLFSR) combined with a region-of-practical-equivalence (ROPE) criterion (Sec. 4.6). The resulting representation enables a suite of downstream analyses (Fig. 1, right): variance decomposition across modalities to identify dominant sources of biological variation; latent clustering to reveal perturbation groupings in pathway space; perturba-tion–pathway association analysis to map how individual perturbations modulate specific biological programs; differential expression analysis by propagating perturbation effects through the loadings to obtain gene- and protein-level effect sizes (Sec. 4.7); and pathway refinement, whereby genes out-side the original annotation that receive high data-driven loadings extend and contextualise curated pathway definitions. 
+
+2.2 PACMON outperforms specialised tools in terms of accuracy and scal-ability in a simulation study 
+
+We first evaluated PACMON on synthetic single-view perturbation data with known ground-truth latent factors, perturbation-factor coefficients, and downstream feature-level effects. To enable direct comparison with GSFA [Zhou et al., 2023], which operates on transcriptomic data only, we generated datasets with a single modality consisting of 10,000 samples, 5,000 features, 20 latent factors and 20 perturbation conditions. All methods were evaluated on the same simulated datasets across five ran-dom seeds. In order to more closely resemble real-world domain knowledge, we informed PACMON with noisy pathway information a priori. Specifically, 50% of the true positive features within each latent factor were swapped with randomly selected true negatives, thereby introducing both false pos-itives and false negatives into the prior annotations. In addition, we included an uninformed baseline, denoted PACMON u, which simply places an uninformative Horseshoe prior on the factor loadings. PACMON accurately recovered both the latent pathway structure and the effects of perturbations on these latent programs. As shown in Fig. 2A, PACMON achieved near-perfect pathway recovery (AUPR = 0 .99 ± 0.00) and the strongest recovery of perturbation effects (AUPR = 0 .94 ± 0.04), while the uninformed PACMON u model also performed strongly (pathway recovery AUPR = 0 .94 ± 0.04; perturbation-effect recovery AUPR = 0 .88 ± 0.08). Both variants substantially outperformed GSFA, which achieved pathway and perturbation-effect AUPRs of 0 .65 ± 0.05 and 0 .60 ± 0.11, respectively. These results indicate that PACMON successfully recovers the modular perturbation structure of the data and benefits further from pathway-informed priors, even when those priors are substantially cor-rupted. We further validated the ability of PACMON to recover known effects of individual perturbations on pathways on an independent transcriptomic dataset with experimentally confirmed perturbation effects (Sec. 5.1, [Lalli et al., 2020]). We next assessed recovery of downstream gene-level perturbation effects by comparing PACMON with 4
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## A B C               
+
+>      
+> !$%#%&
+> 
+> 
+> 
+> 
+> 
+> 
+>  !" !! # %&
+> 
+> 
+> 
+> 
+> 
+> 
+> !!
+> #
+> 
+> 
+> % 
+> 
+> 
+> 
+> 
+> 
+> 
+> $"&$'  (
+> 
+> (!%#&!$ &
+> 
+> 
+> 
+> 
+> ("'!#(%&
+> # 
+> 
+
+Figure 2: PACMON accurately recovers pathway and differential-expression signals while scaling to large perturbation datasets. (A) Recovery of underlying pathways and their perturbation-associated structure on synthetic data, measured by area under the precision–recall curve (AUPR), comparing PACMON with PACMON u (uninformed) and GSFA. PACMON achieves the highest recovery of ground-truth pathways, as well as their corresponding perturbation associations. 
+
+(B) Recovery of differentially expressed genes on synthetic data, again measured by AUPR, showing strong agreement between PACMON and ground-truth perturbation-induced feature responses rela-tive to alternative approaches. (C) Runtime as a function of dataset size, highlighting the scalability of PACMON relative to GSFA and enabling application to atlas-scale perturbation datasets such as Tahoe-100M. six established differential expression (DE) approaches spanning bulk RNA-seq methods (DESeq2 [Love et al., 2014], limma [Ritchie et al., 2015]), single-cell-specific DE tools (MAST [Finak et al., 2015]), specialized tools CRISPR screen analysis (scMAGeCK-LR [Yang et al., 2020], SCEPTRE [Barry et al., 2021]), and the latent factor model GSFA [Zhou et al., 2023]. All methods were applied to the same simulated datasets to identify genes significantly affected by perturbations. Summarised in Fig. 2B, PACMON achieved the highest AUPR (0 .96 ± 0.02), followed by the un-informed variant PACMON u (0 .93 ± 0.03) and GSFA (0 .90 ± 0.03), outperforming limma, DESeq2, MAST, SCEPTRE and scMAGeCK under this simulation setting. Thus, modelling perturbation ef-fects through latent pathway programs not only improves recovery of pathway-level structure, but also yields highly accurate downstream feature-level perturbation effects. Finally, we assessed com-putational scalability by varying dataset size while keeping the remaining simulation settings fixed. PACMON scaled substantially better than GSFA across all sample sizes tested. On a single Quadro RTX 5000 (16 GB), PACMON required on average 1.74 hours for 100,000 samples, whereas GSFA re-quired 20.50 hours (Fig. 2C). This improved computational efficiency is consistent with the stochastic variational inference framework underlying PACMON, which is substantially more scalable than the Gibbs sampling inference used by GSFA [Zhou et al., 2023]. These results highlight the practical ad-vantage of variational inference for large perturbation screens and enable the application of PACMON to atlas-scale single-cell data. 
+
+2.3 PACMON identifies pathway programs from multimodal perturbation data and reveals perturbation-pathway associations 
+
+We next applied PACMON to a multimodal CRISPR screen of patient-derived melanoma cells de-signed to identify tumour-intrinsic mechanisms of immune evasion [Frangieh et al., 2021]. This dataset contains measurements of both transcriptome and surface proteins from more than 150,000 single cells 5
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint                                             
+
+> =++*)87.<*=
+>  
+> ++*)87.<*
+> 3+1'22'846;!*75437*
+> 846)  ".,3'1.3,
+> *96486'372.88*6!*)*58  8.)"
+> ".,3'1.3,;!-485'7*7.648
+> *11;)1*-*)054.387!
+>  -*)054.38
+>  #'6,*87
+> *98645-.1*,6'391'8.43!
+> *1191'6!*75437*7#4"8.291.!
+> *2478'7.7!
+> 6'7".,3'1.3,$5
+> 4',91'8.43
+> $:!*75437*$5
+> *2**8'(41.72
+> !-485'7*;)1*!
+> ;840.3*".,3'1.3,32293*";7
+> 38*6+*643'22'!*75437*
+> 38*6+*643".,3'1.3,!
+> 114,6'+8!*/*)8.43
+> +')846&
+> 
+>  
+> #
+>  
+> ""!
+> 
+> 
+>  
+> 
+> # 
+>  
+>  
+> 
+> # "
+> #
+> #!
+> #% 
+> !
+> 
+> "##
+> !
+> 
+>   
+> "*(
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> +"#'*&
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> *.$-%$-+*'&*")'*&-*"
+> 
+> "*(
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> +"#'*&
+> !
+>  
+> 
+>  
+>  
+>  %
+> *.$-%$-+*'&*")'*&,-+.
+> /,$
+> **+.".$#
+> *%$--$#
+>   
+> #+)
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> ,#$(+'
+> 
+> 
+> 
+> 
+> !
+> 
+> 
+>  
+> 
+> 
+> +0%.&%.,+#**#%/-,+/%.+#
+>    
+> #+)
+> 
+> 
+> 
+> 
+> 
+> ,#$(+'
+>  
+> 
+>  
+> 
+>  
+> "
+>  
+>  &
+>  
+> "
+> +0%.&%.,+#**#%/-,+/%-.,0
+> 1-%
+> ++,0#0%$
+> +&%..%$
+
+A                           
+
+>      
+> %##!   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>  %##!  $"!  $
+> !&%&#
+> ! %#!
+> '
+> 4 44
+> ))('10+3(
+> !!
+> 
+> 
+> 
+> 
+> !# 
+>  
+> !
+> $
+> 
+> " 
+> !!
+> 
+> 
+> !
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> (/12/&%1+.-())('10.--1(/)(/.- +*-%,+-*
+
+B C
+
+D E
+
+F        
+
+>       
+> 
+> 
+> 
+> 
+>   
+> 
+> 
+
+Figure 3: PACMON identifies interpretable pathway programs from multimodal pertur-bation data. (A) UMAP of the inferred joint latent space for the Perturb-CITE-seq melanoma dataset, showing separation of control, T cell co-culture and IFN γ-treated cells. (B) Perturbation effects on the Interferon Signaling (R) factor. Disruption of the IFN γ–JAK/STAT cascade strongly suppresses interferon-associated pathway activity, consistent with canonical immune-evasion mecha-nisms. (C) Joint distribution of Interferon Signaling (R) and Interferon Gamma Response (H) factor activities across cells, illustrating that IFN γ treatment is primarily associated with the Hallmark interferon-gamma program, i.e. Interferon Gamma Response (H), whereas co-culture shifts cells along a broader interferon-signaling axis. (D) Dotplot summarising perturbation–pathway associations across targeted genetic perturbations. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. The inferred landscape highlights pathway-specific responses across immune and proliferative programs. (E) Top RNA and surface-protein loadings for the Interferon Gamma Response (H) factor. PACMON recovers canonical interferon-stimulated genes together with immune-relevant surface proteins, including PD-L1 ( CD274 ), indicating coordinated multimodal in-terferon responses. (F) Top RNA and surface-protein loadings for the broader Interferon Signaling (R) factor, showing enrichment of antigen-presentation machinery, including MHC class II compo-nents at the transcript level and immune-interaction markers at the protein level. 6
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint profiled using Perturb-CITE-seq across three experimental conditions: control, T cell co-culture, and IFN γ treatment. Cells carry single CRISPR perturbations targeting 241 genes or non-targeting con-trol guides. To encourage interpretable latent structure, we informed PACMON with annotations from the Hallmark and Reactome databases. Specifically, PACMON ingested 26 Hallmark gene sets and 50 Reactome pathways. In addition to the pathway-informed latent factors, we included one ad-ditional dense latent factor, included by default in all PACMON analyses, that was excluded from the perturbation design, effectively acting as an intercept-like component that captures global variation not attributable to specific perturbations. We first examined the latent components explaining the dominant sources of variation in the data. Among the strongest gene programs we identified Inter-feron Signaling (R), Interferon Gamma Response (H), G2M Checkpoint (H), Cell Cycle Checkpoints (R), and E2F Targets (H) (Supplementary Fig. S1, S2). A UMAP representation of the joint latent space revealed clear separation of the three experimental conditions (Fig. 3A). IFN γ-stimulated cells were characterised by strong activation of the Interferon Gamma Response (H) program, whereas T cell co-culture induced increased activity of the broader Interferon Signaling (R) pathway [Frangieh et al., 2021] (Fig. 3C, S3). In addition to capturing condition-driven structure, PACMON also resolved intrinsic cell-state variation. Latent factors corresponding to cell-cycle programs displayed clear align-ment with independently inferred cell-cycle phases (Supplementary Fig. S4, S5). In particular, the G2M Checkpoint (H) pathway showed strong activation in cells assigned to the G2/M phase, while the Reactome Cell Cycle Checkpoints pathway exhibited increased activity in S-phase cells (Supple-mentary Fig. S6). These results indicate that PACMON recovers biologically meaningful pathways that reflect both experimental perturbations and endogenous cell-state structure. The cell-cycle factors were further supported by coherent loading profiles: G2M Checkpoint (H) recovered canonical mitotic regulators and additionally highlighted CCNB1 as a refined marker, whereas Cell Cycle Checkpoints (R) captured core DNA replication and S-phase genes (Supplementary Fig. S7). We next examined the composition of the inferred interferon-associated pathway factors to assess whether they cap-tured known multimodal biology. The Interferon Gamma Response (H) factor exhibited strong RNA loadings for canonical interferon-stimulated genes including IDO1 , IRF1 , and STAT1 , together with guanylate-binding proteins ( GBP1 , GBP2 , GBP4 ) that are well-established interferon-inducible ef-fectors [Tretina et al., 2019]. In the protein modality, this factor was dominated by PD-L1 (encoded by CD274 ) and also loaded on antigen-presentation and immune-interaction markers (e.g. HLA-A, CD47, CD58), consistent with IFN γ-driven checkpoint and visibility phenotypes [Moon et al., 2017] (Fig. 3E). Complementary to this, the broader Interferon Signaling (R) factor captured an antigen-presentation enriched transcriptional program, with strong RNA loadings on MHC class II compo-nents ( CD74 , HLA-DRA , HLA-DRB1 , HLA-DPA1/DPB1 , HLA-DMA ), consistent with the IFN γ-CIITA axis that induces MHC class II genes [Steimle et al., 1994, Le´ on Machado and Steimle, 2021] (Fig. 3F). These multimodal loading patterns indicate that PACMON recovers coherent interferon-driven programs spanning transcriptional interferon effectors, antigen presentation machinery, and surface immune checkpoint markers. Finally, we examined associations between perturbations and pathways inferred by PACMON to determine how genetic perturbations modulate pathway activity (Fig. 3D). Disruption of the IFN γ-JAK/STAT signaling cascade ( IFNGR1 , IFNGR2 , JAK1 , JAK2 ,
+
+STAT1 ) resulted in strong suppression of interferon-responsive programs, consistent with canonical resistance mechanisms [Frangieh et al., 2021]. PACMON captured pronounced negative associations with interferon-related pathways, reflecting a selective loss of interferon-driven latent activity rather than a global transcriptional effect. In line with this pattern, knockout of CD274 (PD-L1) reduced activity of interferon-associated programs while modestly increasing scores for broader cytokine sig-naling pathways, suggesting a more nuanced inflammatory state. In contrast, perturbations affecting proliferative regulators such as CCND1 primarily influenced pathways associated with cell-cycle pro-gression, including Cell Cycle Checkpoints (R) and E2F Targets (H), while leaving interferon-linked programs largely unaffected. These results demonstrate that PACMON disentangles distinct biologi-cal axes and assigns perturbation effects to specific pathway programs rather than distributing them across unrelated transcriptional processes. Complete perturbation–pathway, perturbation–gene and 7
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+perturbation–protein effect summaries are provided in Supplementary Figs. S8–S9 and Supplemen-tary Tables S1–S3; a detailed analysis of STAT1 knockout effects at the gene and protein level is shown in Supplementary Figs. S11–S12. 
+
+2.4 PACMON elucidates drug-response pathway landscapes in the Tahoe-100M perturbation atlas 
+
+We applied PACMON to the Tahoe-100M single-cell perturbation atlas, which comprises approxi-mately 100 million cells profiled across hundreds of chemical perturbations assayed at up to three concentrations (0.05, 0.5 and 5.0 μM) [Zhang et al., 2025]. The dataset contains 1,135 drug–dose combinations together with DMSO-treated vehicle controls—roughly three orders of magnitude larger than perturbation screens previously analysed with latent factor models and beyond the practical reach of existing perturbation-aware approaches such as GSFA (Fig. 2C). After training on a single GPU, PACMON produced a pathway-centric representation of drug-induced transcriptional responses. The inferred coefficient matrix encoding associations between perturbations and pathways exhibited a sparse structure (Supplementary Fig. S14), with most drug-dose perturbations showing supported ef-fects on only a small subset of pathways. We summarised each drug by averaging pathway coefficients across the three assayed concentrations (0.05, 0.5 and 5.0 μM) and visualised the most pronounced drug-pathway associations (two-sided tail quantile q = 0 .005), yielding a compact subset of 36 drugs in Fig. 4A. The complete perturbation-pathway coefficient matrix is provided in Supplementary Table S4. To quantify alignment of inferred factors with their Hallmark annotations, we assessed enrich-ment of factor loadings using principal component gene set enrichment (PCGSE) [Frost et al., 2015]. All Hallmark-informed factors shown in Fig. 4 were significantly enriched for their corresponding gene programs after multiple-testing correction. The global drug-pathway landscape revealed co-herent and interpretable response patterns across Hallmark programs (Fig. 4A). We first examined pathway structure along the axis defined by Interferon Gamma Response (H) and mTORC1 Signal-ing (H). In this projection, JAK/STAT inhibitors such as Tofacitinib and Fedratinib occupied the interferon-suppressed region, whereas mTOR inhibitors such as Rapamycin and Temsirolimus clus-tered along the mTORC1-suppressed axis (Fig. 4B). Drug-level hulls further showed how individual compounds traversed this pathway space across the three assayed concentrations (Supplementary Fig. S16). These patterns are consistent with the expected roles of JAK/STAT signaling in me-diating interferon-responsive transcription and of mTORC1 signaling in regulating anabolic growth programs [Boor et al., 2017, Hu et al., 2021, Talpaz and Kiladjian, 2021, Le Tourneau et al., 2008, Li et al., 2013]. We next focused on stress-associated responses using the pathway space defined by UV Response Up (H) and Apoptosis (H). At the mechanism of action level, protein synthesis, proteasome, HDAC and CDK inhibitors occupied distinct but partially overlapping regions of this stress-apoptosis landscape (Supplementary Fig. S15). At the individual drug level, hulls across doses highlighted substantial heterogeneity in dose-dependent responses among representative compounds (Supplementary Fig. S17). In particular, the translation inhibitors Harringtonine and Homoharring-tonine strongly activated UV Response Up (H), with Harringtonine additionally inducing Apoptosis (H), consistent with translation blockade eliciting cellular stress and cell-death programs [Tang et al., 2006]. Proteasome inhibitors produced a similarly strong stress-associated signature: Bortezomib and Ixazomib showed large positive UV Response Up (H) effects, consistent with proteotoxic stress and unfolded-protein-response engagement under proteasome blockade [Obeng et al., 2006]. Apoptosis-linked transcriptional programs were further highlighted by strong positive Apoptosis (H) effects for the CDK inhibitor Dinaciclib and the HDAC inhibitor Panobinostat [Gregory et al., 2015, Jeon et al., 2013]. To illustrate dose-resolved effects for an individual compound, we examined Dinaciclib across different concentrations. Supplementary Fig. S18 summarises the corresponding pathway-level re-sponses, and Supplementary Fig. S19 shows the strongest gene-level effects at the highest assayed concentration (5.0 μM). Together, these results illustrate how PACMON links dose-dependent per-turbation effects at the pathway level to interpretable downstream gene expression changes. Finally, 8                                 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint   
+> ;(('%43+:';
+>  
+> (('%43+:'
+> /4'2('20/-1*#'310/3'
+> /4'2('20/#..#'310/3'
+> 9108+#
+> -9%0-93+3
+>  #4*7#9
+> /(#+)/#-+/)"+#(,$
+> !6'310/3'!1
+> 402%  +)/#-+/)
+> 101403+3
+> +404+%1+/&-'
+> 0(#%+4+/+$
+> '-+/034#4
+> '&2#4+/+$*9&20%*-02+&'*9&2#4'
+> 024':0.+$
+> "0-#3'24+$
+> &#25$+%+/*9&20%*-02+&'
+> /(+)2#4+/+$
+> 1#-$0%+%-+$
+> 2+/04'%#/
+> '.%+4#$+/'
+> /#3420:0-'
+>  
+> #/0$+/034#4
+> 52#/0(+/
+> 8#:0.+$%+42#4'
+> 
+> #22+/)40/+/'
+> 0.0*#22+/)40/+/'
+> +)+408+/
+> 5#$#+/%4#*9&2#4'
+> +/#%+%-+$
+> +%-03#.+&'0-#.+/'
+> 94#2#$+/'*9&20%*-02+&'
+> *9.0-
+> '-+/'802
+> 92+&08+/'*9&20%*-02+&'
+> ')'3420-
+> 535-(#/
+> #--+%#%+&*9&2#4'
+> 2+(-52+&+/'
+> '.3+20-+.53
+> '36'2#420-
+> #-.#4+/'%*-02+&'
+> -#)0-+830&+5.
+> "'2#1#.+-*9&20%*-02+&'
+> --#/40+/
+>   
+> !('
+> 
+> 
+>  
+> 
+>  
+> 
+>  
+> )!"&(%
+>  
+> 
+>  
+> 
+>  
+> 
+>  
+> 
+> 
+> 
+> *)*-),&,
+> .*#
+> (()-!-#"
+> ($#++#"
+>   
+> %#
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> &"%!
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>  
+> %*( (&%$$)'&%)
+> +'
+> %%&**
+> % ((
+>  
+> $-+
+> 
+> 
+> 
+> 
+> 
+> .$&*-)
+> !
+> !
+> 
+> 
+> 
+> 
+> !!
+>  
+> "# 
+> !
+> 1.0%!*)-$,*-)
+> "2/'
+> --.1$1'&
+> -('00'&
+>   
+> !('
+> 
+> 
+> 
+> 
+>  
+> 
+>  
+> )!"&(%
+> 
+> 
+> 
+>  
+> 
+> 
+> 
+> 
+> 
+> 
+> .#,*)(,#*
+> /*#
+> (()-!-#"
+> ($#++#"
+
+A B            
+
+> 3333
+
+).",#",*)(("-+*)-"     
+
+> 3
+> 3
+> 3
+> 3
+> 
+> 
+> 
+> 
+> 
+> .*,  &$)'&)$
+> *(*%,,&)$.*)&)"
+> ,,&)$.*)&)"
+> )*&)*-..
+> "'&)*-..
+> 02*(& &.,."
+> *,."2*(&
+> "!,.&)&%1!,* %'*,&!"%1!,."
+> *# &.&)&
+> "(-&,*'&(/-
+> +(1 &)
+
+(*#&)" 
+
+> ,*."&)-1).%"-&-&)%&&.*,
+> &)%&&.*,
+> ,*."-*("&)%&&.*,
+> &)%&&.*,
+> &)%&&.*,
+
+C D
+
+E FFigure 4: PACMON identifies interpretable drug-induced pathway programs in the Tahoe-100M perturbation atlas. (A) Drug–pathway association landscape for the Tahoe-100M atlas. Each row corresponds to one drug and each column to a Hallmark pathway. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. For visualization, only extreme drug-pathway associations are shown after averaging coefficients across the three assayed concentra-tions, revealing coherent responses across interferon, growth, stress and apoptotic programs. (B) 
+
+Projection of selected mechanisms of action in pathway space defined by Interferon Gamma Response (H) and mTORC1 Signaling (H). Each point corresponds to one drug, and convex hulls summarise the distribution of drugs within each mechanism of action class. JAK/STAT inhibitors occupy the interferon-suppressed region, whereas mTOR inhibitors cluster along the mTORC1-suppressed axis. 
+
+(C–F) Top RNA loadings for representative pathway factors recovered from Tahoe-100M: Interferon Gamma Response (H) (C) , mTORC1 Signaling (H) (D) , UV Response Up (H) (E) and Apoptosis (H) (F) . Black points indicate genes present in the original Hallmark annotation, whereas red points denote genes inferred by PACMON outside the prior gene set. These loading profiles recover canon-ical pathway signatures while extending them with data-supported genes, highlighting the ability of PACMON to refine pathway definitions in atlas-scale perturbation data. PACMON recovered and refined canonical Hallmark signatures, enabling multi-scale interpretation of drug effects at both the pathway and gene levels (Fig. 4C-F). 9
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint Together, these results illustrate how PACMON links dose-dependent perturbation effects at the pathway level to interpretable downstream gene-expression changes, enabling multi-scale interpreta-tion from pathway programs to individual genes. Finally, PACMON recovered and refined canonical Hallmark signatures, extending prior gene-set definitions with data-supported genes at atlas scale (Fig. 4C–F; Supp. Fig. S13). Overall, these results demonstrate that PACMON scales to atlas-level perturbation data while maintaining pathway-level interpretability, enabling systematic mapping of drug-induced transcriptional programs across thousands of perturbations and ∼100 million cells. 
+
+## 3 Discussion and conclusion 
+
+We introduced PACMON, a Bayesian latent factor model that integrates multimodal molecular mea-surements with prior pathway knowledge to infer interpretable perturbation–pathway associations from large-scale perturbation screens. By combining pathway-informed structured sparsity with perturbation-aware latent modelling and scalable variational inference, PACMON addresses three key limitations of existing approaches: the lack of biological interpretability of inferred latent factors, the inability to jointly model perturbations and pathway programs, and poor computational scalabil-ity to modern atlas-scale datasets. PACMON is complementary to neural-network-based perturbation models that prioritise prediction of responses to unseen conditions [Lotfollahi et al., 2023a, Roohani et al., 2024, Zhu and Li, 2025]; PACMON instead provides an interpretable generative decomposition of observed perturbation effects with meaningful posterior uncertainty. On synthetic data, PACMON achieved near-perfect recovery of ground-truth pathway structure and perturbation effects, substan-tially outperforming GSFA in accuracy and runtime (Fig. 2). Notably, PACMON benefited from pathway-informed priors even when these were corrupted with 50% noise, and modelling perturba-tion effects through latent pathway programs improved recovery of gene-level differential expression relative to single-gene testing approaches. Validation on the LUHMES neurodevelopmental dataset further confirmed recovery of known perturbation–pathway relationships in a real biological context (Sec. 5.1). PACMON is the first perturbation-aware latent factor analysis that allows to integrate multiple data modalities within a single generative model. Leveraging this integrative capability, we applied PACMON to a multimodal Perturb-CITE-seq melanoma dataset; it recovered biologically coherent interferon-signaling and cell-cycle programs spanning RNA and surface-protein modalities, and cor-rectly identified disruption of the IFN γ–JAK/STAT cascade as the dominant driver of interferon-program suppression (Fig. 3). Application to the Tahoe-100M perturbation atlas across 100 million cells and over 1,000 drug–dose combinations yielded pharmacologically coherent drug-response land-scapes across Hallmark pathway programs (Fig. 4). Existing perturbation-aware latent factor methods such as GSFA are limited to datasets roughly three orders of magnitude smaller, illustrating the prac-tical necessity of the variational inference framework underlying PACMON. Several limitations should be noted. First, PACMON currently assumes linear perturbation–factor relationships, which, while providing inherent interpretability, may not capture nonlinear effects; ex-tending the model with nonlinear perturbation mappings could improve the modelling of combinatorial or nonlinear perturbation responses. Second, the Tahoe-100M analysis was restricted to 31 Hallmark programs for computational tractability. Finally, while the mean-field variational approximation pro-vides substantial scalability advantages, exploring richer variational families could further improve model performance. In conclusion, PACMON provides a unified, scalable and interpretable framework for mapping per-turbation effects onto biological pathways from multimodal single-cell data. This enables a systematic characterisation of how genetic and chemical perturbations modulate coordinated biological programs from individual experiments to atlas-scale perturbation screens. 10 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## 4 Methods 
+
+4.1 Factorisation model 
+
+PACMON is a Bayesian matrix factorisation method that decomposes high–dimensional molecular readouts from multiple modalities (data views) into a lower–dimensional latent space. For a single sample i ∈ { 1, . . . , N }, e.g. single cell, let yi ∈ RD denote the D–dimensional molecular profile. In addition, assume the features are partitioned into M non–overlapping data views Gm ⊆ { 1, . . . , D }
+
+(e.g. different omics layers), such that Gp ∩ Gq = ∅ for p̸ = q, |Gm| = Dm, and PMm=1 Dm = D. After reordering the features we write the data of view m as Y(m) ∈ RN ×Dm .A core assumption of the Bayesian approach adopted for PACMON is that variation across all data modalities is jointly explained by a shared set of latent factors zi ∈ RK with K ≪ D. A linear mapping from the latent space to each modality is parameterised by the factor-loading matrix W(m) ∈ RDm×K .The likelihood for cell i in view m can be written as 
+
+y(m) 
+
+> i
+
+| zi, W(m), Ψ(m) ∼ N 
+
+
+
+W(m)zi, Ψ(m)
+
+, (1) where Ψ(m) = diag( σ2( m)) is a diagonal noise covariance with feature–specific residual variances σ2( m) 
+
+> j
+
+.Collecting all latent factors into Z = [ z⊤ 
+
+> 1
+
+, . . . , z⊤ 
+
+> N
+
+] ∈ RN ×K , the induced matrix factorisation for each view is 
+
+Y(m) ≈ Z  W(m)⊤, m = 1 , . . . , M. (2) 
+
+4.2 Perturbation–driven latent factors 
+
+Large–scale perturbation screens associate each cell with one or more experimental conditions, e.g., drug, dose, CRISPR perturbation, or their combinations. PACMON incorporates this structure by directly modelling how perturbations give rise to the latent factors. Let P ∈ RN ×C be a perturbation design matrix, where row pi encodes the perturbation state of cell 
+
+i. PACMON places a perturbation–informed prior on the latent factors: 
+
+zi | pi, B ∼ N 
+
+
+
+B⊤pi, I
+
+
+
+, (3) where B ∈ RC×K contains the perturbation–to–factor coefficients. The entry Bc,k quantifies how strongly perturbation c activates (positive value) or represses (negative value) latent factor k. In addition to the perturbation-informed latent factors, PACMON includes one additional dense factor that is excluded from the perturbation design matrix, thereby acting as an intercept-like component that captures global variation not attributable to specific perturbations. This parametrisation has two key consequences: (i) each latent factor corresponds to a pertur-bation–responsive gene program, and (ii) the matrix B yields a compact low–dimensional repre-sentation of perturbation effects, facilitating downstream tasks such as clustering of perturbations, dose–response characterisation, or cross–context comparison. 
+
+4.3 Sparsity and domain knowledge in the loadings 
+
+The loading matrices W(m) define the mapping from latent factors to observed features and are therefore the main quantities used for biological interpretation. PACMON employs a regularised horseshoe prior to induce sparsity while simultaneously integrating prior knowledge in the form of 11 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+noisy gene sets or pathways [Carvalho et al., 2009, Piironen and Vehtari, 2017, Qoku and Buettner, 2023]. For a generic loading element W (m) 
+
+> j,k
+
+we specify 
+
+W (m) 
+
+> j,k
+
+∼ N 
+
+0,
+
+bC(m) 
+
+> j,k
+
+S(m)2 
+
+> j,k
+
+bC(m) 
+
+> j,k
+
++ S(m)2 
+
+> j,k
+
+, (4) 
+
+bC(m) 
+
+> j,k
+
+= C(m) 
+
+> j,k
+
+Ω2( m) 
+
+> j,k
+
+, (5) 
+
+C(m) 
+
+> j,k
+
+∼ G −1(ac
+
+> 0
+
+, b c
+
+> 0
+
+), (6) where ac 
+
+> 0
+
+= bc 
+
+> 0
+
+= 0 .5 are fixed hyperparameters. The quantity 
+
+S(m) 
+
+> j,k
+
+= Λ (m) 
+
+> j,k
+
+ξ(m) 
+
+> k
+
+τ (m), (7) is the product of hierarchical shrinkage components, Λ(m) 
+
+> j,k
+
+∼ C+(0 , 1) , (8) 
+
+ξ(m) 
+
+> k
+
+∼ C+(0 , 1) , (9) 
+
+τ (m) ∼ C+(0 , 1) , (10) controlling element–wise, factor–wise, and view–wise shrinkage, respectively. The regularisation con-stants C(m) 
+
+> j,k
+
+enforce a minimum amount of shrinkage even for large coefficients. Prior knowledge is incorporated through a scaling matrix Ω(m) ∈ [0 , 1] Dm×K . For an uninformed factor k we set Ω (m) 
+
+> j,k
+
+= 1 for all features j, recovering the standard regularised horseshoe prior. For an informed factor k we begin with a binary annotation (e.g. pathway membership or transcription factor regulon) and define Ω(m) 
+
+> j,k
+
+=
+
+(
+
+1, if feature j is annotated to factor k, ζ, otherwise , (11) with a small relaxation constant ζ ≈ 0+ (we use ζ ≈ 0.01). Thus, features outside the annotated set receive a much stronger prior shrinkage, but may still acquire non-zero loadings when strongly supported by the data. 
+
+4.4 Non–negativity 
+
+For many single–cell applications it is desirable to interpret latent factors as additive gene programs whose activity and feature contributions are non–negative. PACMON adopts the non–negativity module introduced in MOFA-FLEX, which applies a rectified linear unit (ReLU) transformation to the latent variables, i.e., factor scores and factor loadings, during inference [Qoku et al., 2025]. Given unconstrained posterior samples of factor scores Zn,k and loadings W (m) 
+
+> j,k
+
+, we define the trans-formed quantities ˜Zn,k = ReLU( Zn,k ), (12) ˜W (m) 
+
+> j,k
+
+= ReLU( W (m) 
+
+> j,k
+
+), (13) and replace Z and W(m) with ˜Z and ˜W(m) in the factorisation model of Equation (1). 12 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+This post–hoc transformation leaves the variational inference procedure and prior specification un-changed, but results in non–negative latent representations that can be interpreted as gene-activation programs and corresponding gene contributions. Importantly, PACMON allows non–negativity to be imposed independently on factor scores and loadings, providing flexibility for different biological applications. 
+
+4.5 Inference 
+
+Let Y = {Y(m)}Mm=1 denote the observed multi–view data and let P ∈ RN ×C be the observed perturbation design matrix. PACMON introduces latent factors Z ∈ RN ×K that are generated from perturbations through the perturbation–to–factor coefficients B ∈ RC×K via 
+
+zi | pi, B ∼ N 
+
+
+
+B⊤pi, I
+
+
+
+.
+
+Each view m is generated through 
+
+y(m) 
+
+> i
+
+| zi, W(m), Ψ(m) ∼ N 
+
+
+
+W(m)zi, Ψ(m)
+
+,
+
+where Ψ(m) = diag( σ2( m)). The weight matrices W(m) follow the regularised horseshoe prior (Sec-tion 4.3). The complete generative joint model factorises as 
+
+p(Y, Θ) = 
+
+" MY
+
+> m=1
+
+p
+
+
+
+Y(m) | Z, W(m), Ψ(m)#
+
+p(Z | P, B) p(B)
+
+" MY
+
+> m=1
+
+p
+
+
+
+W(m)
+
+p
+
+
+
+Ψ(m)#
+
+, (14) where the collection of all latent variables and parameters is 
+
+Θ = Z, B, {W(m), Ψ(m)}Mm=1 .
+
+The full hierarchy of the regularised horseshoe prior on the loadings (Section 4.3) is included implicitly inside the term p(W(m) | Λ(m), ξ (m), τ (m), C (m), Ω(m)). Since the posterior p(Θ | Y, P) is intractable, PACMON introduces a fully mean–field variational family 
+
+qϕ(Θ) = Y
+
+> θ∈Θ
+
+qϕ(θ),
+
+using Gaussian variational distributions for Z, B and each W(m), and log–normal distributions for the positive scale parameters in the horseshoe hierarchy. The evidence lower bound (ELBO) is 
+
+L(ϕ) = Eqϕ
+
+log p(Y, Θ) − log qϕ(Θ) .
+
+Optimisation is performed using stochastic variational inference. Monte–Carlo estimates of ∇ϕL are computed using the reparameterization trick, ensuring low–variance gradient estimates. PACMON is implemented in Pyro, enabling automatic differentiation and scalable minibatch training. 13 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+4.6 Significance assessment of inferred effects 
+
+PACMON infers a range of effect sizes of interest, including perturbation-pathway associations, perturbation-gene effects, and other derived quantities obtained from linear transformations of la-tent variables and loadings. To assess the statistical significance and directionality of these inferred effects, we operate directly on their marginal variational posterior distributions. For each inferred effect, we use its variational posterior mean μ and standard deviation σ, and treat the effect as ap-proximately Gaussian. Statistical evidence for a non-zero effect is quantified using the variational local false sign rate (vLFSR) [Stephens, 2017], defined as the posterior probability that the sign of the effect is incorrect, vLFSR = Φ 
+
+
+
+− |μ|
+
+σ
+
+
+
+, (15) where Φ( ·) denotes the cumulative distribution function of the standard normal distribution. Low vLFSR values indicate high confidence in the inferred sign of the effect. Since mean-field variational inference is known to underestimate posterior uncertainty, leading to inflated significant results, we apply a data-driven variance calibration procedure to improve uncertainty calibration without refitting the model [Wainwright and Jordan, 2008]. Posterior standard deviations are inflated by a global scaling factor estimated from the empirical distribution of |μ|/σ . Posterior standard deviations are inflated by a global scaling factor estimated from the central portion of the empirical distribution of |μ|/σ . By default, the central 60% of this distribution is retained and its median is matched to the median of a half-normal reference distribution. This calibration preserves relative effect sizes while reducing overconfidence in posterior estimates. To further guard against reporting effects that are statistically significant but negligible in magnitude, we apply a region-of-practical-equivalence (ROPE) criterion [Kruschke, 2013, 2018]. For an effect X ∼ N (μ, σ 2cal ), we compute the posterior probability that |X| exceeds a threshold t. By default, after variance calibration, the threshold is set to 
+
+t = median( σcal ), (16) and effects are retained only if Pr  |X| > t  ≥ 0.95 . (17) An effect is considered significant if it satisfies all of the following criteria: (i) vLFSR < 0.05, (ii) posterior mass outside the ROPE exceeds 0.95, and (iii) the sign of the effect is assigned according to the sign of the posterior mean. Significant effects are therefore reported in ternary form as positive, negative, or non-significant. This unified significance framework enables consistent statistical assess-ment across pathway-level perturbation effects, gene-level differential effects, and other downstream quantities derived from the PACMON model. All thresholds can in principle be adjusted, but the default settings were used throughout this study. 
+
+4.7 Derived perturbation effects on observed features 
+
+In addition to perturbation-factor coefficients, PACMON yields perturbation-feature associations for individual observed features by propagating perturbation effects through the view-specific loadings. For view m, let B ∈ RC×K denote the perturbation-factor coefficient matrix and W(m) ∈ RDm×K
+
+the factor loading matrix. The induced perturbation-feature effect matrix is defined as 
+
+∆(m) = B W(m)⊤, (18) so that ∆(m) 
+
+> c,j
+
+=
+
+> K
+
+X
+
+> k=1
+
+Bc,k W (m) 
+
+> j,k
+
+, (19) where ∆ (m) 
+
+> c,j
+
+quantifies the signed effect of perturbation c on feature j in view m. Positive values indi-cate increased feature abundance under the perturbation, whereas negative values indicate decreased 14 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+abundance. In the transcriptomic view, these quantities are interpreted as differential gene-expression effects, and in the protein view as differential protein abundance effects. Posterior means for ∆ (m) are computed by multiplying posterior means of perturbation coefficients and factor loadings. Posterior variances are obtained under the mean-field approximation by summing the variances of the factor-wise products. Specifically, for each factor k, perturbation c and feature j,we use 
+
+E[Bc,k W (m) 
+
+> j,k
+
+] = μ(B) 
+
+> c,k
+
+μ(W,m ) 
+
+> j,k
+
+, (20) and Var[ Bc,k W (m) 
+
+> j,k
+
+] = ( μ(B) 
+
+> c,k
+
+)2(σ(W,m ) 
+
+> j,k
+
+)2 + ( μ(W,m ) 
+
+> j,k
+
+)2(σ(B) 
+
+> c,k
+
+)2 + ( σ(B) 
+
+> c,k
+
+)2(σ(W,m ) 
+
+> j,k
+
+)2, (21) with the total variance of ∆ (m) 
+
+> c,j
+
+obtained by summing across factors k. Statistical significance for these derived perturbation-feature effects is assessed using the same posterior-significance framework described in Section 4.6. 
+
+4.8 Assessment of pathway alignment using PCGSE 
+
+To quantify agreement between inferred latent factors and pathway annotations, we adapted principal component gene set enrichment (PCGSE) [Frost et al., 2015] to the inferred factor loadings. For each selected view, we extracted the posterior mean factor loading matrix and restricted it to the features present in the tested feature sets. Loadings were rescaled by the maximum absolute loading within the view. Because PACMON was fit with the nonnegative configuration in the analyses presented here, we restricted the test to the positive part of the factor loading matrix. Posterior mean loadings of opposite sign, if present numerically, were set to zero, and the resulting positive loading magnitudes were used as feature-level statistics. For each factor and feature set, we compared the mean loading magnitude of features inside the set against the mean loading magnitude of features outside the set using a two-sample t-statistic. Let nin 
+
+and nout denote the number of features inside and outside the set, respectively, and let ¯ win , ¯ wout , s2in 
+
+and s2out denote the corresponding sample means and variances of the loading magnitudes. We first formed the pooled variance estimate 
+
+s2pool = (nin − 1) s2in + ( nout − 1) s2out 
+
+nin + nout − 2 . (22) When correlation adjustment was enabled, we estimated the mean pairwise correlation among features inside the set from the observed data matrix of the corresponding view and defined a variance inflation factor VIF = 1 + ( nin − 1)¯ ρin , (23) where ¯ ρin is the average within-set feature correlation. The resulting test statistic was 
+
+t = ¯win − ¯wout 
+
+q
+
+s2pool 
+
+ VIF /n in + 1 /n out 
+
+ . (24) Two-sided p-values were obtained from the Student t distribution, and when one-sided tests were requested, effects with the opposite sign were set to zero and assigned p = 1. Unless otherwise stated, only feature sets with at least 10 overlapping features were tested, correlation adjustment was enabled, and p-values were adjusted for multiple testing using the Benjamini-Hochberg procedure within each factor. Throughout the manuscript, pathway-informed factors with adjusted 
+
+p < 0.05 were considered significantly aligned with their prior annotation. Informed factors that were not significant after correction were retained in the model but renamed as generic factors (for example, factor 0 , factor 1 ) and interpreted as latent structure not confidently supported by the original pathway priors. 15 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+4.9 Data preprocessing and model setup 
+
+4.9.1 Perturb-Seq Data 
+
+We first applied standard single-cell quality control procedures using Scanpy [Wolf et al., 2018]. Cells with fewer than 200 detected genes, mitochondrial transcript fractions exceeding 18%, or extreme library sizes outside the 1st-99th percentile of total UMI counts were removed. To enable downstream assessment of pathways associated with the cell cycle, we annotated cell-cycle states using curated S-phase and G2/M-phase gene sets following established protocols [Satija et al., 2015]. CRISPR guide annotations were parsed to determine the targeted gene for each cell. Non-targeting guides were collapsed into a single control category, and cells containing multiple distinct gene perturbations were excluded to retain only single-gene perturbations or non-targeting controls. To ensure robust estimation of perturbation effects, we further restricted the dataset to perturbations represented by at least 30 cells. Finally, we identified highly variable genes using a Seurat-style variance stabilisation procedure with variance estimation performed separately across experimental conditions and retained the top 6,000 genes for downstream modeling. All 20 surface proteins measured by the CITE-seq assay were retained. 
+
+4.9.2 Tahoe-100M 
+
+We preprocessed each experimental plate independently following recommendations of the original study [Zhang et al., 2025]. We selected the top 10,000 highly variable genes per plate and intersected these sets across the 14 plates, resulting in a shared set of 4,148 genes. From this common feature space, we filtered the Hallmark gene set collection to retain programs with sufficient representation in the data (at least 20% of genes and at least 25 genes per program), yielding 31 gene programs. Restricting the expression matrix to genes belonging to these programs resulted in a final feature space of 1,014 genes used for model fitting. To prioritise pathway interpretability, we set a strong prior confidence (1 − ζ with ζ = 10 −8) for the 31 Hallmark programs. Model fitting was performed via stochastic variational inference using minibatches of 10,000 cells, and we employed the scDataset 
+
+framework for lazy on-disk batch loading [D’Ascenzo and Di Montesano, 2025] to reduce data-loading overhead. Training on a single NVIDIA H200 NVL GPU completed in approximately 25 hours. 
+
+4.9.3 LUHMES data 
+
+The LUHMES dataset, which is publicly available on the Gene Expression Omnibus with the accession number GSE142078, consists of 8,843 cells and 33,694 genes, which were measured in three different runs. The Scanpy package [Wolf et al., 2018] was used to preprocess the data. Initially, cells with more than 10% mitochondrial RNA were removed. Furthermore, we filtered for cells with fewer than 20,000 total counts. We normalised to a target sum of 10,000 counts per cell and pseudo-log-transformed the counts. Finally, we selected the top 6,000 highly variable genes. During training, we corrected for total and mitochondrial counts, as well as for the different experimental runs, to account for batch effects. We used the publicly available Hallmark and GOBP gene sets from MSigDB [Liberzon et al., 2011, 2015, Ashburner et al., 2000] as prior annotations for model training. As we were particularly interested in pathways related to neuronal development, we selected GOBP pathways containing the substrings NEUR , NERV , SYNAP , and AXON . We filtered these pathways for the highly variable genes in the preprocessed dataset and set the minimum fraction of genes in a pathway that must be present in the dataset to 30%. The neuron-related pathways were then filtered further by setting a minimum count of 60 genes, in order to reduce the total number of prior pathways and to avoid many overlapping gene sets. 16 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+4.10 Aggregation and visualisation of drug-level pathway effects 
+
+For the Tahoe-100M analysis, perturbation effects were first inferred at the level of individual drug-dose combinations. Drug-level summaries were then obtained by averaging pathway coefficients across the three assayed concentrations (0.05, 0.5 and 5.0 μM). For visualisation of the global drug-pathway landscape, only the most extreme entries were retained using a two-sided tail quantile threshold of q =0.005. Mechanism-of-action summaries were obtained by grouping drugs according to the annotated mechanism classes, whereas drug-level hull plots retained the individual dose-specific responses. 
+
+## Code availability 
+
+An open-source implementation of PACMON is available on GitHub at https://github.com/mlo-lab/ pacmon , where users can find detailed installation instructions as well as extensive tutorials. 
+
+## Acknowledgements 
+
+This work was supported by the Deutsche Forschungsgemeinschaft (DFG, German Research Founda-tion) – TRR 387/1 – 514894665 (T.S.). 
+
+## References 
+
+Michael Ashburner, Catherine A Ball, Judith A Blake, David Botstein, Heather Butler, J Michael Cherry, Allan P Davis, Kara Dolinski, Selina S Dwight, Janan T Eppig, et al. Gene ontology: tool for the unification of biology. Nature genetics , 25(1):25–29, 2000. Timothy Barry, Xuran Wang, John A Morris, Kathryn Roeder, and Eugene Katsevich. Sceptre improves calibration and sensitivity in single-cell crispr screen analysis. Genome biology , 22(1):344, 2021. Patrick P C Boor, Petra E de Ruiter, Patrick S Asmawidjaja, Erik Lubberts, Luc J W van der Laan, and Jaap Kwekkeboom. Jak-inhibitor tofacitinib suppresses interferon alfa production by plasma-cytoid dendritic cells and inhibits arthrogenic and antiviral effects of interferon alfa. Translational Research , 188:67–79, 2017. doi: 10.1016/j.trsl.2016.11.006. Florian Buettner, Kedar N Natarajan, F Paolo Casale, Valentina Proserpio, Antonio Scialdone, Fabian J Theis, Sarah A Teichmann, John C Marioni, and Oliver Stegle. Computational anal-ysis of cell-to-cell heterogeneity in single-cell rna-sequencing data reveals hidden subpopulations of cells. Nature biotechnology , 33(2):155–160, 2015. Florian Buettner, Naruemon Pratanwanich, Davis J McCarthy, John C Marioni, and Oliver Stegle. f-sclvm: scalable and versatile factor analysis for single-cell rna-seq. Genome biology , 18:1–13, 2017. Carlos M Carvalho, Nicholas G Polson, and James G Scott. Handling sparsity via the horseshoe. In 
+
+Artificial intelligence and statistics , pages 73–80. PMLR, 2009. Youjun Chen, Wen-Chin Huang, Julien S´ ejourn´ e, Amy E Clipperton-Allen, and Damon T Page. Pten mutations alter brain growth trajectory and allocation of cell types through elevated β-catenin signaling. Journal of Neuroscience , 35(28):10252–10267, 2015. Seonhye Cheon, Allison M Culver, Anna M Bagnell, Foster D Ritchie, Janay M Vacharasin, Mikayla M McCord, Carin M Papendorp, Evelyn Chukwurah, Austin J Smith, Mara H Cowen, et al. Counter-acting epigenetic mechanisms regulate the structural development of neuronal circuitry in human neurons. Molecular psychiatry , 27(4):2291–2303, 2022. 17 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+Davide D’Ascenzo and Sebastiano Cultrera Di Montesano. scdataset: scalable data loading for deep learning on large-scale single-cell omics. arXiv preprint arXiv:2506.01883 , 2025. Paul Datlinger, Andr´ e F Rendeiro, Christian Schmidl, Thomas Krausgruber, Peter Traxler, Johanna Klughammer, Linda C Schuster, Amelie Kuchler, Donat Alpar, and Christoph Bock. Pooled crispr screening with single-cell transcriptome readout. Nature methods , 14(3):297–301, 2017. Atray Dixit, Oren Parnas, Biyu Li, Jenny Chen, Charles P Fulco, Livnat Jerby-Arnon, Nemanja D Marjanovic, Danielle Dionne, Tyler Burks, Raktima Raychowdhury, et al. Perturb-seq: dissecting molecular circuits with scalable single-cell rna profiling of pooled genetic screens. cell , 167(7): 1853–1866, 2016. Greg Finak, Andrew McDavid, Masanao Yajima, Jingyuan Deng, Vivian Gersuk, Alex K Shalek, Chloe K Slichter, Hannah W Miller, M Juliana McElrath, Martin Prlic, et al. Mast: a flexible statistical framework for assessing transcriptional changes and characterizing heterogeneity in single-cell rna sequencing data. Genome biology , 16(1):278, 2015. Chris J Frangieh, Johannes C Melms, Pratiksha I Thakore, Kathryn R Geiger-Schuller, Patricia Ho, Adrienne M Luoma, Brian Cleary, Livnat Jerby-Arnon, Shruti Malu, Michael S Cuoco, et al. Multimodal pooled perturb-cite-seq screens in patient models define mechanisms of cancer immune evasion. Nature genetics , 53(3):332–341, 2021. H Robert Frost, Zhigang Li, and Jason H Moore. Principal component gene set enrichment (pcgse). 
+
+BioData Mining , 8:25, 2015. doi: 10.1186/s13040-015-0059-z. Geoffrey P Gregory et al. Cdk9 inhibition by dinaciclib potently suppresses mcl-1 to induce durable apoptotic responses in aggressive myc-driven b-cell lymphoma in vivo. Leukemia , 2015. doi: 10. 1038/leu.2015.10. Leland H Hartwell, John J Hopfield, Stanislas Leibler, and Andrew W Murray. From molecular to modular cell biology. Nature , 402(Suppl 6761):C47–C52, 1999. Xiaolei Hu, Jing Li, Maorong Fu, Xia Zhao, and Wei Wang. The jak/stat signaling path-way: from bench to clinic. Signal Transduction and Targeted Therapy , 6(1):402, 2021. doi: 10.1038/s41392-021-00791-1. Y Jeon, S M Ko, J H Cho, J Chae, and J Shim. The hdac inhibitor, panobinostat, induces apoptosis by suppressing the expression of specificity protein 1 in oral squamous cell carcinoma. International Journal of Molecular Medicine , 32(4):860–866, 2013. doi: 10.3892/ijmm.2013.1451. John K Kruschke. Bayesian estimation supersedes the t test. Journal of experimental psychology: General , 142(2):573, 2013. John K Kruschke. Rejecting or accepting parameter values in bayesian estimation. Advances in methods and practices in psychological science , 1(2):270–280, 2018. Russell Z Kunes, Thomas Walle, Max Land, Tal Nawy, and Dana Pe’er. Supervised discovery of interpretable gene programs from single-cell data. Nature biotechnology , 42(7):1084–1095, 2024. Matthew A Lalli, Denis Avey, Joseph D Dougherty, Jeffrey Milbrandt, and Robi D Mitra. High-throughput single-cell functional elucidation of neurodevelopmental disease–associated genes reveals convergent mechanisms altering neuronal differentiation. Genome research , 30(9):1317–1331, 2020. Roxanne C Lariviere and Jean-Pierre Julien. Functions of intermediate filaments in neuronal devel-opment and disease. Journal of neurobiology , 58(1):131–148, 2004. Christophe Le Tourneau, Sandrine Faivre, Marina Serova, and Eric Raymond. mtorc1 inhibitors: is temsirolimus in renal cancer telling us how they really work? British Journal of Cancer , 99(8): 1197–1203, 2008. doi: 10.1038/sj.bjc.6604636. 18 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+Jorge Alfonso Le´ on Machado and Viktor Steimle. The mhc class ii transactivator ciita: not (quite) the odd-one-out anymore among nlr proteins. International Journal of Molecular Sciences , 22(3): 1074, 2021. Shuyu Li, Yan Liang, Manlin Wu, Xiaojing Wang, Haixia Fu, Yuhao Chen, and Zhigang Wang. The novel mtor inhibitor cci-779 (temsirolimus) induces antiproliferative effects through inhi-bition of mtor in bel-7402 liver cancer cells. Cancer Cell International , 13:30, 2013. doi: 10.1186/1475-2867-13-30. Arthur Liberzon, Aravind Subramanian, Reid Pinchback, Helga Thorvaldsd´ ottir, Pablo Tamayo, and Jill P Mesirov. Molecular signatures database (msigdb) 3.0. Bioinformatics , 27(12):1739–1740, 2011. Arthur Liberzon, Chet Birger, Helga Thorvaldsd´ ottir, Mahmoud Ghandi, Jill P Mesirov, and Pablo Tamayo. The molecular signatures database hallmark gene set collection. Cell systems , 1(6):417– 425, 2015. Mohammad Lotfollahi, Anna Klimovskaia Susmelj, Carlo De Donno, Leon Hetzel, Yuge Ji, Ignacio L Ibarra, Sanjay R Srivatsan, Mohsen Naghipourfar, Riza M Daza, Beth Martin, et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular systems biology ,19(6):MSB202211517, 2023a. Mohammad Lotfollahi, Sergei Rybakov, Karin Hrovatin, Soroor Hediyeh-Zadeh, Carlos Talavera-L´ opez, Alexander V Misharin, and Fabian J Theis. Biologically informed deep learning to query gene programs in single-cell atlases. Nature Cell Biology , 25(2):337–350, 2023b. Michael I Love, Wolfgang Huber, and Simon Anders. Moderated estimation of fold change and dispersion for rna-seq data with deseq2. Genome biology , 15(12):550, 2014. Marija Milacic, Deidre Beavers, Patrick Conley, Chuqiao Gong, Marc Gillespie, Johannes Griss, Robin Haw, Bijay Jassal, Lisa Matthews, Bruce May, et al. The reactome pathway knowledgebase 2024. 
+
+Nucleic acids research , 52(D1):D672–D678, 2024. Eleni P Mimitou, Anthony Cheng, Antonino Montalbano, Stephanie Hao, Marlon Stoeckius, Mateusz Legut, Timothy Roush, Alberto Herrera, Efthymia Papalexi, Zhengqing Ouyang, et al. Multiplexed detection of proteins, transcriptomes, clonotypes and crispr perturbations in single cells. Nature methods , 16(5):409–412, 2019. Ji Wook Moon, Su-Kang Kong, Byung Soo Kim, Hyun Ji Kim, Hyangsoon Lim, Kyeonga Noh, Younghye Kim, Jung-Woo Choi, Ju-Han Lee, and Young-Sik Kim. Ifn γ induces pd-l1 overexpression by jak2/stat1/irf-1 signaling in ebv-positive gastric carcinoma. Scientific reports , 7(1):17810, 2017. Thomas M Norman, Max A Horlbeck, Joseph M Replogle, Alex Y Ge, Albert Xu, Marco Jost, Luke A Gilbert, and Jonathan S Weissman. Exploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science , 365(6455):786–793, 2019. Esther A Obeng, Louise M Carlson, Delia M Gutman, William J Harrington, Kelvin P Lee, and Lawrence H Boise. Proteasome inhibitors induce a terminal unfolded protein response in multiple myeloma cells. Blood , 107(12):4907–4916, 2006. doi: 10.1182/blood-2005-08-3531. Juho Piironen and Aki Vehtari. Sparsity information and regularization in the horseshoe and other shrinkage priors. Electronic Journal of Statistics , 11(2):5018 – 5051, 2017. doi: 10.1214/ 17-EJS1337SI. URL https://doi.org/10.1214/17-EJS1337SI .Arber Qoku and Florian Buettner. Encoding domain knowledge in multi-view latent variable models: A bayesian approach with structured sparsity. In International Conference on Artificial Intelligence and Statistics , pages 11545–11562. PMLR, 2023. 19 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+Arber Qoku, Martin Rohbeck, Florin C Walter, Ilia Kats, Oliver Stegle, and Florian Buettner. Mofa-flex: A factor model framework for integrating omics data with prior knowledge. bioRxiv , pages 2025–11, 2025. J¨ uri Reimand, Ruth Isserlin, Veronique Voisin, Mike Kucera, Christian Tannus-Lopes, Asha Rostami-anfar, Lina Wadi, Mona Meyer, Jeff Wong, Changjiang Xu, et al. Pathway enrichment analysis and visualization of omics data using g: Profiler, gsea, cytoscape and enrichmentmap. Nature protocols ,14(2):482–517, 2019. Joseph M Replogle, Reuben A Saunders, Angela N Pogson, Jeffrey A Hussmann, Alexander Lenail, Alina Guna, Lauren Mascibroda, Eric J Wagner, Karen Adelman, Gila Lithwick-Yanai, et al. Map-ping information-rich genotype-phenotype landscapes with genome-scale perturb-seq. Cell , 185(14): 2559–2575, 2022. Matthew E Ritchie, Belinda Phipson, DI Wu, Yifang Hu, Charity W Law, Wei Shi, and Gordon K Smyth. limma powers differential expression analyses for rna-sequencing and microarray studies. 
+
+Nucleic acids research , 43(7):e47–e47, 2015. Yusuf Roohani, Kexin Huang, and Jure Leskovec. Predicting transcriptional outcomes of novel multi-gene perturbations with gears. Nature Biotechnology , 42(6):927–935, 2024. Rahul Satija, Jeffrey A Farrell, David Gennert, Alexander F Schier, and Aviv Regev. Spatial recon-struction of single-cell gene expression data. Nature biotechnology , 33(5):495–502, 2015. Eran Segal, Michael Shapira, Aviv Regev, Dana Pe’er, David Botstein, Daphne Koller, and Nir Friedman. Module networks: identifying regulatory modules and their condition-specific regulators from gene expression data. Nature genetics , 34(2):166–176, 2003. Margaret Sperow, Raymond B Berry, Ildar T Bayazitov, Guo Zhu, Suzanne J Baker, and Stanislav S Zakharenko. Phosphatase and tensin homologue (pten) regulates synaptic plasticity independently of its effect on neuronal morphology and migration. The Journal of physiology , 590(4):777–792, 2012. Sanjay R Srivatsan, Jos´ e L McFaline-Figueroa, Vijay Ramani, Lauren Saunders, Junyue Cao, Jonathan Packer, Hannah A Pliner, Dana L Jackson, Riza M Daza, Lena Christiansen, et al. Massively multiplex chemical transcriptomics at single-cell resolution. Science , 367(6473):45–51, 2020. Oliver Stegle, Sarah A Teichmann, and John C Marioni. Computational and analytical challenges in single-cell transcriptomics. Nature Reviews Genetics , 16(3):133–145, 2015. Viktor Steimle, Claire-Anne Siegrist, Annick Mottet, Barbara Lisowska-Grospierre, and Bernard Mach. Regulation of mhc class ii expression by interferon-γ mediated by the transactivator gene ciita. Science , 265(5168):106–109, 1994. Matthew Stephens. False discovery rates: a new deal. Biostatistics , 18(2):275–294, 2017. Aarathi Sugathan, Marta Biagioli, Christelle Golzio, Serkan Erdin, Ian Blumenthal, Poornima Man-avalan, Ashok Ragavendran, Harrison Brand, Diane Lucente, Judith Miles, et al. Chd8 regulates neurodevelopmental pathways associated with autism spectrum disorder in neural progenitors. Pro-ceedings of the National Academy of Sciences , 111(42):E4468–E4477, 2014. Michael Talpaz and Jean-Jacques Kiladjian. Fedratinib, a newly approved treatment for pa-tients with myeloproliferative neoplasm-associated myelofibrosis. Leukemia , 2021. doi: 10.1038/ s41375-020-0954-2. Ruoping Tang, Anne-Marie Faussat, Patricia Majdak, Christophe Marzac, Sabine Dubrulle, Zora Marjanovic, Ollivier Legrand, and Jean-Pierre Marie. Semisynthetic homoharringtonine induces 20 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+apoptosis via inhibition of protein synthesis and triggers rapid myeloid cell leukemia-1 down-regulation in myeloid leukemia cells. Molecular Cancer Therapeutics , 5(3):723–731, 2006. doi: 10.1158/1535-7163.MCT-05-0164. Junlin Teng, Yosuke Takei, Akihiro Harada, Takao Nakata, Jianguo Chen, and Nobutaka Hirokawa. Synergistic effects of map2 and map1b knockout in neuronal migration, dendritic outgrowth, and microtubule organization. The Journal of cell biology , 155(1):65–76, 2001. Kyle Tretina, Eui-Soon Park, Agnieszka Maminska, and John D MacMicking. Interferon-induced guanylate-binding proteins: Guardians of host defense in health and disease. Journal of Experi-mental Medicine , 216(3):482–500, 2019. Martin J Wainwright and Michael I Jordan. Graphical models, exponential families, and variational inference. Foundations and Trends ® in Machine Learning , 1(1-2):1–305, 2008. F Alexander Wolf, Philipp Angerer, and Fabian J Theis. Scanpy: large-scale single-cell gene expression data analysis. Genome biology , 19(1):15, 2018. Lin Yang, Yuqing Zhu, Hua Yu, Xiaolong Cheng, Sitong Chen, Yulan Chu, He Huang, Jin Zhang, and Wei Li. scmageck links genotypes with multiple phenotypes in single-cell crispr screens. Genome biology , 21(1):19, 2020. Douglas Yao, Loic Binan, Jon Bezney, Brooke Simonton, Jahanara Freedman, Chris J Frangieh, Kushal Dey, Kathryn Geiger-Schuller, Basak Eraslan, Alexander Gusev, et al. Compressed perturb-seq: highly efficient screens for regulatory circuits using random composite perturbations. BioRxiv ,2023. Douglas Yao, Loic Binan, Jon Bezney, Brooke Simonton, Jahanara Freedman, Chris J Frangieh, Kushal Dey, Kathryn Geiger-Schuller, Basak Eraslan, Alexander Gusev, et al. Scalable genetic screening for regulatory circuits using compressed perturb-seq. Nature biotechnology , 42(8):1282– 1295, 2024. Aidong Yuan, Mala V Rao, Ralph A Nixon, et al. Neurofilaments and neurofilament proteins in health and disease. Cold Spring Harbor perspectives in biology , 9(4):a018309, 2017. Jesse Zhang, Airol A Ubas, Richard De Borja, Valentine Svensson, Nicole Thomas, Neha Thakar, Ian Lai, Aidan Winters, Umair Khan, Matthew G Jones, et al. Tahoe-100m: A giga-scale single-cell perturbation atlas for context-dependent gene function and cellular modeling. BioRxiv , pages 2025–02, 2025. Yifan Zhou, Kaixuan Luo, Lifan Liang, Mengjie Chen, and Xin He. A new bayesian factor analysis method improves detection of genes and biological processes affected by perturbations in single-cell crispr screening. Nature Methods , 20(11):1693–1703, 2023. Ouyang Zhu and Jun Li. Scouter predicts transcriptional responses to genetic perturbations with large language model embeddings. Nature Computational Science , pages 1–8, 2025. 21 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## 5 Supplementary Results 
+
+5.1 PACMON correctly links ASD perturbations to biological processes 
+
+As an additional transcriptomic-only application, we validated PACMON on the Lund human mes-encephalic (LUHMES) single-cell RNA-seq perturbation dataset [Lalli et al., 2020]. In this study, 14 genes associated with autism spectrum disorder ( ASD ) were perturbed in LUHMES neural progenitor cells to assess their effects on neuronal differentiation. The primary analysis revealed that perturba-tions of CHD2 , ASH1L , ARID1B , and DYRK1A delay neuronal differentiation, whereas perturbations of PTEN and CHD8 promote differentiation [Lalli et al., 2020]. To assess whether PACMON could recover these perturbation effects in an end-to-end manner, we ran PACMON with Hallmark and GOBP gene sets as prior pathway annotations. We first examined whether the inferred perturbation effects preserved the known structure among ASD -associated perturbations. To this end, we computed cosine similarity between perturbation-factor coefficient vectors for the factors explaining 98% of the variance. Supplementary Fig. S20 shows that PTEN and CHD8 have highly similar perturbation profiles, whereas perturbations previously associated with delayed neuronal differentiation, namely 
+
+CHD2 , ASH1L , ARID1B , and DYRK1A , form a more distinct group. This organisation is consistent with the developmental phenotypes reported in the original study. We next examined perturbation-pathway associations in more detail. PACMON identified six pathways associated with at least one of the ASD -related perturbations (Supplementary Fig. S21). One example is a factor related to synapse organisation, which showed a negative association with PTEN perturbation. This is consistent with the established role of PTEN in synaptic regulation and plasticity [Sperow et al., 2012]. A second ex-ample factor is related to neuron development and showed positive associations with PTEN and CHD8 
+
+perturbations and a negative association with ASH1L perturbation. These directions are biologically plausible: PTEN perturbation has been linked to increased proliferation and growth [Lalli et al., 2020, Chen et al., 2015], CHD8 regulates multiple aspects of brain development [Sugathan et al., 2014], and 
+
+ASH1L perturbation has been associated with altered neuronal morphogenesis [Cheon et al., 2022]. Inspection of the corresponding factor loadings provided further support for the biological relevance of these programs (Supplementary Fig. S22). For the neuron-development-associated factor, many of the top-ranked genes were part of the original GOBP annotation, but PACMON also highlighted additional genes outside the prior set. Among these, NEFM is a neurofilament protein implicated in neurite formation [Lariviere and Julien, 2004], and together with NEFL contributes to axonal cy-toskeleton development [Yuan et al., 2017]. The factor also highlighted MAP2 and MAP1B , which are important for microtubule organisation during neuronal development [Teng et al., 2001]. These re-sults illustrate that PACMON not only recovers known biologically meaningful perturbation-pathway associations, but can also refine pathway definitions by assigning high weight to genes with relevant developmental functions that were not explicitly included in the original annotation. 22 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## 6 Supplementary Figures 
+
+23 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint rna prot 
+
+Mitotic Prometaphase (R) 
+
+Platelet Activation Signaling And Aggregation (R) 
+
+Interleukin 4 And Interleukin 13 Signaling (R) 
+
+Rho Gtpases Activate Formins (R) 
+
+Signaling By Interleukins (R) 
+
+Esr Mediated Signaling (R) 
+
+Signaling By Nuclear Receptors (R) 
+
+Diseases Of Metabolism (R) 
+
+Intracellular Signaling By Second Messengers (R) 
+
+Mitotic Me...Nd Anaphase (R)|Separation... Chromatids (R) 
+
+Signaling By Gpcr (R) 
+
+Extracellular Matrix Organization (R) 
+
+G Alpha I Signalling Events (R) 
+
+Response To Elevated Platelet Cytosolic Ca2 (R) 
+
+Mitotic G2 G2 M Phases (R) 
+
+Transmission Across Chemical Synapses (R) 
+
+Integrin Cell Surface Interactions (R) 
+
+Slc Mediated Transmembrane Transport (R) 
+
+Glycolysis (H) 
+
+Apoptosis (H) 
+
+Cell Surface Interactions At The Vascular Wall (R) 
+
+Signaling By Tgfb Family Members (R) 
+
+Metabolism Of Steroids (R) 
+
+Estrogen Response Early (H) 
+
+Developmental Cell Lineages (R) 
+
+Signaling By Receptor Tyrosine Kinases (R) 
+
+Cardiac Conduction (R) 
+
+Mapk1 Mapk3 Signaling (R)|Mapk Famil...Ng Cascades (R) 
+
+Gpcr Ligand Binding (R) 
+
+P53 Pathway (H) 
+
+factor_2 
+
+Complement (H) 
+
+Collagen Formation (R) 
+
+Myogenesis (H) 
+
+Mitotic Spindle (H) 
+
+Degradation Of The Extracellular Matrix (R) 
+
+Il2 Stat5 Signaling (H) 
+
+Diseases Of Signal Tran...Rs And Second Messengers (R) 
+
+Hypoxia (H) 
+
+Apical Junction (H) 
+
+Nervous System Development (R) 
+
+Regulation Of Insulin L... Binding Proteins Igfbps (R) 
+
+Keratinization (R) 
+
+Negative R...Akt Network (R)|Pi3K Akt S...G In Cancer (R) 
+
+Cellular Response To Chemical Stress (R) 
+
+Neuronal System (R) 
+
+Cell Cell Communication (R) 
+
+Tnfa Signaling Via Nfkb (H) 
+
+Xenobiotic Metabolism (H) 
+
+Estrogen Response Late (H) 
+
+factor_1 
+
+Class A 1 Rhodopsin Like Receptors (R) 
+
+Signaling By Rho Gtpases Miro Gtpases And Rhobtb3 (R) 
+
+Coagulation (H) 
+
+Heme Metabolism (H) 
+
+Hemostasis (R) 
+
+Muscle Contraction (R) 
+
+Neurotransmitter Recept...Ptic Signal Transmission (R) 
+
+factor_0 
+
+Rho Gtpase Cycle (R) 
+
+Uv Response Up (H) 
+
+Kras Signaling Up (H) 
+
+Neutrophil Degranulation (R) 
+
+Mtorc1 Signaling (H) 
+
+Allograft Rejection (H) 
+
+Uv Response Dn (H) 
+
+Inflammatory Response (H) 
+
+Cell Cycle Checkpoints (R) 
+
+Innate Immune System (R) 
+
+Epithelial Mesenchymal Transition (H) 
+
+E2F Targets (H) 
+
+Cytokine Signaling In Immune System (R) 
+
+G2M Checkpoint (H) 
+
+Cellular Responses To Stimuli (R) 
+
+Interferon Signaling (R) 
+
+Interferon Gamma Response (H) 
+
+dense_0 
+
+0.00 
+
+0.05 
+
+0.10 
+
+0.15 
+
+0.20 
+
+0.25 
+
+0.30 Figure S1: Variance explained by inferred factors across RNA and protein modalities in the Perturb-CITE-seq melanoma dataset. Heat map showing the fraction of variance explained ( R2) by each inferred latent factor in the RNA and protein views. Rows correspond to pathway-informed factors from the Hallmark and Reactome collections together with additional latent factors. Interferon-related and cell-cycle-associated programs account for substantial variance across both views, whereas other factors show stronger modality-specific contributions. The factor dense 0 denotes the uninformed latent factor that is excluded from the perturbation design and captures residual variation indepen-dent of specific perturbations. In contrast, factor 0, factor 1, and factor 2 correspond to previously pathway-informed factors that were not retained as significantly aligned with their prior annotations by PCGSE, indicating latent structure that is captured by the model but not confidently attributable to the original pathway priors. 24 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint 0.02 0.04 0.06 0.08 
+
+R2
+
+> Neutrophil Degranulation (R) (+)
+> Mtorc1 Signaling (H) (+)
+> Kras Signaling Up (H) (+)
+> Cell Cycle Checkpoints (R) (+)
+> Epithelial Mesenchymal Transition (H) (+)
+> Innate Immune System (R) (+)
+> E2F Targets (H) (+)
+> Cytokine Signaling In Immune System (R) (+)
+> Interferon Signaling (R) (+)
+> G2M Checkpoint (H) (+)
+> Cellular Responses To Stimuli (R) (+)
+> Interferon Gamma Response (H) (+)
+> Factor
+
+Overview top factors in rna α = 0.05 
+
+−log 10 (FDR )
+
+> 10
+
+Size    
+
+> 60
+> 90
+> 120
+> 150
+> 180
+> 210
+> 0.04 0.06 0.08 0.10
+
+R2
+
+> Neurotransmitter Recept...Ptic Signal Transmission (R)
+> E2F Targets (H)
+> Cytokine Signaling In Immune System (R)
+> Rho Gtpase Cycle (R)
+> factor_0
+> Epithelial Mesenchymal Transition (H)
+> Uv Response Up (H)
+> Inflammatory Response (H)
+> Uv Response Dn (H)
+> Allograft Rejection (H)
+> Interferon Signaling (R)
+> Interferon Gamma Response (H)
+> Factor
+
+Overview top factors in prot α = 0.05 
+
+−log 10 (FDR )
+
+> 0
+
+−log 10 (FDR )
+
+> 0
+
+Figure S2: Overview of top latent factors in the multimodal Perturb-CITE-seq melanoma dataset. Bubble plots summarising the top factors identified by PACMON in the RNA ( left ) and protein (right ) modalities at FDR < 0.05. The x-axis shows the fraction of variance explained ( R2) by each factor, bubble size indicates factor size, and colour intensity corresponds to − log 10 (FDR). In the RNA view, dominant factors include interferon-related, cytokine-signaling, innate-immune and cell-cycle programs, whereas the protein view is dominated by interferon-associated and inflammatory programs together with epithelial-mesenchymal transition and UV/stress-related signatures. The additional factor factor 0 denotes latent structure recovered by the model that was not significantly aligned with its original pathway annotation by PCGSE. 25 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint Co-culture 
+
+> Control
+> IFNγ
+
+.2 .4 .6 .8 1.0 
+
+Fraction of cells 
+
+in group (%) 
+
+0.25 0.50 0.75 
+
+Mean expression 
+
+in group 
+
+> Interferon Signaling (R)
+> Allograft Rejection (H)
+> Mtorc1 Signaling (H)
+> Epithelial Mesenchymal Transition (H)
+> dense_0
+> Signaling By Rho Gtpases Miro Gtpases And Rhobtb3 (R)
+> Interferon Gamma Response (H)
+> Diseases Of Signal Tran...Rs And Second Messengers (R)
+> factor_0
+
+Co-culture 
+
+Control 
+
+IFNγ Figure S3: Differential pathway activity across experimental conditions in the Perturb-CITE-seq melanoma dataset. Dotplot summarising pathway activity differences between each condition and the remaining cells, assessed using Wilcoxon rank-sum testing. Dot size denotes the fraction of cells in the group, and colour indicates the mean pathway activity in that group. The co-culture condition is primarily associated with increased activity of Interferon Signaling (R), whereas IFN γ-treated cells are most strongly characterized by Interferon Gamma Response (H). 26 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+G2M G1 S
+
+.2 .4 .6 .8 1.0 
+
+Fraction of cells 
+
+in group (%) 
+
+0.25 0.50 0.75 
+
+Mean expression 
+
+in group 
+
+> G2M Checkpoint (H)
+> Mitotic Prometaphase (R)
+> Mitotic Me...Nd Anaphase (R)|Separation... Chromatids (R)
+> P53 Pathway (H)
+> Tnfa Signaling Via Nfkb (H)
+> Platelet Activation Signaling And Aggregation (R)
+> Cell Cycle Checkpoints (R)
+> Estrogen Response Late (H)
+> dense_0
+
+G2M 
+
+G1 
+
+SFigure S4: Differential pathway activity across cell-cycle phases in the Perturb-CITE-seq melanoma dataset. Dotplot summarising pathway activity differences between each cell-cycle phase and the remaining cells, assessed using Wilcoxon rank-sum testing. Dot size denotes the fraction of cells in the group, and colour indicates the mean pathway activity in that group. The G2/M phase is most strongly associated with G2M Checkpoint (H), whereas S-phase cells are characterized by increased activity of Cell Cycle Checkpoints (R). G1-phase cells additionally show elevated activity of P53 Pathway (H). 27 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+P53 Pathway (H) 
+
+G2M Checkpoint (H) 
+
+Cell Cycle Checkpoints (R) 
+
+Factor 
+
+0.0 
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+> Score
+
+G1 
+
+G2M 
+
+SFigure S5: Cell-cycle-associated pathway scores across independently assigned cell-cycle phases in the Perturb-CITE-seq melanoma dataset. Boxplots showing the distribution of inferred pathway scores for P53 Pathway (H), G2M Checkpoint (H) and Cell Cycle Checkpoints (R) across cells assigned to G1, S and G2/M phases. Consistent with the differential testing results, G2M Checkpoint (H) is highest in G2/M-phase cells, Cell Cycle Checkpoints (R) is highest in S-phase cells, and P53 Pathway (H) shows elevated activity in G1-phase cells. 28 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 
+
+# G2M Checkpoint (H) 
+
+## 0.0 
+
+## 0.2 
+
+## 0.4 
+
+## 0.6 
+
+## 0.8 
+
+## 1.0 
+
+## 1.2 
+
+## 1.4 
+
+## 1.6 
+
+> Cell Cycle Checkpoints (R)
+
+# G1 G2M 
+
+# SFigure S6: Joint distribution of G2/M and S-phase pathway activities in the Perturb-CITE-seq melanoma dataset. Scatterplot of factor scores for G2M Checkpoint (H) and Cell Cycle Checkpoints (R), coloured by independently assigned cell-cycle phase. Cells in G2/M preferentially occupy higher G2M Checkpoint (H) scores, whereas S-phase cells are enriched for high Cell Cycle Checkpoints (R) scores. G1-phase cells remain concentrated near the origin, consistent with low activity of both cell-cycle programs outside actively cycling states. 29 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint 0 1000 2000 3000              
+
+> Rank
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> Loading
+> CCNB1
+> HMMR
+> AURKA
+> PLK1
+> CDC20
+> CENPF
+> TPX2
+> CCNB2
+> PTTG1
+> CKS2
+> G2M Checkpoint (H) (rna)
+> 246810 12
+> Rank
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> Loading
+> CD44
+> CD29
+> HLA_A
+> CD274
+> CD172a
+> G2M Checkpoint (H) (prot)
+> Type
+> Annotated
+> Inferred 01000 2000 3000
+> Rank
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> 1.75
+> 2.00
+> Loading
+> CDC6
+> CLSPN
+> FAM111B
+> GINS2
+> PCNA
+> MCM5
+> ORC6
+> DTL
+> E2F1
+> ATAD2
+> Cell Cycle Checkpoints (R) (rna)
+> 2.5 5.0 7.5 10.0 12.5 15.0
+> Rank
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> 0.12
+> 0.14
+> Loading
+> CD44
+> CD29
+> CD274
+> HLA_A
+> CD49f
+> CD47
+> CD59
+> CD119
+> Cell Cycle Checkpoints (R) (prot)
+> Type
+> Annotated
+> Inferred
+
+Figure S7: RNA and protein loadings for cell-cycle-associated pathway factors in the Perturb-CITE-seq melanoma dataset. Top-ranked loadings for G2M Checkpoint (H) ( top ) and Cell Cycle Check-points (R) ( bottom ) are shown for the RNA ( left ) and protein ( right ) modalities. Black points denote genes present in the original pathway annotation, whereas red points indicate features inferred by PACMON outside the prior set. For G2M Checkpoint (H), the RNA loadings recover canonical mitotic regulators including HMMR , AURKA , PLK1 , CDC20 , CENPF and TPX2 , while additionally assigning high weight to CCNB1 despite its absence from the original annotation, indicating biolog-ically meaningful pathway refinement. For Cell Cycle Checkpoints (R), the RNA loadings highlight core DNA replication and S-phase regulators such as CDC6 , CLSPN , MCM5 and ORC6 , together with refined markers including FAM111B , GINS2 , PCNA , DTL , E2F1 and ATAD2 . Corresponding protein loadings show that both factors are also reflected in the surface-protein modality, indicating that PACMON captures coherent cell-cycle-associated structure across RNA and protein readouts. 30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint .1 .2 .3 .4 .6 
+
+|Effect size| 
+
+-0.5 0 0.2 
+
+Effect size 
+
+> CD58
+> SSR2
+> CDKN1A
+> CD59
+> B2M
+> TAPBP
+> CCND1
+> CD44
+> SLIRP
+> CTPS1
+> DNMT1
+> TPRKB
+> CD47
+> ITGA3
+> CD274
+> NPC1
+> TXNDC17
+> IFNGR1
+> JAK1
+> IFNGR2
+> JAK2
+> STAT1
+> CDK6
+> HLA-E
+
+Developmental Cell Lineages (R) 
+
+Inflammatory Response (H) 
+
+Il2 Stat5 Signaling (H) 
+
+Cardiac Conduction (R) 
+
+Class A 1 Rhodopsin Like Receptors (R) 
+
+Negative R...Akt Network (R)|Pi3K Akt S...... 
+
+Apical Junction (H) 
+
+Coagulation (H) 
+
+Slc Mediated Transmembrane Transport (R) 
+
+Integrin Cell Surface Interactions (R) 
+
+Diseases Of Metabolism (R) 
+
+Metabolism Of Steroids (R) 
+
+Estrogen Response Early (H) 
+
+Signaling By Tgfb Family Members (R) 
+
+Intracellular Signaling By Second Messenge... 
+
+Transmission Across Chemical Synapses (R) 
+
+Esr Mediated Signaling (R) 
+
+Hypoxia (H) 
+
+Mitotic Me...Nd Anaphase (R)|Separation...... 
+
+Regulation Of Insulin L... Binding Protein... 
+
+Mapk1 Mapk3 Signaling (R)|Mapk Famil...Ng ... 
+
+Cellular Response To Chemical Stress (R) 
+
+Myogenesis (H) 
+
+Response To Elevated Platelet Cytosolic Ca... 
+
+Collagen Formation (R) 
+
+Gpcr Ligand Binding (R) 
+
+Signaling By Nuclear Receptors (R) 
+
+Mtorc1 Signaling (H) 
+
+Xenobiotic Metabolism (H) 
+
+Neurotransmitter Recept...Ptic Signal Tran... 
+
+Estrogen Response Late (H) 
+
+Rho Gtpases Activate Formins (R) 
+
+Cell Cell Communication (R) 
+
+Neuronal System (R) 
+
+Signaling By Rho Gtpases Miro Gtpases And ... 
+
+Cell Cycle Checkpoints (R) 
+
+G2M Checkpoint (H) 
+
+E2F Targets (H) 
+
+Nervous System Development (R) 
+
+Cell Surface Interactions At The Vascular ... 
+
+Mitotic G2 G2 M Phases (R) 
+
+Cellular Responses To Stimuli (R) 
+
+Signaling By Receptor Tyrosine Kinases (R) 
+
+Neutrophil Degranulation (R) 
+
+Hemostasis (R) 
+
+P53 Pathway (H) 
+
+Glycolysis (H) 
+
+Complement (H) 
+
+Platelet Activation Signaling And Aggregat... 
+
+Kras Signaling Up (H) 
+
+Heme Metabolism (H) 
+
+Degradation Of The Extracellular Matrix (R... 
+
+G Alpha I Signalling Events (R) 
+
+Allograft Rejection (H) 
+
+factor_0 
+
+Rho Gtpase Cycle (R) 
+
+Tnfa Signaling Via Nfkb (H) 
+
+Cytokine Signaling In Immune System (R) 
+
+Interferon Gamma Response (H) 
+
+Interferon Signaling (R) 
+
+Uv Response Up (H) 
+
+Keratinization (R) 
+
+Extracellular Matrix Organization (R) 
+
+factor_2 
+
+Signaling By Gpcr (R) Figure S8: Global perturbation-pathway association landscape in the Perturb-CITE-seq melanoma dataset. Full dotplot of inferred perturbation-pathway associations, restricted to pathways with at least one significant perturbation effect and perturbations with at least one significant pathway asso-ciation. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. This overview provides a global view of the pathway-level structure recovered by PACMON across the full set of significant perturbation responses. 31 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint .2 .4 .6 .8   
+
+> |Effect size|
+> -0.7 00.3
+> Effect size
+> CD44
+> SSR2
+> CDK6
+> HLA-E
+> CD58
+> CD59
+> ITGA3
+> CTPS1
+> TPRKB
+> CD47
+> B2M
+> TAPBP
+> IFNGR1
+> CD274
+> JAK1
+> STAT1
+> IFNGR2
+> JAK2
+> CD58
+> CD9
+> CD119
+> CD49f
+> CD59
+> CD172a
+> HLA_E
+> CD309
+> CD61
+> HLA_A
+> CD274
+> CD47
+> CD29
+> CD44
+
+Figure S9: Perturbation-associated surface-protein effects that are differentially expressed in the Perturb-CITE-seq melanoma dataset. Dotplot summarising significant perturbation effects on surface-protein abundance. Rows correspond to measured proteins and columns to perturbations, with dot colour denoting effect direction and magnitude and dot size indicating absolute effect size. Con-sistent with the pathway-level analysis, perturbations targeting the IFN γ-JAK/STAT axis induce coordinated changes across multiple immune-relevant surface markers, including strong suppression of CD274 (PD-L1), highlighting the ability of PACMON to recover interpretable perturbation effects directly in the protein modality. 32 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint −1.00 −0.75 −0.50 −0.25 0.00 0.25 0.50 0.75 1.00 
+
+## Effect size 
+
+STAT1 
+
+IFNGR1 
+
+JAK2 
+
+IFNGR2 
+
+JAK1 
+
+CD274 
+
+TPRKB 
+
+SLC5A3 
+
+SMAD4 
+
+SINHCAF 
+
+SLC22A18 
+
+SDC3 
+
+SSR2 
+
+TAPBP 
+
+KCNN4 
+
+B2M 
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## Perturbation effects on Interferon Gamma Response (H) Figure S10: Perturbation effects on the Interferon Gamma Response (H) factor in the Perturb-CITE-seq melanoma dataset. Barplot showing inferred perturbation effects on the Interferon Gamma Re-sponse (H) factor. Negative effect sizes indicate suppression of interferon-associated pathway activity, whereas positive values indicate increased activity. Consistent with the pathway-level dot plot, dis-ruption of the IFN γ-JAK/STAT cascade, including STAT1 , IFNGR1 , IFNGR2 , JAK1 and JAK2 ,produces the strongest negative effects on this factor. Knockout of CD274 (PD-L1) also reduces Interferon Gamma Response (H) activity, whereas the remaining perturbations show comparatively weak or negligible effects. Asterisks denote statistically significant effects. 33 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+−4 −2 0 2 4
+
+## Effect size 
+
+GBP1 
+
+WARS 
+
+GBP2 
+
+GBP4 
+
+IDO1 
+
+STAT1 
+
+IRF1 
+
+RARRES3 
+
+CD74 
+
+LAP3 
+
+MKI67 
+
+GTSE1 
+
+CENPW 
+
+CDKN3 
+
+BIRC5 
+
+MAD2L1 
+
+TOP2A 
+
+TPX2 
+
+NUSAP1 
+
+CENPF 
+
+## *
+
+## **
+
+## *
+
+## *
+
+## *
+
+## **
+
+## *
+
+## * *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## STAT1 effect on gene expression 
+
+−2 
+
+−1 
+
+0
+
+1
+
+2
+
+> Effect size
+
+Figure S11: Top differential gene-expression effects associated with STAT1 perturbation in the Perturb-CITE-seq melanoma dataset. Barplot showing the 10 strongest negative and 10 strongest positive inferred gene-expression effects for STAT1 perturbation. Negative effects are enriched for canonical interferon-response genes, including GBP1 , WARS , GBP2 , GBP4 , IDO1 , STAT1 and IRF1 ,consistent with loss of interferon signaling upon STAT1 disruption. Positive effects include a smaller set of proliferation-associated genes, including MKI67 , TOP2A , TPX2 and CENPF . Asterisks denote statistically significant effects. 34 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+−1.0 −0.5 0.0 0.5 1.0 
+
+## Effect size 
+
+CD274 
+
+HLA_A 
+
+CD47 
+
+CD44 
+
+CD29 
+
+CD49f 
+
+HLA_E 
+
+CD59 
+
+CD9 
+
+CD140b 
+
+CD58 
+
+CD202b 
+
+CD279 
+
+CD140a 
+
+CD184 
+
+CD309 
+
+CD117 
+
+CD61 
+
+CD172a 
+
+CD119 
+
+## * * *
+
+## ** *
+
+## *
+
+## *
+
+## STAT1 effect on surface proteins 
+
+−0.6 
+
+−0.4 
+
+−0.2 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+> Effect size
+
+Figure S12: Differential surface-protein effects associated with STAT1 perturbation in the Perturb-CITE-seq melanoma dataset. Barplot showing inferred effects of STAT1 perturbation on all measured surface proteins. Consistent with the pathway-level and gene-expression analyses, STAT1 perturba-tion induces broad negative effects on immune-relevant surface markers, with the strongest suppression observed for CD274 (PD-L1), HLA A , CD47 , CD44 and CD29 . The remaining proteins show weak or negligible effects. Asterisks denote statistically significant effects. 35    
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint 0.01 0.02 0.03 0.04
+
+R2
+
+> factor_13
+> factor_12
+> Androgen Response (H) (+)
+> factor_11
+> P53 Pathway (H) (+)
+> Uv Response Up (H) (+)
+> factor_9
+> factor_10
+> factor_8
+> Cholesterol Homeostasis (H) (+)
+> Interferon Gamma Response (H) (+)
+> Mitotic Spindle (H) (+)
+> Xenobiotic Metabolism (H) (+)
+> Apoptosis (H) (+)
+> factor_7
+> Glycolysis (H) (+)
+> Interferon Alpha Response (H) (+)
+> factor_6
+> G2M Checkpoint (H) (+)
+> factor_4
+> factor_5
+> Tnfa Signaling Via Nfkb (H) (+)
+> E2F Targets (H) (+)
+> Mtorc1 Signaling (H) (+)
+> factor_3
+> factor_2
+> factor_1
+> factor_0
+> Hypoxia (H) (+)
+> Apical Junction (H) (+)
+> Epithelial Mesenchymal Transition (H) (+)
+> Factor
+
+Overview top factors in rna α = 0.05 
+
+−log 10 (FDR )
+
+> 2
+> 4
+> 6
+> 8
+> 10
+
+Size 
+
+> 40
+> 60
+> 80
+> 100
+> 120
+
+Figure S13: Overview of the latent factors in the Tahoe-100M perturbation atlas. Bubbleplot sum-marising the latent factors identified by PACMON at FDR < 0.05. The x-axis shows the fraction of variance explained ( R2) by each factor, bubble size indicates factor size, and colour intensity corresponds to − log 10 (FDR) from principal component gene set enrichment (PCGSE). Pathway-informed factors recover major transcriptional programs including epithelial-mesenchymal transi-tion, hypoxia, mTORC1 signaling, E2F targets, TNF α signaling via NF κB, G2/M checkpoint and interferon-associated responses. Additional factors labeled as factor 0-factor 13 denote latent struc-ture retained by the model but not significantly aligned with the available prior pathway annotations, consistent with the large scale and transcriptional diversity of the Tahoe-100M dataset relative to the limited number of informed Hallmark programs used here. 36 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint Mtorc1 Signaling (H) 
+
+> Uv Response Up (H)
+> Tnfa Signaling Via Nfkb (H)
+> Interferon Alpha Response (H)
+> Apoptosis (H)
+> Mitotic Spindle (H)
+> Interferon Gamma Response (H)
+> Hypoxia (H)
+> factor_4
+> P53 Pathway (H)
+> factor_6
+> Apical Junction (H)
+> Xenobiotic Metabolism (H)
+> Glycolysis (H)
+> factor_11
+> E2F Targets (H)
+> factor_13
+> factor_1
+> G2M Checkpoint (H)
+> factor_5
+> Androgen Response (H)
+> Epithelial Mesenchymal Transition (H)
+> factor_0
+> Cholesterol Homeostasis (H)
+> factor_2
+> factor_8
+> factor_10
+> factor_3
+> factor_7
+> factor_12
+> Factor
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Proportion of significant perturbations  Negative
+> Positive
+
+Figure S14: Sparsity of perturbation-pathway associations in the Tahoe-100M perturbation atlas. Paired barplot showing, for each latent factor, the proportion of drug-dosage perturbations with significant negative or positive associations. Factors are ordered by the total proportion of significant perturbations. Only a subset of pathway factors is recurrently affected across perturbations, and for each factor only a minority of perturbations show significant associations, consistent with a sparse perturbation-pathway structure. In particular, mTORC1 Signaling (H), UV Response Up (H), TNF α
+
+Signaling via NF κB (H), interferon-associated programs, Apoptosis (H) and Hypoxia (H) account for the largest fractions of significant perturbations, whereas overwritten generic factors are affected less frequently and tend to appear toward the lower-ranked end of the distribution. 37 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint −0.5 0.0 0.5 1.0 1.5 2.0 
+
+Uv Response Up (H) 
+
+−0.2 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+1.2 
+
+1.4 
+
+> Apoptosis (H)
+
+Harringtonine 
+
+Homoharringtonine 
+
+Belinostat 
+
+Panobinostat 
+
+Bortezomib 
+
+Ixazomib citrate 
+
+Dinaciclib 
+
+MOA 
+
+Protein synthesis inhibitor 
+
+HDAC inhibitor 
+
+Proteasome inhibitor 
+
+CDK inhibitor Figure S15: MOA-level projection of stress- and apoptosis-associated drug responses in the Tahoe-100M perturbation atlas. Convex-hull projection of selected mechanisms of action (MOAs) in pathway space defined by UV Response Up (H) and Apoptosis (H). Each point corresponds to one drug after averaging pathway coefficients across the three assayed concentrations, and hulls summarise the distribution of drugs within each MOA class. Protein synthesis inhibitors occupy the strongest stress-associated region and extend toward high apoptosis, whereas HDAC, proteasome and CDK inhibitors show partially overlapping but distinct response profiles. Representative labeled drugs illustrate the heterogeneity of pathway responses within and across mechanisms of action. 38 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+−0.6 −0.4 −0.2 0.0 0.2 0.4 0.6 
+
+Interferon Gamma Response (H) 
+
+−1.0 
+
+−0.5 
+
+0.0 
+
+0.5 
+
+1.0 
+
+> Mtorc1 Signaling (H)
+
+Tofacitinib_0.05uM 
+
+Tofacitinib_0.5uM 
+
+Tofacitinib_5.0uM 
+
+Fedratinib (hydrochloride hydrate)_0.05uM 
+
+Fedratinib (hydrochloride hydrate)_0.5uM 
+
+Fedratinib (hydrochloride hydrate)_5.0uM 
+
+Temsirolimus_0.05uM 
+
+Temsirolimus_0.5uM 
+
+Temsirolimus_5.0uM 
+
+Harringtonine_0.05uM 
+
+Harringtonine_0.5uM 
+
+Harringtonine_5.0uM 
+
+Bortezomib_0.05uM 
+
+Bortezomib_0.5uM 
+
+Bortezomib_5.0uM 
+
+Panobinostat_0.05uM 
+
+Panobinostat_0.5uM 
+
+Panobinostat_5.0uM 
+
+Drug 
+
+Tofacitinib 
+
+Fedratinib (hydrochloride hydrate) 
+
+Temsirolimus 
+
+Harringtonine 
+
+Bortezomib 
+
+Panobinostat Figure S16: Drug-level projection of dose-dependent pathway responses in the Tahoe-100M perturba-tion atlas. Convex-hull projection of selected drugs in pathway space defined by Interferon Gamma Response (H) and mTORC1 Signaling (H). Each point corresponds to one assayed drug concentration, and hulls connect the dose-specific responses for each drug. This view provides a compact summary of how representative drugs traverse pathway space across increasing dosage while preserving the broader separation between interferon-associated and growth-associated response patterns. 39 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+−0.5 0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Uv Response Up (H) 
+
+−0.5 
+
+0.0 
+
+0.5 
+
+1.0 
+
+1.5 
+
+> Apoptosis (H)
+
+Dinaciclib_0.05uM 
+
+Dinaciclib_0.5uM 
+
+Dinaciclib_5.0uM 
+
+Fedratinib (hydrochloride hydrate)_0.05uM 
+
+Fedratinib (hydrochloride hydrate)_0.5uM 
+
+Fedratinib (hydrochloride hydrate)_5.0uM 
+
+Homoharringtonine_0.05uM 
+
+Homoharringtonine_0.5uM 
+
+Homoharringtonine_5.0uM 
+
+Harringtonine_0.05uM 
+
+Harringtonine_0.5uM Harringtonine_5.0uM 
+
+Bortezomib_0.05uM 
+
+Bortezomib_0.5uM 
+
+Bortezomib_5.0uM 
+
+Panobinostat_0.05uM 
+
+Panobinostat_0.5uM 
+
+Panobinostat_5.0uM 
+
+Drug 
+
+Dinaciclib 
+
+Fedratinib (hydrochloride hydrate) 
+
+Homoharringtonine 
+
+Harringtonine 
+
+Bortezomib 
+
+Panobinostat Figure S17: Drug-level projection of dose-dependent pathway responses in the Tahoe-100M perturba-tion atlas. Convex-hull projection of selected drugs in pathway space defined by UV Response Up (H) and Apoptosis (H). Each point corresponds to one assayed drug concentration, and hulls connect the dose-specific responses for each drug. This view summarises how representative drugs traverse path-way space across increasing dosage and highlights heterogeneity in dose-dependent responses across the selected compounds. 40 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+−2 −1 0 1 2
+
+Effect size 
+
+Glycolysis (H) 
+
+Interferon Alpha Response (H) 
+
+factor_11 
+
+Hypoxia (H) 
+
+Interferon Gamma Response (H) 
+
+Epithelial Mesenchymal Transition (H) 
+
+G2M Checkpoint (H) 
+
+factor_8 
+
+Tnfa Signaling Via Nfkb (H) 
+
+Apoptosis (H) 
+
+*
+
+*
+
+*
+
+Dinaciclib (0.05uM) effect on factors 
+
+> −1.00
+> −0.75
+> −0.50
+> −0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> Effect size
+
+−2 −1 0 1 2
+
+Effect size 
+
+Hypoxia (H) 
+
+Glycolysis (H) 
+
+Interferon Gamma Response (H) 
+
+factor_11 
+
+factor_6 
+
+E2F Targets (H) 
+
+factor_8 
+
+Epithelial Mesenchymal Transition (H) 
+
+G2M Checkpoint (H) 
+
+Apoptosis (H) 
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+Dinaciclib (0.5uM) effect on factors 
+
+> −1.0
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> Effect size
+
+−1 0 1
+
+Effect size 
+
+Hypoxia (H) 
+
+Glycolysis (H) 
+
+Interferon Gamma Response (H) 
+
+P53 Pathway (H) 
+
+factor_6 
+
+E2F Targets (H) 
+
+factor_8 
+
+G2M Checkpoint (H) 
+
+Epithelial Mesenchymal Transition (H) 
+
+Apoptosis (H) 
+
+*
+
+*
+
+*
+
+*
+
+*
+
+*
+
+Dinaciclib (5.0uM) effect on factors 
+
+> −0.8
+> −0.6
+> −0.4
+> −0.2
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Effect size
+
+Figure S18: Dose-specific pathway effects of Dinaciclib in the Tahoe-100M perturbation atlas. Barplots showing the strongest inferred pathway effects for Dinaciclib at 0.05 μM ( top ), 0.5 μM ( middle ) and 5.0 μM ( bottom ). Negative effect sizes indicate pathway suppression, whereas positive values indicate increased pathway activity. Across all three concentrations, Dinaciclib is consistently associated with increased apoptosis and reduced activity of interferon- and metabolism-associated programs, while additional pathway effects vary with dosage. Asterisks denote statistically significant effects. 41 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint −2 −1 0 1 2
+
+## Effect size 
+
+ERO1A 
+
+NDRG1 
+
+GAPDH 
+
+MYO1E 
+
+GBE1 
+
+FLNB 
+
+NAMPT 
+
+ERRFI1 
+
+EFNA5 
+
+CD55 
+
+COL6A2 
+
+TPX2 
+
+COL6A1 
+
+SMC4 
+
+CENPF 
+
+MKI67 
+
+TOP2A 
+
+COL5A1 
+
+COL6A3 
+
+SPARC 
+
+## * *
+
+## **
+
+## **
+
+## *
+
+## *
+
+## *
+
+## * *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## *
+
+## Dinaciclib (5.0uM) effect on gene expression 
+
+−1.00 
+
+−0.75 
+
+−0.50 
+
+−0.25 
+
+0.00 
+
+0.25 
+
+0.50 
+
+0.75 
+
+1.00 
+
+> Effect size
+
+Figure S19: Top differential gene-expression effects associated with Dinaciclib at 5.0 μM in the Tahoe-100M perturbation atlas. Barplot showing the 10 strongest negative and 10 strongest positive inferred gene-expression effects for Dinaciclib at the highest assayed concentration. Negative effects are en-riched for genes associated with hypoxia and metabolic adaptation, whereas positive effects include a smaller set of genes related to proliferation and extracellular-matrix organization. 42 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+CHD8 PTEN CHD2 ARID1B ASH1L DYRK1A 
+
+> CHD8 PTEN CHD2 ARID1B ASH1L DYRK1A
+
+−1 
+
+0
+
+1Figure S20: Heatmap visualising the cosine similarity computed for the perturbation-factor coefficient vectors of selected perturbations from the LUHMES dataset. Factors explaining 98% of the variance were used for the computation. The similarity structure reveals two clusters: CHD8 and PTEN have very similar perturbation effects, whereas CHD2, ARID1B, ASH1L, and DYRK1A form a second cluster. 43 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+.1 .2 .3 .4 
+
+|Effect size| 
+
+-0.3 0 0.3 
+
+Effect size 
+
+> Synapse Organization (G)
+> Cell Morphogenesis Involved In Neuron ...
+> Myogenesis (H)
+> Axon Development (G)
+> Neuron Development (G)
+> Regulation Of Trans Synaptic Signaling...
+
+CHD8 
+
+PTEN 
+
+ASH1L 
+
+ADNP 
+
+CHD2 Figure S21: Perturbation-factor coefficients for the LUHMES dataset. ”Cell Morphogenesis Involved In Neuron ...” denotes the GOBP pathway ”Cell Morphogenesis Involved In Neuron Differentiation (G)”. ”Regulation of Trans Synaptic Signaling...” is based on the corresponding GOBP pathway. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. Clustering the factors by their associated perturbations reveals two clusters, which are mainly driven by the PTEN 
+
+perturbation effect. 44 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+0 500 1000 1500 2000 2500 3000 3500 4000 
+
+Rank 
+
+0.0 
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+> Loading
+
+NEFM 
+
+NEFL 
+
+MAP2 
+
+MALAT1 
+
+PTH2 
+
+MAP1B 
+
+DCX 
+
+PEG10 
+
+ANK3 
+
+DPYSL2 
+
+RTN1 
+
+NCAM1 
+
+RAB31 
+
+GPM6A 
+
+PBX1 
+
+RGMB 
+
+TUBA1A 
+
+TUBB 
+
+TUBB2B 
+
+THSD7A 
+
+STMN4 
+
+GNG3 
+
+NSG1 
+
+APLP1 
+
+ANK2 
+
+Neuron Development (G) 
+
+Type 
+
+Annotated 
+
+Inferred Figure S22: Factor loadings for one exemplary LUHMES factor related to neuron development. The pathway definition is based on the GOBP gene set. Genes are ranked by their individual weight on the factor score. Black genes are annotated in the prior GOBP pathway definition, while red genes are inferred by the model. 45 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted March 24, 2026. ;https://doi.org/10.64898/2026.03.20.713295 doi: bioRxiv preprint
+
+## 7 Supplementary Tables 
+
+Supplementary Table S1. Complete perturbation-pathway association matrix for the Perturb-CITE-seq analysis. Provided as a CSV file. 
+
+Supplementary Table S2. Complete perturbation-gene effect matrix for the Perturb-CITE-seq analysis. Provided as a CSV file. 
+
+Supplementary Table S3. Complete perturbation-protein abundance effect matrix for the Perturb-CITE-seq analysis. Provided as a CSV file. 
+
+Supplementary Table S4. Complete perturbation-pathway association matrix for the Tahoe-100M analysis. Provided as a CSV file. 
+
+Supplementary Table S5. Complete perturbation-gene effect matrix for the Tahoe-100M analysis. Provided as a CSV file. 46

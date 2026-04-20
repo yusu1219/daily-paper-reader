@@ -1,0 +1,1742 @@
+Title: scMagnifier: resolving fine-grained cell subtypes via GRN-informed perturbations and consensus clustering
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.03.26.714385v1.full.pdf
+
+Number of Pages: 26
+
+Markdown Content:
+scMagnifier: resolving fine-grained cell subtypes via GRN-informed 1
+
+perturbations and consensus clustering 2
+
+3
+
+Zhenhui He 1, Kangning Dong 1* 
+
+4
+
+5
+
+> 1
+
+School of Mathematics, Renmin University of China, Beijing 100872, China 6
+
+> *
+
+Correspondence: dongkangning@ruc.edu.cn. 7
+
+8
+
+Abstract 9
+
+Resolving fine-grained cell subtypes in single-cell RNA sequencing (scRNA-seq) data 10 
+
+remains challenging, as their subtle transcriptional differences are often obscured by 11 
+
+technical noise and data sparsity. Here, we present scMagnifier, a consensus 12 
+
+clustering framework that leverages gene regulatory network (GRN)-informed in silico 13 
+
+perturbations to amplify subtle transcriptional differences and uncover latent cell 14 
+
+subpopulations. scMagnifier perturbs candidate transcription factors (TFs), propagates 15 
+
+perturbation effects through cluster-specific GRNs to simulate post-perturbation 16 
+
+expression profiles, and integrates clustering results across multiple perturbations into 17 
+
+stable subtype assignments. Additionally, scMagnifier introduces regulatory 18 
+
+perturbation consensus UMAP (rpcUMAP), a perturbation-aware visualization that 19 
+
+provides clearer separation between cell subtypes and guides the selection of the 20 
+
+optimal number of clusters. In both single-batch and multi-batch benchmarks, 21 
+
+scMagnifier consistently improves the resolution and accuracy of fine-grained cell type 22 
+
+identification. Notably, when integrated with spatial clustering methods such as 23 
+
+STAGATE, scMagnifier is compatible with spatial transcriptomics workflows and 24 
+
+effectively reveals tumor cell subtypes and their spatial organization in ovarian cancer. 25 
+
+26 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+Introduction 27 
+
+Single-cell RNA sequencing (scRNA-seq) has revolutionized our understanding of 28 
+
+cellular heterogeneity by enabling transcriptome-wide profiling at single-cell resolution 1.29 
+
+Unsupervised clustering is a standard and essential step in the scRNA-seq analysis 30 
+
+workflow, routinely used to identify discrete cell types and continuous cell states 2,3 .31 
+
+With the rapid development of clustering algorithms, current tools can consistently and 32 
+
+accurately resolve major cell types—such as T and B lymphocytes in immune tissues, 33 
+
+neurons and glia in the brain, or epithelial and stromal cells in solid tumors—across a 34 
+
+wide range of biological settings. However, resolving fine-grained cell subtypes and 35 
+
+accurately delineating their boundaries remains challenging—particularly for 36 
+
+transcriptionally similar cell states such as activated versus resting immune cells, 37 
+
+malignant epithelial subclones within tumors, or rare cell populations 2,3 . The high 38 
+
+dimensionality, sparsity, and noise inherent in scRNA-seq data often obscure subtle 39 
+
+but biologically meaningful transcriptional differences, limiting the resolution of 40 
+
+clustering methods for fine-grained heterogeneity 4.41 
+
+Notably, transcriptionally similar cell populations may respond differently to 42 
+
+regulatory perturbations due to variations in their underlying gene regulatory networks 43 
+
+(GRNs), offering a powerful means to uncover hidden heterogeneity 5,6 . Several studies 44 
+
+have employed in silico gene perturbations to simulate key biological processes, such 45 
+
+as cell fate transitions or drug-induced state changes. For example, CellOracle 46 
+
+simulates the effects of transcription factor (TF) perturbations on cell identity dynamics 47 
+
+by modeling GRN influences, providing interpretable and quantitative insights into 48 
+
+developmental trajectories 7. Similarly, scRank perturbs inferred GRNs to simulate 49 
+
+drug-induced regulatory changes, enabling the identification of drug-responsive cell 50 
+
+types 8. In addition, scTenifoldKnk applies GRN perturbation to predict the functional 51 
+
+consequences of gene knockouts 9. Collectively, these studies demonstrate that GRN-52 
+
+informed perturbations provide a powerful approach for revealing functionally relevant 53 
+
+cellular heterogeneity. Motivated by these studies, we reasoned that perturbing 54 
+
+candidate TFs or genes within GRNs could provide a way to amplify subtle 55 
+
+transcriptional differences and thereby facilitate the identification of fine-grained cell 56 
+
+subtypes. 57 
+
+Furthermore, different perturbations of regulatory networks can yield distinct 58 
+
+patterns of cellular responses, making it necessary to integrate multiple perturbation 59 
+
+outcomes to obtain stable clustering results and well-defined subpopulation 60 
+
+boundaries. Consensus clustering provides an effective strategy to integrate multiple 61 
+
+results and produce stable cluster assignments. Existing consensus clustering 62 
+
+approaches typically generate ensemble diversity by repeatedly applying clustering 63 
+
+with varying parameters or initializations to the same expression matrix 10-13 , which 64 
+
+improves robustness to stochastic variability but fails to enhance the underlying 65 
+
+biological signal used to distinguish cell subtypes or states. In contrast, integrating 66 
+
+GRN-informed perturbation-derived clustering results into a consensus clustering 67 
+
+framework captures the differential responses of subpopulations to distinct regulatory 68 
+
+perturbations. This perturbation-aware consensus strategy leads to robust and 69 
+
+interpretable boundaries between fine-grained cell types. 70 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+Building on these ideas, we develop a GRN-informed perturbation-driven 71 
+
+consensus clustering framework named scMagnifier. By integrating with standard 72 
+
+clustering algorithms, batch integration methods, or spatial clustering tools, 73 
+
+scMagnifier is readily applicable to diverse scenarios—including single-batch, multi-74 
+
+batch, and spatial transcriptomic datasets. Extensive benchmarking demonstrates that 75 
+
+scMagnifier consistently improves the resolution and accuracy of fine-grained cell type 76 
+
+identification and enhances the detection of rare cell populations. Additionally, 77 
+
+scMagnifier integrates perturbation-induced clustering information into the UMAP 78 
+
+algorithm, yielding a perturbation-aware visualization, named regulatory perturbation 79 
+
+consensus UMAP (rpcUMAP), that provides clearer separation between cell subtypes 80 
+
+and guides the selection of the optimal number of cell types. 81 
+
+82 
+
+Results 83 
+
+Overview of scMagnifier 84 
+
+The inputs to scMagnifier are the raw gene expression matrix (GEM) and a basic GRN, 85 
+
+defined as a set of regulatory interactions from TFs to their target genes ( Fig. 1a ). An 86 
+
+initial clustering is obtained using a standard scRNA-seq preprocessing and clustering 87 
+
+pipeline implemented in Scanpy 14 . Cluster-specific GRNs are then constructed by 88 
+
+pruning the basic GRN based on the expression levels of TFs and their target genes 89 
+
+within each cluster ( Fig. 1d and see “Cluster-specific GRN construction” section 90 
+
+of the Methods ). 91 
+
+The core of scMagnifier lies in performing GRN-informed in silico perturbations 92 
+
+and yielding an ensemble of clustering results across distinct perturbation conditions 93 
+
+(Fig. 1b ). For each candidate TF, a cell-specific perturbation term is first defined 94 
+
+relative to its original expression level. This perturbation is then propagated through 95 
+
+the corresponding cluster-specific GRN to model downstream regulatory effects ( Fig. 96 
+
+1e and see “TF genes perturbation on the level of gene expression” section of 97 
+
+the Methods ). The resulting propagated expression changes are integrated with the 98 
+
+original GEM to generate a post-perturbation GEM, from which a perturbation-driven 99 
+
+clustering result is obtained. 100 
+
+To derive stable cell subtype assignments, scMagnifier performs consensus 101 
+
+clustering on the perturbation-driven ensemble of cluster results ( Fig. 1c, f ). To 102 
+
+integrate these clustering results, each clustering outcome is converted into a one-hot 103 
+
+matrix, enabling the computation of perturbation-informed cell-cell distances across 104 
+
+the ensemble. These perturbation-informed cell-cell distances are further combined 105 
+
+with expression-derived distances computed from the embedding matrix of the GEM, 106 
+
+resulting in a combined distance matrix that captures both transcriptional similarity and 107 
+
+regulatory perturbation-driven differences. Based on this combined distance matrix, a 108 
+
+k-nearest neighbor (KNN) graph is constructed for consensus clustering and for 109 
+
+generating a regulatory perturbation consensus UMAP (rpcUMAP) ( See “Consensus 110 
+
+clustering” section of the Methods ). 111 
+
+To avoid missing subtle but biologically meaningful differences, consensus 112 
+
+clustering is initially performed at high clustering resolution. These preliminary clusters 113 
+
+are then merged based on inter-cluster centroid distances and a minimum cluster-size 114 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+threshold to merge closely related or very small clusters into their nearest neighbor 115 
+
+clusters and produce the final stable consensus clusters ( Supplementary Fig. S1 and 116 
+
+see “Cluster merging” section of the Methods ). 117 
+
+More generally, scMagnifier is extensible and can be applied to multi-batch single-118 
+
+cell datasets. Because both the clustering and the computation of expression-derived 119 
+
+distances are performed on low-dimensional embeddings, scMagnifier can directly 120 
+
+make use of batch-corrected embeddings (e.g., from Harmony 15 , Scanorama 16 or 121 
+
+scVI 17 ), enabling straightforward application to multi-batch datasets ( See “Extension 122 
+
+of scMagnifier for multi-batch datasets” section of the Methods ). 123 
+
+124 
+
+Benchmarking scMagnifier in real datasets 125 
+
+To evaluate scMagnifier’s ability to resolve fine-grained cell subtypes, we 126 
+
+benchmarked its performance on multiple publicly available single-cell datasets. For 127 
+
+single-batch evaluation, we selected four lung adenocarcinoma datasets that contain 128 
+
+rich cellular substructure and published annotations 18 . In each dataset, we fixed the 129 
+
+number of output clusters to match the annotation and compared seven methods 130 
+
+(Leiden 19 , Louvain 20 , scVI(Leiden) 17 , scVI(Louvain) 17 , SC3s 21 , scMagnifier(Leiden) and 131 
+
+scMagnifier(Louvain)) using adjusted Rand index (ARI) and normalized mutual 132 
+
+information (NMI) to assess agreement between clustering results and cell type 133 
+
+annotations ( See “Benchmarking setup and parameters” section of the Methods ). 134 
+
+Across these single-batch benchmarks, scMagnifier consistently achieved the highest 135 
+
+ARI and NMI, irrespective of whether Leiden or Louvain was used for clustering, and 136 
+
+outperformed a consensus clustering method (SC3s) in our comparisons ( Fig. 2a and 137 
+
+Supplementary Table S3, S4 ). 138 
+
+We next tested scMagnifier’s applicability in multi-batch samples. We 139 
+
+benchmarked scMagnifier on two public multi-batch datasets (an integrated pancreas 140 
+
+dataset 22 and the BMMC dataset 23 ). For each dataset, we compared several commonly 141 
+
+used batch-correction methods alone and in combination with scMagnifier (BBKNN 24 ,142 
+
+Harmony 15 , scMagnifier+Harmony, Scanorama 16 , scMagnifier+Scanorama, scVI 17 ,143 
+
+scMagnifier+scVI). ARI and NMI were used to quantify agreement with published cell-144 
+
+type annotations. Across both datasets, combining scMagnifier with batch-correction 145 
+
+methods resulted in higher ARI and NMI than using batch-correction methods alone 146 
+
+(Fig. 2b and Supplementary Table S5, S6 ). 147 
+
+Focusing on the myeloid lineage-enriched compartment in the BMMC dataset, we 148 
+
+found that scMagnifier+scVI precisely delineated subcluster boundaries, as validated 149 
+
+against reference cell type annotations ( Fig. 2c ). In contrast, scVI drew an inaccurate 150 
+
+boundary between granulocyte-monocyte progenitors (G/M prog) and CD14+ 151 
+
+monocytes, leading to significant cross-contamination of their identities. Notably, the 152 
+
+rpcUMAP visualization generated by scMagnifier+scVI outperformed conventional 153 
+
+UMAP by achieving clearer separation of distinct cellular clusters. We further found 154 
+
+that rpcUMAP identified two morphologically distinct subpopulations within Cluster 0, 155 
+
+which were merged into a single cluster in our benchmarking analyses to align with the 156 
+
+predefined cell-type number. Differential gene expression analysis confirmed that 157 
+
+these subpopulations exhibited divergent expression of proliferation-associated genes 158 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+(e.g., CENPE and MKI67 ), supporting their classification as distinct subclusters ( Fig. 159 
+
+2d ). Thus, rpcUMAP-based evidence supports revising the optimal number of cell 160 
+
+types in this myeloid lineage-enriched compartment from four to five. Collectively, 161 
+
+these findings demonstrate that rpcUMAP not only enhances the separation of cell 162 
+
+subtypes but also guides the selection of the optimal number of cell types. 163 
+
+Finally, we explored whether scMagnifier amplifies biologically meaningful 164 
+
+differences between cells. In the BMMC dataset, using the scMagnifier+scVI workflow, 165 
+
+we perturbed the TF gene BCL11A and propagated its regulatory effects through 166 
+
+cluster-specific GRNs. We observed that plasmacytoid dendritic cell (pDC) clusters 167 
+
+exhibited progressively stronger transcriptional changes compared to neighboring cell 168 
+
+populations and, as the perturbation fold change increased, gradually dissociated from 169 
+
+surrounding clusters ( Fig. 2e ). Importantly, BCL11A has been reported as an essential 170 
+
+regulator of pDC development and lineage specification 25 . Its knockout leads to 171 
+
+impaired pDC development, aberrant lineage specification and a marked decrease in 172 
+
+the number and functional maturation of pDCs 25 . These observations demonstrate that 173 
+
+gene perturbations can amplify biologically meaningful transcriptional differences, 174 
+
+providing a mechanistic explanation for why scMagnifier can resolve fine-grained cell 175 
+
+subtypes. 176 
+
+177 
+
+scMagnifier reveals hidden heterogeneity within MAIT/Th1-Th17 populations 178 
+
+We further evaluate whether scMagnifier can reveal fine-grained cellular heterogeneity 179 
+
+that is obscured by conventional clustering. In UPN19_pre dataset 26 , using standard 180 
+
+Leiden clustering on the original embedding, Mucosal-associated invariant T (MAIT) 181 
+
+cells and a T helper 1/T helper 17 (Th1/Th17)-MAIT mixed population were grouped 182 
+
+into a single cluster (Cluster 3) and appeared continuously connected on the original 183 
+
+UMAP, indicating limited separability in the original embedding space ( Fig. 3a, b ). Even 184 
+
+when the initial resolution was increased, the two cell populations were still recognized 185 
+
+as a single cluster ( Supplementary Fig. S3a ). This observation is expected, as MAIT 186 
+
+cells exhibit transcriptional programs associated with both Th1 and Th17 effector 187 
+
+functions 27 . In contrast, applying scMagnifier to the same cells clearly separated this 188 
+
+previously merged population into two distinct clusters (Cluster 2 and Cluster 16) in 189 
+
+the rpcUMAP space ( Fig. 3a, b ). 190 
+
+Differential expression analysis reveals that Cluster 2 is characterized by high 191 
+
+expression of cytotoxic-associated genes including CD8A , NKG7 , NCR3 and PRF1 ,192 
+
+while Cluster 16 shows relatively higher expression of several genes associated with 193 
+
+Th1/Th17 programs ( Fig. 3c ). Visualization of gene expression on the rpcUMAP 194 
+
+provides a more intuitive view of these differences, showing that cytotoxic-associated 195 
+
+genes are strongly enriched in Cluster 2 ( Fig. 3d ). 196 
+
+We next performed KEGG pathway enrichment analysis to further validate the 197 
+
+functional heterogeneity of these two scMagnifier-resolved clusters ( Fig. 3e ). For 198 
+
+Cluster 2, it was significantly enriched in natural killer cell mediated cytotoxicity 199 
+
+pathway (Adjusted p-value=3.2 ×10 -5 ), which aligns perfectly with its high expression 200 
+
+of cytotoxic genes. Conversely, Cluster 16 was prominently enriched in inflammatory 201 
+
+bowel disease pathway (Adjusted p-value=1.03 × 10 -5 ), which has been well-202 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+documented to be functionally consistent with the molecular features of Th1/Th17 203 
+
+cells 28 .204 
+
+Meanwhile, we derived the TF importance scores based on the changes induced 205 
+
+by the perturbed genes ( See “TF gene importance score calculation” section of 206 
+
+the Methods ). We observed STAT1 ranked as the second most important TF genes 207 
+
+in Cluster 16 and it did not appear among the top-ranked TF genes in Cluster 2 ( Fig. 208 
+
+3f and Supplementary Fig. S3b ). STAT1 has been reported as a key regulator 209 
+
+involved in interferon signaling and Th1/Th17-related immune responses 29 .210 
+
+Collectively, analyses at the gene expression, functional pathway and regulatory 211 
+
+levels consistently demonstrate that the two scMagnifier-resolved clusters exhibit 212 
+
+biological heterogeneity, which is obscured under conventional clustering but 213 
+
+effectively revealed by scMagnifier. Notably, the biological differences observed 214 
+
+between the two clusters are consistent with the known plasticity of MAIT cells toward 215 
+
+cytotoxic or Th1/Th17-like programs under different contexts 30 . Together, these results 216 
+
+highlight scMagnifier’s ability to amplify subtle yet meaningful cellular differences and 217 
+
+to facilitate the discovery of fine-grained heterogeneity. 218 
+
+219 
+
+scMagnifier enables the identification of rare immune cell types with distinct 220 
+
+regulatory programs 221 
+
+Rare cells often represent a very small fraction of the total population and are therefore 222 
+
+susceptible to technical noise, dropout events and batch effects, while conventional 223 
+
+clustering workflows tend to favor dominant transcriptional programs and can merge 224 
+
+low-abundance subpopulations into larger clusters 31,32 . To test whether scMagnifier 225 
+
+can effectively identify rare cell populations, we applied it to two independent scRNA-226 
+
+seq datasets, EBUS_10 and LUNG_N30 18 . When exploring rare cell states, the 227 
+
+minimum cluster-size threshold used during the cluster-merge step can be 228 
+
+appropriately reduced based on the size of the dataset and the underlying biological 229 
+
+context, so as to avoid merging small but potentially meaningful clusters and to retain 230 
+
+candidate rare cell populations for downstream evaluation (See “ Consensus 231 
+
+clustering ” section of the Methods ). 232 
+
+In the EBUS_10 dataset, scMagnifier identified two small cell clusters, R1 (18 cells, 233 
+
+0.40%) and R2 (16 cells, 0.36%), that could not be resolved by conventional clustering 234 
+
+methods even at high resolution ( Supplementary Fig. S4a ). While these cells were 235 
+
+closely positioned within larger populations in the standard UMAP embedding, they 236 
+
+became clearly separated from surrounding clusters in the rpcUMAP space ( Fig. 4a ), 237 
+
+suggesting the potential presence of subtle but consistent transcriptional differences 238 
+
+that are revealed by scMagnifier. To characterize these clusters, we first grouped the 239 
+
+remaining cells according to their original cell-type annotations. We then performed 240 
+
+differential expression analysis for R1, R2 and each annotation-defined cluster, 241 
+
+obtaining cluster-specific differentially expressed gene (DEG) sets for all groups. 242 
+
+These cluster-specific DEG sets were subsequently used to quantify transcriptional 243 
+
+similarity between R1, R2 and annotated cell populations using the Jaccard coefficient 244 
+
+(See “Jaccard coefficient calculation” section of the Methods ). R1 showed 245 
+
+similarity with germinal centers (GC) B cells in the dark zone (DZ) (Jaccard = 0.33) and 246 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+lower similarity with mucosa-associated lymphoid tissue (MALT) B cells (Jaccard = 247 
+
+0.12), while R2 exhibited a similarity with GC B cells in the DZ (Jaccard = 0.41) 248 
+
+(Supplementary Fig. S4b and Supplementary Table S7 ). Consistent with these 249 
+
+results, violin plots of DEG expression ( Fig. 4b ) revealed that R1 shares partial 250 
+
+expression patterns with both MALT B cells and GC B cells in the DZ, while also 251 
+
+displaying distinct expression distributions. In contrast, R2 more closely resembled GC 252 
+
+B cells in the DZ but still exhibited differences. Notably, cells in R1 and R2 were 253 
+
+originally annotated as MALT B cells and GC B cells in the DZ ( Fig. 4a ). Together, 254 
+
+these results suggest that R1 likely represents a finer-grained subpopulation within the 255 
+
+MALT B cell compartment, and R2 likely represents a finer-grained subpopulation 256 
+
+within GC B cells in the DZ. 257 
+
+To further examine the transcriptional differences among these populations, we 258 
+
+next visualized the significantly upregulated genes for R1, R2, MALT B cells and GC 259 
+
+B cells in the DZ using a heatmap ( Fig. 4c ). R1 exhibits significantly higher expression 260 
+
+of CCND2 and UBE2S relative to the other cell clusters. It has been reported that 261 
+
+CCND2 is implicated in promoting B cell cell-cycle entry and has been linked to 262 
+
+proliferative B cell states 33 , while UBE2S contributes to mitotic progression and 263 
+
+supports proliferation in multiple cellular systems 34 . Together, these findings suggest 264 
+
+that R1 represent a rare subpopulation of MALT B cells associated with proliferation 265 
+
+and activation. By contrast, R2 shows higher expression of EBI3 and TLR10 relative 266 
+
+to the other cell clusters. EBI3 has been reported in activated B cells and can modulate 267 
+
+B cell differentiation and immune responses 35 , and TLR10 has been associated with 268 
+
+activation and mucosal immune regulation 36 . These observations suggest that R2 269 
+
+represents a rare subpopulation of B cells associated with activation and immune 270 
+
+regulation, likely resembling a MALT-like subcluster rather than a simple proliferative 271 
+
+GC-DZ program. 272 
+
+Similarly, we next applied scMagnifier to the LUNG_N30 dataset and identified a 273 
+
+small cluster, R3 (36 cells, 1.25%), that was not detected by conventional high-274 
+
+resolution clustering ( Supplementary Fig. S4a ). In the standard UMAP embedding, 275 
+
+R3 appeared connected to neighboring cells, whereas in rpcUMAP it formed a clearly 276 
+
+separated cluster ( Fig. 4d ). Jaccard similarity between R3 DEGs and annotated 277 
+
+clusters reveals highest overlap with natural killer (NK) cells (Jaccard = 0.37) ( Fig. 4e 278 
+
+and Supplementary Table S8 ), and R3 cells were originally annotated as NK ( Fig. 279 
+
+4d ), supporting the hypothesis that R3 is a rare NK subpopulation. To investigate this 280 
+
+further, we compared significantly upregulated genes for R3 and NK cells ( Fig. 4f ). R3 281 
+
+exhibits significantly higher expression of ID2 , IFNG , GIMAP7 and TBC1D10C relative 282 
+
+to NK cell clusters, which is also clearly reflected in the UMAP visualization ( Fig. 4g ). 283 
+
+It has been reported that ID2 is a key transcription factor regulating NK cell 284 
+
+development and maturation 37 , while IFNG is a hallmark effector cytokine of NK cells 38 .285 
+
+GIMAP7 and TBC1D10C are involved in lymphocyte activation and regulation 39,40 .286 
+
+Together, these findings suggest that R3 represents a rare subpopulation of NK cells 287 
+
+associated with a distinct activation or maturation state, potentially corresponding to 288 
+
+the CD56 bright NK cells, which are known to express higher levels of IFNG , and are 289 
+
+often linked to early stages of activation and immune responses 41 .290 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+In summary, scMagnifier successfully identified rare subpopulations in the 291 
+
+EBUS_10 and LUNG_N30 datasets, highlighting its potential to uncover biologically 292 
+
+meaningful yet low-abundance cell populations that are often overlooked by 293 
+
+conventional clustering methods. 294 
+
+295 
+
+Integration of scMagnifier with STAGATE reveals tumor cell subtypes and spatial 296 
+
+organization in ovarian cancer 297 
+
+The identification of tumor cell subtypes and their spatial organization plays a critical 298 
+
+role in understanding cancer progression and therapeutic response 42 . STAGATE 299 
+
+enables the accurate identification of spatial domains by learning low-dimensional 300 
+
+latent embeddings 43 , while scMagnifier provides fine-grained types of cells. Hence, we 301 
+
+integrated scMagnifier with STAGATE (See “Integration of scMagnifier with 302 
+
+STAGATE for Spatial Transcriptomics Analysis” section of the Methods ), aiming 303 
+
+to identify biologically meaningful tumor subtypes and illustrate their spatial domains. 304 
+
+We used the spatial transcriptomics dataset of epithelial ovarian cancer from the 305 
+
+SPATCH website 44 , which incorporates both detailed cell annotations and spatial layer 306 
+
+annotations. For our analysis, we selected a subset of cells located at the center of 307 
+
+spatial coordinates comprising 48,793 cells ( Fig. 5b ). 308 
+
+Epithelial ovarian cancer, a malignancy originating from epithelial cells, is 309 
+
+characterized by significant cellular heterogeneity and complex tumor 310 
+
+microenvironment 45 . Based on cell annotations and spatial layer annotations provided 311 
+
+by the dataset ( Fig. 5a ), we determined the approximate location of the tumor’s core 312 
+
+regions (The overlapping region of Epithelial cell clusters in the cell type annotation 313 
+
+map and Layer 3 regions in the spatial layer annotation map). Subsequently, using the 314 
+
+final clustering results from scMagnifier combined with STAGATE, we identified five 315 
+
+distinct subclusters of tumor cells (Cluster 0, Cluster 2, Cluster 4, Cluster 7 and Cluster 316 
+
+9), which correspond to potential tumor core regions ( Fig. 5a, b ). Using differential 317 
+
+gene expression analysis and functional enrichment analysis, we confirmed that the 318 
+
+five tumor subclusters exhibit distinct molecular and functional differences ( Fig. 5c, d ). 319 
+
+Notably, we observed that the spatial localization of Cluster 2 closely overlapped 320 
+
+with the deeply stained regions in H&E histology ( Fig. 5e ). Differential gene expression 321 
+
+analysis revealed that Cluster 2 displayed high expression of IGF2 (Fig. 5c ). It has 322 
+
+been reported IGF2 is involved in tumor growth and invasion mechanisms 46 .323 
+
+Consistent with this, functional enrichment analysis identified pathways related to 324 
+
+negative regulation of apoptosis (Adjusted p-value=2.0×10 -7 ) and extracellular 325 
+
+structure organization (Adjusted p-value=3.9×10 -8 ) in Cluster 2 ( Fig. 5d ), indicating 326 
+
+that these cells may actively evade cell death and promote metastatic potential. This 327 
+
+functional profile aligns well with IGF2 -mediated proliferative and anti -apoptotic 328 
+
+signaling, a characteristic feature of aggressive epithelial tumor subpopulations 46 .329 
+
+Importantly, deep staining in H&E images generally indicates high cellular density and 330 
+
+malignancy, which are hallmarks of invasive tumor subpopulations 47 , and further 331 
+
+supports that Cluster 2 corresponds to a highly aggressive tumor subpopulation. 332 
+
+Collectively, this spatial correlation suggests that, by integrating scMagnifier with 333 
+
+STAGATE, we were able to identify high-invasion tumor regions without relying on 334 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+traditional histological images, a capability that was not achievable with STAGATE 335 
+
+alone. 336 
+
+To further investigate why this specific region was detected, we analyzed the 337 
+
+impact of TF genes perturbation within the scMagnifier framework. After perturbing 338 
+
+STAT2 , we calculated the changes in gene expression levels of STAT2 and its target 339 
+
+genes, and then visualized the resulting changes on the spatial map ( Fig. 5f ). Notably, 340 
+
+the region corresponding to cluster 2 became significantly more prominent compared 341 
+
+to its surrounding areas, suggesting that this cluster was more strongly affected by 342 
+
+STAT2 perturbation. This increased prominence allowed for the successful 343 
+
+identification of this region after STAT2 perturbation (Supplementary Fig. S5 ), 344 
+
+indicating that perturbation amplified the underlying biological differences within this 345 
+
+cluster. In summary, the integration of scMagnifier with STAGATE enables the 346 
+
+revelation of tumor cell subtypes and spatial organization. 347 
+
+348 
+
+Discussion 349 
+
+Accurately delineating cell subpopulations and their boundaries remains challenging, 350 
+
+particularly when transcriptional differences are subtle or obscured by noise, batch 351 
+
+effects. In this study, we presented scMagnifier, a regulatory perturbation-driven 352 
+
+consensus clustering framework designed to resolve fine-grained cell subtypes. 353 
+
+scMagnifier first amplifies subtle regulatory differences through systematic 354 
+
+perturbation of TF genes to reveal latent subclusters, and then integrates clustering 355 
+
+outcomes across multiple perturbations via consensus clustering to obtain stable 356 
+
+subtype assignments and well-defined boundaries. We demonstrated practical utility 357 
+
+of scMagnifier in several applications. We found scMagnifier clearly reveals hidden 358 
+
+heterogeneity within MAIT/Th1-Th17 populations. We additionally substantiated the 359 
+
+ability of scMagnifier to detect rare cell populations. Finally, by integrating scMagnifier 360 
+
+and STAGATE, we identified five subtypes of ovarian cancer and detected invasive 361 
+
+regions without incorporating pathological images. 362 
+
+Recent studies have demonstrated that GRN perturbation models are capable of 363 
+
+uncovering latent biological signals 7-9 . Building on this framework, we showed that 364 
+
+perturbing TF genes at the gene expression level amplifies the underlying biological 365 
+
+differences, thereby enabling the identification of subclusters ( Fig. 2e and Fig. 5f ). It 366 
+
+is precisely this perturbation strategy that supports the key advantage of scMagnifier. 367 
+
+However, our perturbations do not explicitly model true post-perturbation cellular states, 368 
+
+as they rely on GRN-based signal propagation at the transcriptomic level rather than 369 
+
+learning distributional shifts induced by real perturbations. To address this limitation 370 
+
+and enhance biological fidelity, future extensions could integrate scMagnifier with 371 
+
+optimal transport-based perturbation models such as CellOT 48 , which learn mappings 372 
+
+between control and perturbed single-cell distributions, thereby improving the 373 
+
+biological realism of perturbation effects while retaining scMagnifier’s ability to amplify 374 
+
+regulatory differences for fine-grained subcluster discovery. 375 
+
+scMagnifier effectively identifies heterogeneous cell populations, which form 376 
+
+clearly separated clusters from the remaining cells in the rpcUMAP embedding ( Fig 3a 377 
+
+and Fig. 4a, d ). This clear separation stems from two synergistic factors: first, the 378 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+perturbation of TF genes amplifies the underlying regulation-informed transcriptional 379 
+
+differences between cell subpopulations; second, unlike standard UMAP, rpcUMAP 380 
+
+uniquely incorporates perturbation-derived intercellular distance information. By 381 
+
+integrating this perturbation-based metric, rpcUMAP further exaggerates the 382 
+
+dissimilarities between distinct clusters, thereby achieving the enhanced separation 383 
+
+observed in the embedding. However, many cell states are defined by features beyond 384 
+
+transcript abundance (such as protein markers, chromatin accessibility) and therefore 385 
+
+may remain ambiguous in transcription-only analyses. Extending scMagnifier to 386 
+
+integrate multimodal measurements via modality-aware distance fusion or multimodal 387 
+
+GRN inference would increase sensitivity and specificity for cell type detection. 388 
+
+389 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+Methods 390 
+
+Data preprocessing 391 
+
+All datasets were prepared in the AnnData format and processed using Scanpy 14 . First, 392 
+
+lowly expressed genes were filtered out by retaining only genes with at least one count 393 
+
+across all cells. Expression values were then normalized per cell to a total UMI count 394 
+
+of 10,000. Highly variable genes (HVGs) were identified on the normalized non-log-395 
+
+transformed expression matrix, and the top 2,000 HVGs were retained. After 396 
+
+subsetting the dataset to these HVGs, expression values were renormalized per cell 397 
+
+to a total UMI count of 10,000 to account for the effects of gene filtering. Importantly, 398 
+
+the renormalized non-log-transformed GEM was retained and used for downstream 399 
+
+cluster-specific GRN construction and TF gene perturbation analyses. Subsequently, 400 
+
+the expression values were log-transformed and scaled to a maximum value of 10. 401 
+
+Principal component analysis was performed with 20 components, followed by the 402 
+
+construction of a KNN graph (k=10) and UMAP for dimensionality reduction. Finally, 403 
+
+initial cell clustering results were obtained using the Leiden 19 or Louvain 20 algorithm. 404 
+
+405 
+
+Cluster-specific GRN construction 406 
+
+Cluster-specific GRNs were constructed following the standard CellOracle framework 7.407 
+
+As prior regulatory information, we employed the human promoter-based GRN 408 
+
+provided by CellOracle as our basic GRN, which defines potential TF gene-target gene 409 
+
+relationships. Cluster-specific GRNs were constructed based on the basic GRN and 410 
+
+initial clustering results, using the renormalized but non-log-transformed GEM stored 411 
+
+during data preprocessing. Firstly, dimensionality reduction was performed using PCA 412 
+
+(oracle.perform_PCA() function), followed by KNN-based imputation 413 
+
+(oracle.knn_imputation() function) to alleviate data sparsity. Regulatory relationships 414 
+
+between TF genes and their putative target genes were modeled using regression-415 
+
+based approaches (oracle.get_links() function), and cluster-specific regulatory links 416 
+
+were further identified and filtered based on statistical significance and network scores 417 
+
+(links.filter_links() function). Finally, quantitative GRN models for perturbation 418 
+
+simulation were fitted (oracle.fit_GRN_for_simulation() function). All parameters were 419 
+
+set according to the default or recommended settings in CellOracle. 420 
+
+421 
+
+TF genes perturbation on the level of gene expression 422 
+
+TF gene perturbation was performed on the renormalized but non-log-transformed 423 
+
+GEM retained during data preprocessing ( ). This design ensured that 424 
+
+perturbations were applied in the original linear expression space, thereby being 425 
+
+consistent with the linear regulatory assumptions underlying the GRN models, which 426 
+
+were inferred from the same renormalized non-log-transformed matrix. 427 
+
+Candidate TF genes for perturbation were selected by intersecting the TF genes 428 
+
+from the basic GRN with the top 2,000 HVGs. Perturbations were applied in a cluster-429 
+
+wise manner: let the dataset be partitioned into C clusters according to the initial cluster 430 
+
+results and let denote the set of cell indices belonging to cluster c. For a selected 431 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+perturbed TF gene and perturbation fold change ( ), the initial, 432 
+
+cluster-specific perturbation matrix was defined by 433 
+
+(1) 434 
+
+where denotes the original expression of gene g in cell i.435 
+
+For each cluster c, let denote the cluster-specific regulatory 436 
+
+coefficient matrix. Propagation of the initial perturbation through the cluster-specific 437 
+
+GRN was performed iteratively to capture multi-step regulatory effects. For iteration k438 
+
+= 1, …, n (we use n = 3 iterations), we computed 439 
+
+. (2) 440 
+
+To preserve the intended perturbation on the TF itself across iterations, the 441 
+
+perturbed-TF column was restored to its initial values before proceeding to the next 442 
+
+iteration. 443 
+
+After n iterations, the propagated perturbation for cluster c was . The 444 
+
+overall propagated perturbation affecting all cells was obtained by summing cluster-445 
+
+wise contributions: 446 
+
+. (3) 447 
+
+The post-perturbation GEM was then formed by adding the propagated 448 
+
+perturbation back to the original expression matrix: 449 
+
+, (4) 450 
+
+and negative values were clipped to zero to maintain non-negativity. Finally, 451 
+
+was processed through the downstream analytical pipeline consistent with that used 452 
+
+in our data preprocessing to produce the post-perturbation clustering. 453 
+
+This procedure was repeated independently for each perturbation candidate TF 454 
+
+gene producing a collection of clustering outcomes that together formed the 455 
+
+perturbation-driven ensemble. 456 
+
+457 
+
+Consensus clustering 458 
+
+To integrate perturbation-induced clustering results and generate a consensus, we first 459 
+
+transformed the clustering assignments into a one-hot matrix. For each clustering 460 
+
+result, we assigned a “1” to the cluster a cell belongs to and “0” to other clusters, 461 
+
+producing a sparse matrix for each clustering result. These one-hot matrices were then 462 
+
+concatenated to form a high-dimensional matrix where each row represents a cell, and 463 
+
+each column corresponds to a particular cluster assignment across all perturbation 464 
+
+experiments. Next, we computed the pairwise cosine distance between cells based on 465 
+
+this one-hot matrix ( Supplementary Fig. S7 ). The cosine distance between two cells 466 
+
+i and j, was calculated as 467 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+, (5) 468 
+
+where and are the one-hot vectors for cells i and j.469 
+
+In parallel, we calculated the Euclidean distance between cells in the embedding 470 
+
+space (PCA-reduced space in single-batch scRNA-seq datasets) derived from the 471 
+
+original GEM. The Euclidean distance between cells i and j in the k-dimensional ( k =472 
+
+20) embedding space was given by 473 
+
+, (6) 474 
+
+where and are the k-th embedding values of cells i and j.475 
+
+Both the one-hot distance matrix and embedding distance matrix were min-max 476 
+
+normalized to ensure their scales were consistent by 477 
+
+. (7) 478 
+
+Then we computed a weighted sum of the normalized one-hot and embedding 479 
+
+distances by 480 
+
+, (8) 481 
+
+where is set as 0.8 by default ( Supplementary Fig. S6 ). 482 
+
+We next computed rpcUMAP with the combined distance matrix as the 483 
+
+precomputed distance metric (via umap.umap_.UMAP() function) and set the number 484 
+
+of nearest neighbors to 10. We further constructed a KNN graph (k=10) from the 485 
+
+combined distance matrix and applied the clustering algorithm (consistent with the 486 
+
+clustering approach implemented in our data processing), with the resolution 487 
+
+parameter specified as 1.5. 488 
+
+489 
+
+Cluster merging 490 
+
+We performed cluster merging to produce the final stable consensus clusters. 491 
+
+This process included two stages: centroid-based merging and merging of 492 
+
+small clusters. 493 
+
+In the first stage, we calculated the centroids of each cluster. The centroid 494 
+
+of a cluster was computed from the HVG expression matrix, which 495 
+
+corresponded to the final output of our preprocessing pipeline, where gene 496 
+
+expression values had already been normalized, log-transformed and scaled. 497 
+
+Specifically, the centroid of a cluster l was defined as the arithmetic mean of the 498 
+
+HVG expression vectors of all cells assigned to that cluster: 499 
+
+, (9) 500 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+where represents the set of cells assigned to cluster l, is the number 501 
+
+of cells in cluster l and denotes the HVG expression vector of cell i.502 
+
+The centroids were then used to calculate the pairwise Euclidean distances 503 
+
+between them: 504 
+
+, (10) 505 
+
+where and represent the expression values of gene k in the centroids 506 
+
+and respectively, and n is the number of HVGs. Then we computed the 507 
+
+median of the minimum nearest-neighbor distances for each cluster, and 508 
+
+multiplied this value by a scaling factor (set as 0.75 by default, Supplementary 509 
+
+Fig. S8 ) to obtain the final distance threshold for merging similar clusters: 510 
+
+. (11) 511 
+
+If the centroid distance between two clusters was smaller than this threshold, 512 
+
+the clusters were merged. 513 
+
+In the second stage, we merged small clusters. Small clusters were defined 514 
+
+as those containing fewer cells than a minimum threshold, set as a fraction of 515 
+
+the total number of cells (default: 1% of total cells). For each small cluster, the 516 
+
+nearest non-small cluster was identified based on the centroid distance, and 517 
+
+the small cluster was merged with this centroid-nearest non-small cluster. This 518 
+
+step was originally intended to merge boundary-associated cells misidentified 519 
+
+as small clusters. However, if the algorithm is applied to the task of identifying 520 
+
+rare cell populations, the threshold can be reduced (e.g., set 0.1% of total cells) 521 
+
+to retain low-abundance cell populations. Notably, adjusting this threshold also 522 
+
+enables flexible control over the final number of clusters obtained after merging. 523 
+
+524 
+
+Extension of scMagnifier for multi-batch datasets 525 
+
+scMagnifier can be adapted to handle multi-batch datasets by integrating it with batch 526 
+
+effect correction methods that operate in the dimensionality reduction space, such as 527 
+
+Harmony 15 , Scanorama 16 or scVI 17 . Specifically, during the algorithm workflow, we 528 
+
+make two key adjustments. First, during data preprocessing and TF genes perturbation, 529 
+
+we replace PCA-based dimensionality reduction with a batch effect correction method. 530 
+
+Second, in the consensus clustering step, we use the embedding obtained from the 531 
+
+batch effect correction method to compute cell distances in the reduced space, instead 532 
+
+of using the PCA matrix. All other steps remain unchanged. 533 
+
+534 
+
+Benchmarking setup and parameters 535 
+
+In our benchmarks, we ensured that the number of output clusters was kept consistent 536 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+with the annotated cell-type count. Specifically, during the data preprocessing step, we 537 
+
+adjusted the clustering resolution to match the number of clusters in the cell 538 
+
+annotations. This resolution was maintained throughout the TF genes perturbation 539 
+
+process. Finally, during the cluster merging stage, we controlled the final number of 540 
+
+clusters by adjusting the minimum threshold to ensure it aligned with the annotated 541 
+
+cell-type count. All other parameters across algorithms were kept at their default 542 
+
+settings. 543 
+
+544 
+
+Identifying differentially expressed genes 545 
+
+We used the Wilcoxon test implemented in SCANPY 14 to identify DEGs. For general 546 
+
+analyses, DEGs were selected based on the ranking scores generated by the test 547 
+
+combined with an adjusted p-value (Benjamin-Hochberg-corrected FDR) < 0.05. When 548 
+
+analyzing whether rare cells constitute distinct subtypes, we selected strictly 549 
+
+upregulated differentially expressed genes (DEGs) using dual thresholds: adjusted p-550 
+
+value (Benjamin-Hochberg-corrected FDR) < 0.05 and log fold change (logFC) > 0.25 551 
+
+(Fig. 4c, f ). 552 
+
+553 
+
+Pathway enrichment analysis 554 
+
+We first used the Wilcoxon test implemented in SCANPY 14 to identify DEGs. For each 555 
+
+cluster, DEGs were sorted by adjusted p-value (ascending) and logFC (descending), 556 
+
+and the top 200 DEGs were selected for enrichment analysis. Subsequently over-557 
+
+representation analysis (ORA) was conducted using the enrichr function in the 558 
+
+GSEApy 49 package for two functional databases: GO Biological Process 2021 and 559 
+
+KEGG 2021 (Human), with a significance threshold of adjusted p-value < 0.05. 560 
+
+561 
+
+TF gene importance score calculation 562 
+
+To quantify how strongly each perturbed TF influences a given consensus cluster, we 563 
+
+computed a per-gene, per-cluster importance score. Let G be the set of candidate TF 564 
+
+genes and let I be the set of cells. For a perturbation of gene , we denoted post-565 
+
+perturbation GEM by (P is the number of genes) and the original 566 
+
+(renormalized but non-log-transformed) GEM by .567 
+
+We first calculated a binary change indicator to quantify perturbation-induced 568 
+
+cluster assignment shifts for each cell. For each perturbation gene g, we first 569 
+
+established a label mapping between original and perturbed clusters to account for 570 
+
+potential relabeling of identical clusters. Let be the original label of cell i and 571 
+
+the label of cell i after perturbing gene g. We defined the overlap matrix :572 
+
+. (12) 573 
+
+We obtained a mapping from each original cluster a to a perturbed cluster 574 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+by choosing the perturbed label with maximal overlap: 575 
+
+. (13) 576 
+
+Using this mapping, we defined the per-cell binary change indicator 577 
+
+, (14) 578 
+
+where is the indicator function. The binary matrix collected .579 
+
+We then computed a continuous change metric to quantify the magnitude of global 580 
+
+expression profile alterations for each cell under perturbation g. Let and be 581 
+
+the mean and standard deviation (across cells) of for gene j, computed 582 
+
+from the original GEM . We defined 583 
+
+. (15) 584 
+
+The continuous change for cell i under perturbation g was 585 
+
+. (16) 586 
+
+The continuous matrix collected .587 
+
+To combine the binary and continuous signals on a common scale, each row 588 
+
+was min-max normalized across cells: 589 
+
+. (17) 590 
+
+The two signals were then combined to yield a per-gene per-cell combined perturbation 591 
+
+score 592 
+
+(18) 593 
+
+Given consensus cluster k with cell set , the importance of TF gene g for cluster 594 
+
+k is the mean of perturbation scores across cells in that cluster: 595 
+
+(19) 596 
+
+597 
+
+Jaccard coefficient calculation 598 
+
+To assess the transcriptional similarity between the rare cell clusters and biologically 599 
+
+annotated cell populations, we quantified the overlap of their cluster-specific DEG sets 600 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+using the Jaccard similarity coefficient. For each cluster, cluster-specific DEGs were 601 
+
+first identified and the top 50 DEGs were selected to form distinct gene sets for each 602 
+
+cluster. The Jaccard coefficient between the gene set of a rare cell cluster and the 603 
+
+gene set of an annotated cell population was calculated using the following 604 
+
+formula: 605 
+
+. (20) 606 
+
+607 
+
+Integration of scMagnifier with STAGATE for Spatial Transcriptomics Analysis 608 
+
+To integrate scMagnifier with STAGATE 43 for spatial transcriptomics analysis, we 609 
+
+followed the same extension strategy as described for applying scMagnifier to multi-610 
+
+batch datasets. Specifically, STAGATE was used to generate a low-dimensional 611 
+
+embedding that captures spatial context, and this embedding replaced the PCA space 612 
+
+in the scMagnifier workflow. During data preprocessing and TF gene perturbation, the 613 
+
+STAGATE-derived latent embedding was used for downstream analyses instead of 614 
+
+PCA. In the consensus clustering step, cell-cell distances in the reduced space were 615 
+
+computed based on the STAGATE embedding, while all other steps of the scMagnifier 616 
+
+algorithm remained unchanged. 617 
+
+In our dataset, Spatial neighbor graphs in STAGATE were constructed using a 618 
+
+KNN-based strategy ( k=10). STAGATE was trained for 300 epochs to obtain stable 619 
+
+spatial embeddings. Downstream clustering was performed using the Leiden algorithm 620 
+
+with a resolution of 0.3. 621 
+
+622 
+
+Data availability 623 
+
+All data analyzed in this paper are available in raw form from their original authors. 624 
+
+Specifically, the lung adenocarcinoma datasets are available at NCBI Gene Expression 625 
+
+Omnibus (GEO) (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE131907). 626 
+
+The pancreas dataset is collected from NCBI GEO 627 
+
+(https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE84133). The BMMC 628 
+
+datasets is available at NCBI GEO 629 
+
+(https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE194122). The UPN19_pre 630 
+
+dataset is accessible on Human Antigen Receptor Database (huARdb) website 631 
+
+(https://huarc.net/v2/database/browse/UPN19_pre). The ovarian cancer dataset and 632 
+
+H&E images are available at SPAtial Transcriptomics resource for subCellular and 633 
+
+High-throughput platforms (SPATCH) website (https://spatch.pku-634 
+
+genomics.org/#/dataset/xenium). 635 
+
+636 
+
+Code availability 637 
+
+The scMagnifier algorithm is implemented in Python and is available on Github 638 
+
+(https://github.com/RucDongLab/scMagnifier). 639 
+
+640 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+References 641 
+
+1. Kolodziejczyk, A.A., Kim, J.K., Svensson, V., Marioni, J.C. & Teichmann, S.A. The 642 
+
+technology and biology of single-cell RNA sequencing. Molecular cell 58 , 610-620 643 
+
+(2015). 644 
+
+2. Kiselev, V.Y., Andrews, T.S. & Hemberg, M. Challenges in unsupervised clustering of 645 
+
+single-cell RNA-seq data. Nature Reviews Genetics 20 , 273-282 (2019). 646 
+
+3. Luecken, M.D. & Theis, F.J. Current best practices in single -cell RNA -seq analysis: a 647 
+
+tutorial. Molecular systems biology 15 , e8746 (2019). 648 
+
+4. Imoto, Y. et al. Resolution of the curse of dimensionality in single-cell RNA 649 
+
+sequencing data analysis. Life Science Alliance 5(2022). 650 
+
+5. Aibar, S. et al. SCENIC: single-cell regulatory network inference and clustering. 651 
+
+Nature methods 14 , 1083-1086 (2017). 652 
+
+6. Dixit, A. et al. Perturb-Seq: dissecting molecular circuits with scalable single-cell RNA 653 
+
+profiling of pooled genetic screens. cell 167 , 1853-1866. e17 (2016). 654 
+
+7. Kamimoto, K. et al. Dissecting cell identity via network inference and in silico gene 655 
+
+perturbation. Nature 614 , 742-751 (2023). 656 
+
+8. Li, C. et al. scRank infers drug-responsive cell types from untreated scRNA-seq data 657 
+
+using a target-perturbed gene regulatory network. Cell Reports Medicine 5(2024). 658 
+
+9. Osorio, D. et al. scTenifoldKnk: an efficient virtual knockout tool for gene function 659 
+
+predictions via single-cell gene regulatory network perturbation. Patterns 3(2022). 660 
+
+10. Kiselev, V.Y. et al. SC3: consensus clustering of single-cell RNA-seq data. Nature 661 
+
+methods 14 , 483-486 (2017). 662 
+
+11. Cui, Y. et al. Consensus clustering of single-cell RNA-seq data by enhancing network 663 
+
+affinity. Briefings in bioinformatics 22 , bbab236 (2021). 664 
+
+12. Geddes, T.A. et al. Autoencoder-based cluster ensembles for single-cell RNA-seq 665 
+
+data analysis. BMC bioinformatics 20 , 660 (2019). 666 
+
+13. Kim, H. et al. scICE: enhancing clustering reliability and efficiency of scRNA-seq data 667 
+
+with multi-cluster label consistency evaluation. Nature Communications 16 , 6031 668 
+
+(2025). 669 
+
+14. Wolf, F.A., Angerer, P. & Theis, F.J. SCANPY: large-scale single-cell gene expression 670 
+
+data analysis. Genome biology 19 , 15 (2018). 671 
+
+15. Korsunsky, I. et al. Fast, sensitive and accurate integration of single-cell data with 672 
+
+Harmony. Nature methods 16 , 1289-1296 (2019). 673 
+
+16. Hie, B., Bryson, B. & Berger, B. Efficient integration of heterogeneous single-cell 674 
+
+transcriptomes using Scanorama. Nature biotechnology 37 , 685-691 (2019). 675 
+
+17. Lopez, R., Regier, J., Cole, M.B., Jordan, M.I. & Yosef, N. Deep generative modeling 676 
+
+for single-cell transcriptomics. Nature methods 15 , 1053-1058 (2018). 677 
+
+18. Kim, N. et al. Single-cell RNA sequencing demonstrates the molecular and cellular 678 
+
+reprogramming of metastatic lung adenocarcinoma. Nature communications 11 , 2285 679 
+
+(2020). 680 
+
+19. Traag, V.A., Waltman, L. & Van Eck, N.J. From Louvain to Leiden: guaranteeing well-681 
+
+connected communities. Scientific reports 9, 1-12 (2019). 682 
+
+20. Blondel, V.D., Guillaume, J.-L., Lambiotte, R. & Lefebvre, E. Fast unfolding of 683 
+
+communities in large networks. Journal of statistical mechanics: theory and 684 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+experiment 2008 , P10008 (2008). 685 
+
+21. Quah, F.X. & Hemberg, M. SC3s: efficient scaling of single cell consensus clustering 686 
+
+to millions of cells. BMC bioinformatics 23 , 536 (2022). 687 
+
+22. Baron, M. et al. A single-cell transcriptomic map of the human and mouse pancreas 688 
+
+reveals inter-and intra-cell population structure. Cell systems 3, 346-360. e4 (2016). 689 
+
+23. Luecken, M.D. et al. A sandbox for prediction and integration of DNA, RNA, and 690 
+
+proteins in single cells. in Thirty-fifth conference on neural information processing 691 
+
+systems datasets and benchmarks track (Round 2) (2021). 692 
+
+24. Polański, K. et al. BBKNN: fast batch alignment of single cell transcriptomes. 693 
+
+Bioinformatics 36 , 964-965 (2020). 694 
+
+25. Ippolito, G.C. et al. Dendritic cell fate is determined by BCL11A. Proceedings of the 695 
+
+National Academy of Sciences 111 , E998-E1006 (2014). 696 
+
+26. Wu, L. et al. huARdb: human Antigen Receptor database for interactive clonotype-697 
+
+transcriptome analysis at the single-cell level. Nucleic Acids Research 50 , D1244-698 
+
+D1254 (2022). 699 
+
+27. Wang, H. et al. MAIT cell plasticity enables functional adaptation that drives 700 
+
+antibacterial immune protection. Science Immunology 9, eadp9841 (2024). 701 
+
+28. Cao, H. et al. The pathogenicity and synergistic action of Th1 and Th17 cells in 702 
+
+inflammatory bowel diseases. Inflammatory Bowel Diseases 29 , 818-829 (2023). 703 
+
+29. Villarino, A.V., Gallo, E. & Abbas, A.K. STAT1-activating cytokines limit Th17 704 
+
+responses through both T-bet–dependent and–independent mechanisms. The 705 
+
+Journal of Immunology 185 , 6461-6471 (2010). 706 
+
+30. Garner, L.C. et al. Single-cell analysis of human MAIT cell transcriptional, functional 707 
+
+and clonal diversity. Nature immunology 24 , 1565-1578 (2023). 708 
+
+31. Jindal, A., Gupta, P., Jayadeva & Sengupta, D. Discovery of rare cells from 709 
+
+voluminous single cell expression data. Nature communications 9, 4719 (2018). 710 
+
+32. Torre, E. et al. Rare cell detection by single-cell RNA sequencing as guided by single-711 
+
+molecule RNA FISH. Cell systems 6, 171-179. e5 (2018). 712 
+
+33. Pae, J. et al. Cyclin D3 drives inertial cell cycling in dark zone germinal center B cells. 713 
+
+Journal of Experimental Medicine 218 , e20201699 (2020). 714 
+
+34. Liu, Z. & Xu, L. UBE2S promotes the proliferation and survival of human lung 715 
+
+adenocarcinoma cells. BMB reports 51 , 642 (2018). 716 
+
+35. Ma, N. et al. Ebi3 promotes T-and B-cell division and differentiation via STAT3. 717 
+
+Molecular Immunology 107 , 61-70 (2019). 718 
+
+36. Su, S.B. et al. TLR10: Insights, controversies and potential utility as a therapeutic 719 
+
+target. Scandinavian Journal of Immunology 93 , e12988 (2021). 720 
+
+37. Li, Z.-Y. et al. The transcriptional repressor ID2 supports natural killer cell maturation 721 
+
+by controlling TCF1 amplitude. Journal of Experimental Medicine 218 , e20202032 722 
+
+(2021). 723 
+
+38. Abel, A.M., Yang, C., Thakar, M.S. & Malarkannan, S. Natural killer cells: 724 
+
+development, maturation, and clinical utilization. Frontiers in immunology 9, 1869 725 
+
+(2018). 726 
+
+39. Limoges, M.-A., Cloutier, M., Nandi, M., Ilangumaran, S. & Ramanathan, S. The 727 
+
+GIMAP family proteins: an incomplete puzzle. Frontiers in immunology 12 , 679739 728 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+(2021). 729 
+
+40. Villagomez, F.R. et al. TBC1D10C is a cytoskeletal functional linker that modulates 730 
+
+cell spreading and phagocytosis in macrophages. Scientific Reports 11 , 20946 731 
+
+(2021). 732 
+
+41. Poli, A. et al. CD56bright natural killer (NK) cells: an important NK cell subset. 733 
+
+Immunology 126 , 458-465 (2009). 734 
+
+42. Arora, R. et al. Spatial transcriptomics reveals distinct and conserved tumor core and 735 
+
+edge architectures that predict survival and targeted therapy response. Nature 736 
+
+communications 14 , 5029 (2023). 737 
+
+43. Dong, K. & Zhang, S. Deciphering spatial domains from spatially resolved 738 
+
+transcriptomics with an adaptive graph attention auto-encoder. Nature 739 
+
+communications 13 , 1739 (2022). 740 
+
+44. Ren, P. et al. Systematic benchmarking of high-throughput subcellular spatial 741 
+
+transcriptomics platforms across human tumors. Nature Communications 16 , 9232 742 
+
+(2025). 743 
+
+45. Yang, Y., Yang, Y., Yang, J., Zhao, X. & Wei, X. Tumor microenvironment in ovarian 744 
+
+cancer: function and therapeutic strategy. Frontiers in cell and developmental biology 745 
+
+8, 758 (2020). 746 
+
+46. Dong, Y. et al. High IGF2 expression is associated with poor clinical outcome in 747 
+
+human ovarian cancer. Oncology reports 34 , 936-942 (2015). 748 
+
+47. Malhotra, S., Kazlouskaya, V., Andres, C., Gui, J. & Elston, D. Diagnostic cellular 749 
+
+abnormalities in neoplastic and non -neoplastic lesions of the epidermis: a 750 
+
+morphological and statistical study. Journal of cutaneous pathology 40 , 371-378 751 
+
+(2013). 752 
+
+48. Bunne, C. et al. Learning single-cell perturbation responses using neural optimal 753 
+
+transport. Nature methods 20 , 1759-1768 (2023). 754 
+
+49. Fang, Z., Liu, X. & Peltz, G. GSEApy: a comprehensive package for performing gene 755 
+
+set enrichment analysis in Python. Bioinformatics 39 , btac757 (2023). 756 
+
+757 
+
+758 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+Main Figures 759 
+
+760 
+
+761 
+
+762 
+
+Fig. 1 Overview of scMagnifier. a. scMagnifier takes the gene expression matrix and 763 
+
+a basic gene regulatory network as inputs, and derives the initial clustering results 764 
+
+using a standard clustering pipeline. b. scMagnifier obtains distinct clustering results 765 
+
+by performing TF perturbations on cluster-specific gene regulatory networks. c. The 766 
+
+output of scMagnifier is a consensus clustering result visualized on UMAP and 767 
+
+rpcUMAP embeddings. d. scMagnifier first constructs cluster-specific GRN based on 768 
+
+the basic GRN and initial clustering results. e. scMagnifier systematically perturbs 769 
+
+candidate TF genes and propagates their effects through cluster-specific GRN to 770 
+
+generate an ensemble of post-perturbation clustering results. f. scMagnifier integrates 771 
+
+perturbation-driven clustering results with expression-based similarities to construct a 772 
+
+combined cell –cell distance matrix, enabling consensus clustering and the generation 773 
+
+of a rpcUMAP. 774 
+
+775 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+776 
+
+777 
+
+Fig. 2 Benchmarking of scMagnifier. a. Bar plots illustrating the performance of 778 
+
+seven algorithms on four single-batch datasets, evaluated using the Adjusted Rand 779 
+
+Index (ARI) and Normalized Mutual Information (NMI). b. Bar plots of clustering 780 
+
+performance on two multi-batch datasets for seven batch-correction methods, alone 781 
+
+or combined with scMagnifier. c. UMAP and rpcUMAP visualization of BMMC dataset 782 
+
+clustering via scVI (ARI=0.62) and scMagnifier+scVI (ARI=0.66). The red circle 783 
+
+highlights a myeloid lineage-enriched compartment containing CD14+ Mono, CD16+ 784 
+
+Mono, cDC2 and G/M prog cells. A zoomed view contrasts this compartment on 785 
+
+standard UMAP versus rpcUMAP. d. rpcUMAP visualization of CENPE and MKI67 786 
+
+gene expression in Cluster 0 of the BMMC dataset, obtained using the 787 
+
+scVI+scMagnifier workflow. e. UMAP visualization of BCL11A perturbation in the 788 
+
+BMMC dataset using the scMagnifier+scVI workflow. The leftmost panel shows the 789 
+
+sum of absolute expression changes for BCL11A and its target genes across cells. The 790 
+
+four panels on the right display UMAP visualizations of post-perturbation clustering 791 
+
+results as the perturbation fold change increases. 792 
+
+793 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+794 
+
+Fig. 3 scMagnifier uncovers hidden heterogeneity among MAIT/Th1-Th17 cell 795 
+
+populations. a. Comparison of original Leiden clustering and scMagnifier results. Left: 796 
+
+UMAP visualization of standard Leiden clustering (resolution = 0.75). Middle: UMAP 797 
+
+and rpcUMAP visualization of scMagnifier clustering. The connecting lines denote the 798 
+
+positional correspondence of clusters identified by scMagnifier between the UMAP and 799 
+
+rpcUMAP embedding spaces. The red circle highlights the focal clusters (Cluster 2 and 800 
+
+Cluster 16). Right: rpcUMAP visualization of cell type distributions in the dataset. b. 801 
+
+Sankey diagram showing the correspondence among original Leiden clusters, 802 
+
+scMagnifier clusters and cell-type annotations. c. Bubble plot of the top 10 differentially 803 
+
+expressed genes (DEGs) for each cluster, among cluster 2, cluster 16 and the 804 
+
+remaining Th1/Th17 cells. d. UMAP heatmaps showing the expression of CD8A ,805 
+
+NKG7 , NCR3 , and PRF1 in cluster 2 and cluster 16. e. KEGG pathway enrichment 806 
+
+analysis of cluster 2 and cluster 16, showing the top 10 most significantly enriched 807 
+
+pathways. f. Bar plot of the top 10 TF genes ranked by importance scores in cluster 808 
+
+16. 809 
+
+810 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+811 
+
+Fig. 4 scMagnifier detects rare immune cell populations in lung adenocarcinoma 812 
+
+datasets. a. UMAP and rpcUMAP visualizations of scMagnifier results on the 813 
+
+EBUS_10 dataset, highlighting the R1 and R2 clusters. The connecting lines denote 814 
+
+the positional correspondence of R1 and R2 between the UMAP and rpcUMAP 815 
+
+embedding spaces. b. Violin plots showing the expression profiles of the top 15 DEGs 816 
+
+individually selected from R1 and R2, across R1, R2 and the remaining cell-type-817 
+
+annotated cells. c. Heatmap of gene expression for the top 10 upregulated genes 818 
+
+selected from each of the four clusters (R1, R2, MALT B cells and GC B cells in the 819 
+
+DZ). d. UMAP and rpcUMAP visualizations of scMagnifier results on the LUNG_N30 820 
+
+dataset, highlighting the R3 clusters. e. Bubble plot showing Jaccard coefficient values 821 
+
+between R1 and clusters of the remaining cells grouped by cell-type annotations. f. 822 
+
+Heatmap of gene expression for the top 10 upregulated genes selected from each of 823 
+
+the two clusters (R3 and NK). g. UMAP heatmaps showing the expression of ID2 , IFNG ,824 
+
+GIMAP7 and TBC1D10C in R3 and NK cells. 825 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+826 
+
+Fig. 5 The integration of scMagnifier and STAGATE identifies tumor cell 827 
+
+subtypes and their spatial organization in ovarian cancer. a. Spatial visualization 828 
+
+of the ovarian cancer dataset. Left two panels: cell-type annotations and spatial layer 829 
+
+annotations provided with the dataset. Right two panels: clustering results from 830 
+
+STAGATE alone (Leiden, resolution=0.3) and from scMagnifier combined with 831 
+
+STAGATE. b. H&E-stained image highlighting the specific regions analyzed in the 832 
+
+dataset used for our experiments. c. Bubble plot of the top 5 differentially expressed 833 
+
+> .CC-BY 4.0 International license perpetuity. It is made available under a preprint (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in The copyright holder for this this version posted March 28, 2026. ;https://doi.org/10.64898/2026.03.26.714385 doi: bioRxiv preprint
+
+genes for each of the five tumor subclusters identified by scMagnifier+STAGATE. d. 834 
+
+GO enrichment analysis of the five tumor subclusters, showing the top 10 significantly 835 
+
+enriched GO terms for each subcluster. e. Spatial correspondence between histology 836 
+
+and scMagnifier+STAGATE clustering. Left panel: dark regions highlighted in the H&E-837 
+
+stained image. Right panel: spatial map showing the location of cluster 2 identified by 838 
+
+scMagnifier+STAGATE. f. Spatial heatmap showing the sum of absolute expression 839 
+
+changes for STAT2 and its target genes across cells after STAT2 perturbation. 840

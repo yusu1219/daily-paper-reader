@@ -1,0 +1,765 @@
+Title: PRiMeFlow: Capturing Complex Expression Heterogeneity in Perturbation Response Modelling
+
+URL Source: https://arxiv.org/pdf/2604.13986v1
+
+Published Time: Thu, 16 Apr 2026 01:18:43 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# PR IMEFLOW : CAPTURING COMPLEX EXPRESSION HETEROGENEITY IN PERTURBATION RESPONSE MODELLING 
+
+A P REPRINT 
+
+Zichao Yan 1* †, Yan Wu 1* §, Mica Xu Ji 1* , Chaitra Agrahar 1* , Esther Wershof 1* , Marcel Nassar 1* , Mehrshad Sadria 1* , Ridvan Eksi 1* , Vladimir Trifonov 1, Ignacio Ibarra 1, Telmo Felgueira 1‡, Bła˙ zej Osi ´ nski 1∥, and Rory Stark 1†
+
+> 1
+
+Altos Labs 
+
+# ABSTRACT 
+
+Predicting the effects of perturbations in-silico on cell state can identify drivers of cell behavior at scale and accelerate drug discovery. However, modeling challenges remain due to the inherent hetero-geneity of single cell gene expression and the complex, latent gene dependencies. Here, we present PRiMeFlow, an end-to-end flow matching based approach to directly model the effects of genetic and small molecule perturbations in the gene expression space. The distribution-fitting approach taken by PRiMeFlow enables it to accurately approximate the empirical distribution of single-cell gene expression, which we demonstrate through extensive benchmarking inside PerturBench. Through ablation studies, we also validate important model design choices such as operating in gene expression space and parameterizing the velocity field with a U-Net architecture. The PRiMeFlow architecture was used as the basis for the model that won the Generalist Prize in the first ARC Virtual Cell Challenge. 
+
+# 1 Introduction 
+
+Novel imaging and genomics methods have enabled high-throughput small molecule and genetic perturbation technology with rich imaging and single cell gene expression measurements (Zhang et al., 2025; Dixit et al., 2016; Chandrasekaran et al., 2023). However despite these advances, the space of potential small molecule and genetic perturbations remains massive, especially since perturbations depend on covariates such as cell type and many key cell state shifts only occur in response to multiple perturbations (Watanabe et al., 2019; Wei et al., 2009). Machine learning models that can predict counterfactual response to perturbations are thus valuable in unlocking in-silico screens that can prioritize the most promising sets of perturbations for experimental testing. To this end, significant benchmarking efforts have emerged in the literature space, with PerturBench (Wu et al., 2024) being a representative example. Its novel rank-based metrics have been widely adopted in the field, for example in the first annual virtual cell competition (Roohani et al., 2025). We provide background information on PerturBench in Section 2.1. Empirical results from PerturBench show that, surprisingly, simpler model variants could outperform more complex versions. For example, ablating the adversarial loss from CPA (Lotfollahi et al., 2023) and the sparsity constraint from SAMS-VAE (Bereket & Karaletsos, 2023) improve covariate transfer task performance. This suggests that while strong inductive biases are interesting from a modelling perspective and can be performant in specific test settings, design choices should be rigorously ablated as simpler algorithms can generalize better in practice. 
+
+> *
+
+Equal contribution. 
+
+> †
+
+Corresponding authors: {zyan, rstark}@altoslabs.com 
+
+> §
+
+Current affiliation: Verge Genomics 
+
+> ‡
+
+Current affiliation: Loka 
+
+> ||
+
+Current affiliation: Independent Researcher 
+
+> arXiv:2604.13986v1 [cs.LG] 15 Apr 2026
+
+PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 1: Summary of benchmarking datasets. Dataset Single / Dual Modality Biological Cells Task perturbations states 
+
+Srivatsan20 188 / 0 small molecule 3 178,213 covariate transfer 
+
+Jiang24 219 / 0 genetic 30 1,628,476 covariate transfer 
+
+Norman19 155 / 131 genetic 1 91,168 combo prediction 
+
+Motivated by the insights of PerturBench, we seek to design an expressive yet conceptually simple generative model to better capture the heterogeneous cellular responses to perturbations. We present PRiMeFlow 1 which is the first of its kind to apply end-to-end learning principles to flow matching for perturbation response modeling. We intentionally make the design choice of eliminating the need for fixed pretrained latent embeddings, typically derived from either PCA or single-cell foundation models (Klein et al., 2025; Palla et al., 2025). While these methods compress expression profiles into more tractable lower-dimensional spaces, they risk losing critical biological signals for accurate downstream prediction, as well as error accumulation in the multi-stage inference pipeline. Distinctively, PRiMeFlow directly operates in the gene expression space and employs a U-Net architecture to parame-terize the velocity field. We formulate our contributions in this work as follows: (1) We propose PRiMeFlow, a novel flow matching approach that introduces a straightforward, end-to-end design principle for perturbation response modeling. (2) We demonstrate PRiMeFlow’s superior distribution-fitting capabilities through extensive experiments within PerturBench against a wide array of baselines. Our method achieves significant gains in key distributional metrics, such as the recall of ground truth differentially expressed genes (DEGs), highlighting its ability to accurately model gene expression variance. (3) Through ablation studies, we validate our core design choices. Specifically, we observe significant gains from three key decisions: parameterizing the velocity field in the gene expression space rather than the latent space, using a U-Net over an MLP, and training with independent coupling instead of optimal transport based coupling. Through these experiments, we found an implementation that performed extremely well across multiple datasets. This formed the basis of the model that won the Generalist Prize in the Arc Virtual Cell Challenge (Roohani et al., 2025). 
+
+# 2 Background 
+
+2.1 Benchmarking virtual cell models in PerturBench 
+
+In order to rigorously evaluate the performance of PRiMeFlow, we use the PerturBench platform (Wu et al., 2024) which contains well-defined tasks, numerous perturb-seq datasets and diverse evaluation metrics. PerturBench includes widely-adopted metrics such as cosine similarity of log fold-change (LogFC) and root mean square error (RMSE), which capture pseudobulk-level performance, as well as metrics such as maximum mean discrepancy (MMD) in either gene expression (GEX) or PCA space, and differentially expressed genes (DEG) recall. These distribution-based metrics reflect the necessity for perturbation response models to generate biologically meaningful single-cell populations and capture the heterogeneity of responses to perturbations. PerturBench also provides rank-based versions of each metric, which measure model prediction specificity by evaluating the degree to which perturbations are correctly ordered. It also provides useful insights into mode collapsing. The importance of these rank metrics has been acknowledged in the field and was used for evaluation in the first annual virtual cell competition hosted by the ARC Institute (Roohani et al., 2025). PerturBench also includes preprocessed perturb-seq datasets, some of which are selected in this work for bench-marking purposes. Refer to Table 1 and Appendix section D for details. In particular, we benchmark our models in 
+
+Srivatsan20 and Jiang24 datasets under the covariate transfer task, and in Norman19 dataset under the combo prediction task. 
+
+2.2 Flow Matching 
+
+Flow matching belongs to a family of generative models which transport a known source distribution ( p0, e.g., simple Gaussian distribution) to the unknown data distribution ( pdata ), using a neural network parameterized mapping ψθ . The     
+
+> 1PRiMe stands for: Perturbation Response i M odeling e
+
+2PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+goal is to align the transformed distribution (i.e., push-forward ψθ
+
+> #
+
+p0) to pdata , traditionally achieved by minimizing the negative data log-likelihood (Rezende & Mohamed, 2015): L(θ) = − Pni log( ψθ♯ p0(xi)) .A particular example is the continuous normalizing flow (CNF) (Chen et al., 2018) which parameterizes the time-dependent velocity field vθt (x) with neural networks. By enforcing Lipschitz continuity constraint in x as well as continuity constraint in t, it uniquely defines a diffeomorphic mapping ψθt through the ordinary differential equation (ODE): 
+
+ddt ψθt (x) = vθt (ψθt (x)) , ψθ 
+
+> 0
+
+(x) = x
+
+At inference time, the learned velocity will be used iteratively to solve the ODE, given initial conditions which are samples from p0, and resulting ODE integration ideally leads to high quality samples that capture the diversity in pdata .We denote the intermediate probability densities as pt and consider vt generating pt if the two quantities satisfy the continuity equation: 
+
+∂p t + ∇ · (ptvt) = 0 
+
+Advantages aside, the training of CNF is impeded by expensive ODE simulation required to compute the log-likelihood. This is where a flow matching approach offers a more efficient and simulation-free alternative. In flow matching, we first consider designing the probability path pt that interpolates between p0 and pdata . This requires selecting a conditioning variable z (e.g., z ∼ pdata ) and the conditional probability path pt(x|z) that can be used to recover pt through a weighted aggregation of the conditional paths: pt(x) = R pt(x|z)p(z)dz .It is important that pt(x|z) is selected to induce simple closed-form expressions in its corresponding conditional velocities vt(x|z). In the example of z ∼ pdata and assuming p0 is the standard Gaussian distribution, pt(x|z) takes the form of N (x|t · z, (1 − t)2 · I), and through the continuity equation, it can be shown that vt(x|z) = z−x 
+
+> 1−t
+
+.A further result from Lipman et al. (2022) shows that the ground truth generating velocity of pt, referred to as the marginal velocity, is connected to vt(x|z) in the following way: 
+
+vt(x) = 
+
+Z
+
+vt(x|z) pt(x|z)p(z)
+
+pt(x) dz 
+
+It is obvious that the marginal velocity is intractable, hence the difficulty of directly using it as a regression target for the learned velocity field, as in the naive flow matching loss: 
+
+LF M = Et,x ∼pt || vθt (x) − vt(x)|| 2 (1) And this leads to the conditional flow matching loss proposed in Lipman et al. (2022): 
+
+LCF M = Et,z ∼pz ,x ∼pt(x|z)|| vθt (x) − vt(x|z)|| 2 (2) which is a tractable alternative to LF M and it has been shown in Lipman et al. (2022) Theorem 2 that ∇θ LCF M =
+
+∇θ LF M . Therefore, optimizing the tractable Eq. 2 leads to the same gradient as Eq. 2, making both effectively equivalent in expectation. Ultimately, the conditional flow matching loss has been widely applied in the generative modeling context and has offered a wide selection of conditioning variables and conditional probability paths, such as nonlinear interpolations, couplings between empirical data distributions, and optimal transport (Albergo et al., 2023; Liu et al., 2022; Tong et al., 2023). 
+
+# 3 Method 
+
+For a perturb-seq dataset D, consider the set of log1p normalized gene expression profiles X = {xi ∈ Rm}ni=1 where 
+
+n denotes the size of the dataset and m denotes the number of expression genes. The identity of the genes, for example gene names, is denoted by G = {gj }mj=1 .Every expression profile corresponds to a cell with condition c specifying genetic/small-molecule perturbations, and covariates such as cell line/type and other cytokine treatment which are dataset specific. We denote the set of conditions with C = {ci}ni=1 where c = ( {pck }nc
+
+> k=1
+
+, cov c). Given the possibility of combinatorial perturbations, each condition may contain a plurality of perturbations as indicated by the set {pck }nc 
+
+> k=1
+
+where nc denotes the number of perturbations. In the case of nc = 0 , it would indicate a control cell. 3PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+3.1 Direct flow matching in gene expression space 
+
+In this section, we introduce PRiMeFlow, our perturbation response model. The design philosophy behind PRiMeFlow is straightforward: to tackle the heterogeneity of gene expression measurements (both inter- and intra-condition) and the complex interaction relationship among genes, we propose to directly parameterize the velocity field vθt in the gene expression space. While this exposes the velocity field to the full complexity in the raw gene expression data, it also creates an opportunity for the model to learn dynamics that directly govern the transition of expression profiles, especially when the velocity field is parameterized with adequate architectures to capture the noise and intricate structures inherent in gene expression data. In particular, vθt takes as input three main components: • Gene expression profile xt and gene identities G. xt is sinusoidally encoded to add a feature dimension i.e., 
+
+Enc( xt) ∈ Rm×d. G is included to ingest biological interpretation in the first dimension in xt and is mapped to learnable embedding vectors: Emb( G) ∈ Rm×d;• Condition c = ( {pck }nc
+
+> k=1
+
+, cov c). We use a compositional encoding of potentially combinatorial perturbations and one-hot encoding for covariate: Enc( c) = [ P 
+
+> k
+
+OneHot( pck )|| OneHot( cov c)] , where [... || ... ] denotes concatenation along the feature dimension; • Time t which is also sinusoidally encoded in Enc( t).The output of the velocity field is in the following form: 
+
+ˆv = vθt (Enc(x t) + Emb( G), Enc(c) , Enc( t)) (3) 
+
+vθt is parameterized with a U-Net architecture which we have found crucial for its performance. We have implemented our U-Net based on OpenAI’s guided diffusion library (Dhariwal & Nichol, 2021). 
+
+Remark 1 (Architecture choice for velocity field) U-Nets are designed to capture spatial relationships like in imag-ing data, which do not apply to gene expression vectors where the ordering of genes is arbitrary. While theoretically suboptimal compared to permutation-invariant architectures like Transformer (Vaswani et al., 2017), we found the U-Net to be a pragmatic choice: it empirically outperforms MLP and requires a significantly lower compute budget than a Transformer. 
+
+3.2 Training PRiMeFlow and ablations Algorithm 1 PRiMeFlow Training 
+
+Require: p0, pdata , θ, G, puncond , noise schedule σ, batch size b, learning rate η.Initialize parameters θ.
+
+while not converged do 
+
+Sample x1 ∈ Rb×m ∼ pdata .Retrieve conditions c = {ci}bi=1 ,where ci ← ∅ with prob puncond .Sample x0 ∈ Rb×m ∼ p0.Sample time steps t ∈ Rb ∼ Uniform (0 , 1) .Sample xt ∈ N (x | (1 − t)x0 + tx 1, σ 2I).Compute target vt(x|(x0, x 1)) = x1 − x0.Predict velocity ˆv as Eq. 3. Compute LCF M as Eq. 2. Update parameters: θ ← θ − η∇θ LCF M (θ).
+
+end while 
+
+To train PRiMeFlow, we construct probability paths as independent couplings between p0 and pdata . We choose 
+
+p0 to be the standard Gaussian distribution, and pdata 
+
+to be the empirical cell populations that includes both perturbed and control cells. For training step details, refer to Algorithm 1. To understand the importance of architecture choices we perform ablation studies. We provide an ablation model referred to as PRiMeFlow MLP which parameterizes the velocity field with an MLP instead of U-Net. The training steps of PRiMeFlow MLP remain unchanged. To demonstrate the value of end-to-end learning, we pro-vide an alternative implementation of PRiMeFlow that operates in the PCA space of gene expression and with optimal transport, referred to as FlowMatching PCA and FlowMatching PCA OT respectively. While FlowMatch-ing PCA still uses standard Gaussian as p0, FlowMatch-ing PCA OT uses empirical control cells as p0 and is trained with optimal transport-based data-coupling. Both FlowMatching PCA and FlowMatching PCA OT use MLP for the velocity field. The training steps of FlowMatching PCA OT are altered to take data coupling into account and, in effect, become similar to CellFlow (Klein et al., 2025). 4PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 2: Distributional metric performance of PRiMeFlow on the Srivatsan20 dataset. Model MMD MMD MMD DEG GEX GEX rank PCA recall PRiMeFlow CFG1 0.13 ± 4 × 10 −3 0.13 ± 8 × 10 −3 0.14 ± 8 × 10 −3 0.26 ± 1 × 10 −2
+
+PRiMeFlow CFG3 0.25 ± 2 × 10 −3 0.22 ± 7 × 10 −3 0.31 ± 1 × 10 −2 0.27 ± 6 × 10 −3
+
+PRiMeFlow CFG5 0.47 ± 1 × 10 −2 0.29 ± 2 × 10 −2 0.60 ± 2 × 10 −2 0.25 ± 5 × 10 −3
+
+FM PCA CFG1 1.2 ± 7 × 10 −3 0.26 ± 6 × 10 −3 0.50 ± 2 × 10 −2 0.042 ± 2 × 10 −3
+
+FM PCA CFG3 1.3 ± 5 × 10 −3 0.25 ± 7 × 10 −3 0.44 ± 1 × 10 −2 0.071 ± 3 × 10 −3
+
+FM PCA CFG5 1.4 ± 4 × 10 −3 0.29 ± 4 × 10 −3 0.53 ± 1 × 10 −2 0.10 ± 3 × 10 −3
+
+CPA 2.4 ± 1 × 10 −2 0.30 ± 9 × 10 −3 0.53 ± 4 × 10 −3 0.0073 ± 2 × 10 −3
+
+CPA (noAdv) 2.3 ± 3 × 10 −2 0.25 ± 5 × 10 −3 0.49 ± 1 × 10 −2 0.0040 ± 2 × 10 −3
+
+SAMS-VAE 2.5 ± 2 × 10 −2 0.30 ± 8 × 10 −3 0.69 ± 1 × 10 −2 0.00016 ± 1 × 10 −4
+
+SAMS-VAE (S) 2.9 ± 1 × 10 −2 0.28 ± 5 × 10 −3 0.79 ± 1 × 10 −2 0 ± 0
+
+Biolord 4.9 ± 3 × 10 0 0.36 ± 2 × 10 −1 4.3 ± 4 × 10 0 4.7e − 05 ± 1 × 10 −4
+
+Latent 4.3 ± 2 × 10 −1 0.26 ± 6 × 10 −2 2.0 ± 2 × 10 −1 0.0 ± 0.
+
+Decoder 4.2 ± 4 × 10 −3 0.16 ± 2 × 10 −2 1.9 ± 5 × 10 −3 N/A Linear 2.2 ± 7 × 10 −3 0.31 ± 1 × 10 −3 0.76 ± 9 × 10 −4 0.0036 ± 3 × 10 −4
+
+# 4 Experiments 
+
+Comparison to important prior works are made, such as CPA, SAMS-VAE, Biolord and their variants which are implemented in PerturBench (Wu et al., 2024). For simple baselines, we include Latent Additive, Linear Additive, and Decoder-Only models. We also compare to various ablation models such as PRiMeFlow MLP, FM PCA and FM PCA OT. All models were trained using five random seeds, and we report the mean and standard deviation. Hyperparameters for PRiMeFlow MLP and FM PCA were selected separately through 60-trial HPO sweeps. FM PCA OT reuses FM PCA hyperparameters while adding OT-specific hyperparameters. PRiMeFlow hyperparameters were manually determined due to the model’s higher computational cost and our resource constraints. We report the hyperparameters in the Appendix section E. To compute the evaluation metrics, we sampled 1,000 single-cell gene expression profiles from each model. For inference in the four flow matching based methods, we used 100 Euler integration steps and explored CFG settings from 1 to 5. All results are reported on the test split. 
+
+4.1 Performance of PRiMeFlow in covariate transfer task 
+
+In this section, we evaluate PRiMeFlow in Srivatsan20 and Jiang24 datasets under the covariate transfer task. The task measures the model’s ability to capture the effects of small-molecule and genetic perturbations in novel covariate conditions where those effects are unmeasured in the training data. Results for Srivatsan20 are reported in Table 2 which shows a selected set of distributional metrics. Results for the complete distributional metrics, more ablation models such as PRiMeFlow MLP and FM PCA OT, are reported in Table 7 in the Appendix due to space constraints. The complete results for Jiang24 dataset is reported in Appendix Table 9. Overall, we observe that PRiMeFlow (CFG=1) achieves state-of-the-art performance in both datasets across major distributional metrics which are MMD in either GEX or PCA space, DEG recall as well as DEG recall rank. In 
+
+Srivatsan20 dataset, PRiMeFlow achieves SOTA performance in MMD GEX rank while maintaining a competitive edge in MMD PCA rank. The converse is true in Jiang24 . Increasing the CFG weight from 1 to 5 generally degrades distributional fit. However, stronger guidance appears to yield marginal improvements in DEG recall and its rank metrics in Srivatsan20 dataset. This holds true for both PRiMeFlow and FM PCA, but not for PRiMeFlow MLP or FM PCA OT. In particular, comparing PRiMeFlow to FM PCA in both datasets suggests that operating end-to-end in the full gene expression space and directly updating the gene expression vectors through time (i.e., ODE integration), results in significantly closer fit to the ground truth distribution of gene expression. An immediate benefit of this approach is the proper modeling of gene expression variance, which translates directly and significantly to a higher recall of 5PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 3: Distributional metric performance of PRiMeFlow on the Norman19 dataset. Model MMD MMD MMD DEG GEX GEX rank PCA recall PRiMeFlow CFG1 0.26 ± 7 × 10 −3 0.019 ± 4 × 10 −3 0.34 ± 2 × 10 −2 0.54 ± 2 × 10 −2
+
+PRiMeFlow CFG3 0.61 ± 3 × 10 −2 0.066 ± 9 × 10 −3 0.86 ± 5 × 10 −2 0.61 ± 8 × 10 −3
+
+PRiMeFlow CFG5 1.3 ± 4 × 10 −2 0.17 ± 1 × 10 −2 1.8 ± 5 × 10 −2 0.56 ± 1 × 10 −2
+
+FM PCA CFG1 0.77 ± 4 × 10 −3 0.059 ± 3 × 10 −3 0.61 ± 5 × 10 −3 0.37 ± 2 × 10 −3
+
+FM PCA CFG3 1.1 ± 8 × 10 −3 0.098 ± 2 × 10 −3 0.82 ± 9 × 10 −3 0.45 ± 2 × 10 −3
+
+FM PCA CFG5 1.9 ± 4 × 10 −2 0.18 ± 1 × 10 −2 1.6 ± 4 × 10 −2 0.43 ± 4 × 10 −3
+
+CPA 5.6 ± 3 × 10 −2 0.14 ± 9 × 10 −3 2.2 ± 2 × 10 −2 0.032 ± 4 × 10 −3
+
+CPA (noAdv) 5.5 ± 1 × 10 −1 0.13 ± 2 × 10 −2 2.2 ± 1 × 10 −1 0.016 ± 9 × 10 −3
+
+SAMS-VAE 4.1 ± 4 × 10 −2 0.034 ± 1 × 10 −2 1.9 ± 3 × 10 −2 0 ± 0
+
+SAMS-VAE (S) 3.3 ± 5 × 10 −2 0.088 ± 6 × 10 −3 0.74 ± 5 × 10 −2 0.028 ± 6 × 10 −3
+
+Biolord 2.8 ± 5 × 10 −3 0.066 ± 3 × 10 −3 1.6 ± 5 × 10 −3 0 ± 0
+
+Latent 6.7 ± 4 × 10 −3 0.012 ± 1 × 10 −3 3.2 ± 6 × 10 −3 0.00043 ± 3 × 10 −4
+
+Decoder 6.7 ± 6 × 10 −3 0.0090 ± 8 × 10 −4 3.2 ± 4 × 10 −3 N/A Linear 2.5 ± 4 × 10 −2 0.026 ± 2 × 10 −3 1.2 ± 4 × 10 −2 0.018 ± 2 × 10 −3
+
+ground-truth DEGs. Furthermore, comparing FM PCA to FM PCA OT shows that optimal transport based data coupling does not meaningfully add to model performance. We compare PRiMeFlow to PRiMeFlow MLP in order to understand the effect of architectural choices. Overall, the MLP variant struggles to achieve decent fits on either distributional or traditional pseudobulk based metrics. This result suggests that the U-Net architecture possesses an advantageous inductive bias compared to MLP for modelling complex latent dependencies in raw gene expression data. Finally, we report traditional metrics, such as LogFC, RMSE and their rank versions, for Srivatsan20 and Jiang24 
+
+datasets in Appendix Table 4 and Table 6. While PRiMeFlow remains generally competitive, it is outperformed by earlier works such as CPA and SAMS-VAE on those pseudobulk-based metrics. This highlights a crucial trade-off: while earlier models excel at predicting mean expression, PRiMeFlow’s unique advantage lies in capturing the higher-order moments of the ground-truth gene expression distribution. Furthermore, this distinction also illustrates how metric selection fundamentally shapes performance evaluation and the definition of model success. 
+
+4.2 Performance of PRiMeFlow in combo prediction task 
+
+For the combo prediction task, we use the Norman19 dataset and report the results in Table 3. Pseudobulk-based metrics are reported in Appendix Table 5. Full distributional metrics and additional ablation models such as PRiMeFlow MLP and FM PCA OT are shown in Appendix Table 8. Similar to our previous observations, PRiMeFlow demonstrates a significantly higher distribution-fitting capability and remains competitive on MMD GEX/PCA rank metrics amongst all baselines, despite being outperformed by simpler baselines such as Decoder-Only and Latent Additive models on a subset of metrics. This highlights the ongoing need for improved combinatorial prediction capabilities in perturbation response modeling. Through extensive comparison to ablated models in Appendix Table 8, we are also able to make similar conclusions regarding the benefits of leveraging U-Net architectures, operating in full gene expression space, as well as simple independent coupling between p0 which is the standard Gaussian distribution and pdata .Overall, it is important to point out that throughout Table 2 and 3, PRiMeFlow is the only method to achieve a decent recall performance of the top 50 ground truth DEGs, which is explained by its superior capability for capturing the full gene expression distribution on a single-cell level. 
+
+4.3 PRiMeFlow captures heterogeneous gene expressions 
+
+In Figure 1, we take 1,000 sampled cells from each model and project them into the same PCA space as the reference test data in the Srivatsan20 dataset. The reference cells including control and perturbed cells, cluster naturally into 6PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT A
+
+# B
+
+Figure 1: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): Ellagic acid perturbation in a549 cell line; B) Pirarubicin perturbation in k562 cell line. three cell lines that are K562, A549, and MCF-7. We select two random conditions that are Ellagic acid in a549 and Pirarubicin in k562. The ground truth perturbed cells are colored in green. In both cases, PRiMeFlow (CFG=1) has shown a closer fit to the ground truth perturbed cells at a distributional level, confirmed by its superior MMD metrics in both gene expression and PCA spaces. This suggests PRiMeFlow is less prone to mode collapsing, especially compared to traditional methods such as SAMS-VAE and Latent Additive, which 7PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+have struggled to properly cover the whole target distribution. This is in line with observations made in PerturBench (Wu et al., 2024). FM PCA has also shown strong distribution-fitting capability, but it is worth pointing out that in terms of MMD computed in the PCA space, PRiMeFlow still outperforms FM PCA. Notably, while the visualizations rely on only the top two principal components (PCs), the PCA-based MMD is robustly computed using 30 PCs. Interestingly, in the case of Ellagic acid in a549, increasing CFG weight from 1 to 5 led to improved DEG recall performance at the cost of other distributional metrics, resulting in distortion in the visualization. Nevertheless, amplifying the perturbational effect can benefit certain downstream tasks that are focused on perturbation-specific DEGs. Overall, this crucial trade-off highlights the importance of looking at a comprehensive set of evaluation metrics, and that selection of models should be based on needs of the biological tasks. Additional visualization results in Srivatsan20 and Jiang24 datasets are shown in Appendix section B and C. 
+
+# 5 Related Work 
+
+Early approaches, such as CPA and SAMS-VAE, use variational autoencoders (VAEs) to learn disentangled latent spaces where basal cellular states and perturbation effects are modeled as independent and compositional components. CPA (Lotfollahi et al., 2023) first established this framework by decomposing cellular responses into a collection of independent embeddings for basal states, perturbations and covariates. To ensure these representations remain disentangled, CPA uses an adversarial loss, which helps the model generalize to novel perturbation and covariate combinations. A recent follow-up work that is SAMS-VAE (Bereket & Karaletsos, 2023), introduces sparsity constraints to the latent encodings of perturbation effects and shows improved biological interpretability. Biolord (Piran et al., 2024) leverages biological attributes such as perturbation and covariates to partition the latent space which leads to biologically meaningful latent representations. Single-cell foundation models like scGPT and STATE have leveraged the Transformer architecture and massive pre-training to capture complex gene-gene interactions across millions of cells. scGPT (Cui et al., 2024) treats genes as tokens and utilizes a masked value modeling objective to reconstruct perturbed states by learning the underlying geometry of cellular manifolds. The STATE (Adduri et al., 2025) decouples representation from dynamics through specialized modules: a State Embedding (SE) module that maps 270 million cells into a stable latent space, and a State Transition (ST) transformer that explicitly models sets of cells and non-linear trajectories between control and perturbed cell states. More recent methods have leveraged flow matching and diffusion frameworks to capture the heterogeneity and high-dimensional geometry of cellular responses and more accurately predict distributions of single cell responses (Klein et al., 2025; Sadria & Layton, 2025; He et al., 2025; Palla et al., 2025). CellFlow (Klein et al., 2025) utilizes a conditional flow-matching objective to learn time-dependent vector fields, employing a Sinkhorn Optimal Transport alignment prior to enforce parsimonious, shortest-path dynamics between source and target populations. Similarly, scLDM (Palla et al., 2025) leverages a latent diffusion objective within a compressed token space, utilizing a multi-head cross-attention block (MCAB) to ensure gene permutation invariance and classifier-free guidance to steer the denoising process toward specific attributes. SquiDiff (He et al., 2025) further refines this generative paradigm by tailoring the diffusion process to the specific manifold of single-cell data, using a score-matching objective designed to account for the inherent sparsity and technical dropout characteristic of scRNA-seq distributions. Finally, to address the inherent noise and sparsity of transcriptomic data, frameworks like PRESAGE (Perturbation Response EStimation with Aggregated Gene Embeddings) (Littman et al., 2025) integrate prior biological knowledge by aggregating gene embeddings from external sources (such as aggregates gene embeddings derived from protein-protein interaction networks and existing Perturb-seq datasets). By using these functional priors to weight its internal representations, PRESAGE achieves high predictive accuracy even in low-data regimes, achieving higher robustness and accuracy than purely data-driven approaches. 
+
+# 6 Discussion 
+
+PRiMeFlow takes a distinctly different approach from prior models like CellFlow and scLDM. While compressing data into a latent space helps address the high dimensionality and inherent sparsity of single-cell gene expression data, it risks suboptimally distorting the information in gene expression profiles and discarding crucial biological signals needed to capture subtle, perturbation-specific effects. Instead, PRiMeFlow applies the flow matching framework directly in the full gene expression space, is trained end-to-end, and employs a dedicated U-Net architecture to model the complex underlying gene dependencies. Through extensive benchmarking and ablation experiments, we demonstrate 8PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+the practical benefits of our new formulation, including a closer fit to the target distribution of perturbed cells, capturing more perturbation-specific effects, and a higher recall of ground truth DEGs. In the debut ARC Virtual Cell Challenge, these attributes helped our model to win the Generalist Prize. While we have demonstrated the empirical success of the U-Net architecture for the velocity field parameterization, exactly why it performs so well remains an open question. U-Net assumes inherent inductive bias of learning sequence order in each input, whereas for gene expression data, the order of genes is arbitrary. Apart from gaining a deeper understanding of this behavior, exciting future work includes applying cross-attention mechanisms, such as Perceiver-IO (Jaegle et al., 2021) and the MCAB module in scLDM (Palla et al., 2025). These approaches could learn to optimally aggregate information along the gene dimension of raw expression vectors without relying on the spatial inductive biases that are commonly seen in the convolutional U-Net architectures. With the emergence of massive single-cell Perturb-seq datasets such as Tahoe-100M (Zhang et al., 2025) and Illumina Billion Cell Atlas 2, another exciting direction is the development of generative foundation models for virtual cells. Ultimately, this would enable generalization to rare or even unseen contexts and perturbations, either through in-context learning (Dong et al., 2026) or by leveraging insights from causal inference (Dibaeinia et al., 2026). As both routes can benefit from more perturb-seq data across diverse cellular contexts, having a powerful, high-resolution generative backbone, such as the one established in this paper, will be crucial for driving these models forward. There are also numerous opportunities to improve the flow matching methodology to better account for the biological realities, as well as practicality, behind single-cell perturb-seq data. Ultimately, the transition from modeling virtual cells to simulating entire virtual organisms (Song et al., 2024), driven by the principles of multi-modal and multi-scale modeling, may lead to the next major frontier at the intersection of machine learning and biology. 
+
+# References 
+
+Abhinav K. Adduri, Dhruv Gautam, Beatrice Bevilacqua, Alishba Imran, Rohan Shah, Mohsen Naghipourfar, Noam Teyssier, Rajesh Ilango, Sanjay Nagaraj, Mingze Dong, Chiara Ricci-Tam, Christopher Carpenter, Vishvak Sub-ramanyam, Aidan Winters, Sravya Tirukkovular, Jeremy Sullivan, Brian S. Plosky, Basak Eraslan, Nicholas D. Youngblut, Jure Leskovec, Luke A. Gilbert, Silvana Konermann, Patrick D. Hsu, Alexander Dobin, Dave P. Burke, Hani Goodarzi, and Yusuf H. Roohani. Predicting cellular responses to perturbation across diverse contexts with state. bioRxiv preprint biorxiv: 2025.06.26.661135 , 2025. Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. Optuna: A next-generation hyperparameter optimization framework. In Proceedings of the 25th ACM SIGKDD international conference on knowledge discovery & data mining , pp. 2623–2631, 2019. Michael S Albergo, Nicholas M Boffi, and Eric Vanden-Eijnden. Stochastic interpolants: A unifying framework for flows and diffusions. arXiv preprint arXiv:2303.08797 , 2023. Michael Bereket and Theofanis Karaletsos. Modelling cellular perturbations with the sparse additive mechanism shift variational autoencoder. Advances in Neural Information Processing Systems , 36:1–12, 2023. Srinivas Niranj Chandrasekaran, Jeanelle Ackerman, Eric Alix, D Michael Ando, John Arevalo, Melissa Bennion, Nicolas Boisseau, Adriana Borowa, Justin D Boyd, Laurent Brino, et al. Jump cell painting dataset: morphological impact of 136,000 chemical and genetic perturbations. BioRxiv , pp. 2023–03, 2023. Ricky TQ Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. Neural ordinary differential equations. 
+
+Advances in neural information processing systems , 31, 2018. Haotian Cui, Chloe Wang, Hassaan Maan, Kuan Pang, Fengning Luo, Nan Duan, and Bo Wang. scgpt: toward building a foundation model for single-cell multi-omics using generative ai. Nature methods , 21(8):1470–1480, 2024. Prafulla Dhariwal and Alexander Nichol. Diffusion models beat gans on image synthesis. Advances in neural information processing systems , 34:8780–8794, 2021. Payam Dibaeinia, Sudarshan Babu, Mei Knudson, Ali ElSheikh, Yibo Wen, Han Liu, Jason Perera, and Aly A Khan. Virtual cells need context, not just scale. bioRxiv , pp. 2026–02, 2026. Atray Dixit, Oren Parnas, Biyu Li, Jenny Chen, Charles P Fulco, Livnat Jerby-Arnon, Nemanja D Marjanovic, Danielle Dionne, Tyler Burks, Raktima Raychowdhury, et al. Perturb-seq: dissecting molecular circuits with scalable single-cell rna profiling of pooled genetic screens. cell , 167(7):1853–1866, 2016. 
+
+> 2https://www.illumina.com/company/news-center/press-releases/2026/ fda84c92-b4b3-4691-a402-35555abe8605.html
+
+9PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Mingze Dong, Abhinav Adduri, Dhruv Gautam, Christopher Carpenter, Rohan Shah, Chiara Ricci-Tam, Yuval Kluger, Dave P Burke, and Yusuf Husein Roohani. Stack: In-context learning of single-cell biology. bioRxiv , pp. 2026–01, 2026. Siyu He, Yuefei Zhu, Daniel Naveed Tavakol, Haotian Ye, Yeh-Hsing Lao, Zixian Zhu, Cong Xu, Shradha Chauhan, Guy Garty, Raju Tomer, et al. Squidiff: predicting cellular development and responses to perturbations using a diffusion model. Nature methods , pp. 1–13, 2025. Andrew Jaegle, Sebastian Borgeaud, Jean-Baptiste Alayrac, Carl Doersch, Catalin Ionescu, David Ding, Skanda Koppula, Daniel Zoran, Andrew Brock, Evan Shelhamer, et al. Perceiver io: A general architecture for structured inputs & outputs. arXiv preprint arXiv:2107.14795 , 2021. Longda Jiang, Carol Dalgarno, Efthymia Papalexi, Isabella Mascio, Hans-Hermann Wessels, Huiyoung Yun, Nika Iremadze, Gila Lithwick-Yanai, Doron Lipson, and Rahul Satija. Systematic reconstruction of molecular pathway signatures using scalable single-cell perturbation screens. bioRxiv , pp. 2024.01.29.576933, January 2024. URL 
+
+https://doi.org/10.1101/2024.01.29.576933 .Dominik Klein, Jonas Simon Fleck, Daniil Bobrovskiy, Lea Zimmermann, Sören Becker, Alessandro Palma, Leander Dony, Alejandro Tejada-Lapuerta, Guillaume Huguet, Hsiu-Chuan Lin, et al. Cellflow enables generative single-cell phenotype modeling with flow matching. bioRxiv , pp. 2025–04, 2025. Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu, Maximilian Nickel, and Matt Le. Flow matching for generative modeling. arXiv preprint arXiv:2210.02747 , 2022. Russell Littman, Jacob Levine, Sepideh Maleki, Yongju Lee, Vladimir Ermakov, Lin Qiu, Alexander Wu, Kexin Huang, Romain Lopez, Gabriele Scalia, Tommaso Biancalani, David Richmond, Aviv Regev, and Jan-Christian Hütter. Gene-embedding-based prediction and functional evaluation of perturbation expression responses with presage. 
+
+bioRxiv preprint bioarxiv: 2025.06.03.657653 , 2025. Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. arXiv preprint arXiv:2209.03003 , 2022. Mohammad Lotfollahi, Anna Klimovskaia Susmelj, Carlo De Donno, Leon Hetzel, Yuge Ji, Ignacio L Ibarra, Sanjay R Srivatsan, Mohsen Naghipourfar, Riza M Daza, Beth Martin, et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular systems biology , 19(6):e11517, 2023. Thomas M Norman, Max A Horlbeck, Joseph M Replogle, Alex Y Ge, Albert Xu, Marco Jost, Luke A Gilbert, and Jonathan S Weissman. Exploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science ,365(6455):786–793, 2019. Giovanni Palla, Sudarshan Babu, Payam Dibaeinia, James D Pearce, Donghui Li, Aly A Khan, Theofanis Karaletsos, and Jakub M Tomczak. Scalable single-cell gene expression generation with latent diffusion models. arXiv preprint arXiv:2511.02986 , 2025. Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, Alban Desmaison, Andreas Köpf, Edward Z. Yang, Zach DeVito, Martin Raison, Alykhan Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu Fang, Junjie Bai, and Soumith Chintala. Pytorch: An imperative style, high-performance deep learning library. Advances in Neural Information Processing Systems ,abs/1912.01703, 2019. URL http://arxiv.org/abs/1912.01703 .Zoe Piran, Niv Cohen, Yedid Hoshen, and Mor Nitzan. Disentanglement of single-cell data with biolord. Nature Biotechnology , 42(11):1678–1683, 2024. Danilo Rezende and Shakir Mohamed. Variational inference with normalizing flows. In International conference on machine learning , pp. 1530–1538. PMLR, 2015. Yusuf H Roohani, Tony J Hua, Po-Yuan Tung, Lexi R Bounds, Feiqiao B Yu, Alexander Dobin, Noam Teyssier, Abhinav Adduri, Alden Woodrow, Brian S Plosky, et al. Virtual cell challenge: Toward a turing test for the virtual cell. Cell ,188(13):3370–3374, 2025. M. Sadria and A. Layton. Scvaeder: integrating deep diffusion models and variational autoencoders for single-cell transcriptomics analysis. Genome Biology , 26(1), 2025. Le Song, Eran Segal, and Eric Xing. Toward ai-driven digital organism: Multiscale foundation models for predicting, simulating and programming biology at all levels. arXiv preprint arXiv:2412.06993 , 2024. Sanjay R. Srivatsan, José L. McFaline-Figueroa, Vijay Ramani, Lauren Saunders, Junyue Cao, Jonathan Packer, Hannah A. Pliner, Dana L. Jackson, Riza M. Daza, Lena Christiansen, Fan Zhang, Frank Steemers, Jay Shendure, and Cole Trapnell. Massively multiplex chemical transcriptomics at single-cell resolution. Science , 367(6473):45–51, January 2020. ISSN 0036-8075. doi: 10.1126/science.aax6234. 10 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Alexander Tong, Kilian Fatras, Nikolay Malkin, Guillaume Huguet, Yanlei Zhang, Jarrid Rector-Brooks, Guy Wolf, and Yoshua Bengio. Improving and generalizing flow-based generative models with minibatch optimal transport. 
+
+arXiv preprint arXiv:2302.00482 , 2023. Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing systems , 30, 2017. Kazuhide Watanabe, Nicholas Panchy, Shuhei Noguchi, Harukazu Suzuki, and Tian Hong. Combinatorial perturbation analysis reveals divergent regulations of mesenchymal genes during epithelial-to-mesenchymal transition. NPJ systems biology and applications , 5(1):21, 2019. Zong Wei, Yang Yang, Peilin Zhang, Rosemary Andrianakos, Kouichi Hasegawa, Jungmook Lyu, Xi Chen, Gang Bai, Chunming Liu, Martin Pera, et al. Klf4 interacts directly with oct4 and sox2 to promote reprogramming. Stem cells ,27(12):2969–2978, 2009. Yan Wu, Esther Wershof, Sebastian M Schmon, Marcel Nassar, Bła˙ zej Osi´ nski, Ridvan Eksi, Zichao Yan, Rory Stark, Kun Zhang, and Thore Graepel. Perturbench: Benchmarking machine learning models for cellular perturbation analysis. arXiv preprint arXiv:2408.10609 , 2024. Jesse Zhang, Airol A Ubas, Richard de Borja, Valentine Svensson, Nicole Thomas, Neha Thakar, Ian Lai, Aidan Winters, Umair Khan, Matthew G. Jones, Vuong Tran, Joseph Pangallo, Efthymia Papalexi, Ajay Sapre, Hoai Nguyen, Oliver Sanderson, Maria Nigos, Olivia Kaplan, Sarah Schroeder, Bryan Hariadi, Simone Marrujo, Crina Curca Alec Salvino, Guillermo Gallareta Olivares, Ryan Koehler, Gary Geiss, Alexander Rosenberg, Charles Roco, Daniele Merico, Nima Alidoust, Hani Goodarzi, and Johnny Yu. Tahoe-100m : A giga-scale single-cell perturbation atlas for context-dependent gene function and cellular modeling. February 2025. doi: 10.1101/2025.02.20.639398. URL 
+
+http://dx.doi.org/10.1101/2025.02.20.639398 .11 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+# A Additional results 
+
+Table 4: Performance of PRiMeFlow on traditional pseudobulk-based metrics in Srivatsan20 dataset. Model Cosine Cosine RMSE RMSE logFC logFC rank mean mean rank PRiMeFlow CFG1 0.46 ± 1 × 10 −2 0.12 ± 1 × 10 −2 0.019 ± 5 × 10 −4 0.14 ± 6 × 10 −3
+
+PRiMeFlow CFG3 0.43 ± 9 × 10 −3 0.10 ± 4 × 10 −3 0.029 ± 3 × 10 −4 0.22 ± 5 × 10 −3
+
+PRiMeFlow CFG5 0.39 ± 1 × 10 −2 0.10 ± 2 × 10 −3 0.041 ± 4 × 10 −4 0.29 ± 1 × 10 −2
+
+PRiMeFlow MLP CFG1 −0.012 ± 4 × 10 −4 0.46 ± 1 × 10 −2 0.31 ± 9 × 10 −4 0.42 ± 1 × 10 −2
+
+PRiMeFlow MLP CFG3 −0.0071 ± 2 × 10 −3 0.45 ± 3 × 10 −2 0.33 ± 5 × 10 −3 0.44 ± 2 × 10 −2
+
+PRiMeFlow MLP CFG5 −0.0026 ± 3 × 10 −3 0.45 ± 3 × 10 −2 0.40 ± 1 × 10 −2 0.47 ± 2 × 10 −2
+
+FM PCA CFG1 0.15 ± 2 × 10 −3 0.34 ± 6 × 10 −3 0.042 ± 4 × 10 −4 0.24 ± 9 × 10 −3
+
+FM PCA CFG3 0.16 ± 3 × 10 −3 0.30 ± 3 × 10 −3 0.041 ± 2 × 10 −4 0.22 ± 5 × 10 −3
+
+FM PCA CFG5 0.17 ± 3 × 10 −3 0.28 ± 6 × 10 −3 0.045 ± 2 × 10 −4 0.25 ± 3 × 10 −3
+
+FM PCA OT CFG1 0.12 ± 2 × 10 −4 0.42 ± 4 × 10 −2 0.044 ± 5 × 10 −4 0.41 ± 2 × 10 −2
+
+FM PCA OT CFG3 0.12 ± 6 × 10 −4 0.42 ± 4 × 10 −2 0.044 ± 5 × 10 −4 0.40 ± 2 × 10 −2
+
+FM PCA OT CFG5 0.12 ± 1 × 10 −3 0.42 ± 4 × 10 −2 0.044 ± 4 × 10 −4 0.40 ± 2 × 10 −2
+
+CPA 0.38 ± 5 × 10 −3 0.15 ± 9 × 10 −3 0.020 ± 2 × 10 −4 0.16 ± 7 × 10 −3
+
+CPA (noAdv) 0.40 ± 5 × 10 −3 0.09 ± 5 × 10 −3 0.020 ± 1 × 10 −4 0.10 ± 6 × 10 −3
+
+SAMS-VAE 0.44 ± 1 × 10 −3 0.17 ± 1 × 10 −2 0.023 ± 8 × 10 −5 0.17 ± 1 × 10 −2
+
+SAMS-VAE (S) 0.53 ± 1 × 10 −2 0.12 ± 1 × 10 −2 0.018 ± 3 × 10 −4 0.13 ± 1 × 10 −2
+
+Biolord 0.26 ± 2 × 10 −1 0.26 ± 2 × 10 −1 0.074 ± 5 × 10 −2 0.25 ± 2 × 10 −1
+
+Latent 0.45 ± 2 × 10 −3 0.13 ± 4 × 10 −3 0.018 ± 6 × 10 −5 0.15 ± 3 × 10 −3
+
+Decoder 0.35 ± 5 × 10 −3 0.16 ± 1 × 10 −2 0.018 ± 1 × 10 −4 0.14 ± 7 × 10 −3
+
+Linear 0.16 ± 1 × 10 −2 0.28 ± 5 × 10 −3 0.030 ± 5 × 10 −4 0.27 ± 2 × 10 −3
+
+12 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 5: Performance of PRiMeFlow on traditional pseudobulk-based metrics in Norman19 dataset. Model Cosine Cosine RMSE RMSE logFC logFC rank mean mean rank PRiMeFlow CFG1 0.77 ± 4 × 10 −3 0.0057 ± 8 × 10 −4 0.046 ± 1 × 10 −3 0.022 ± 6 × 10 −3
+
+PRiMeFlow CFG3 0.79 ± 2 × 10 −3 0.0072 ± 3 × 10 −3 0.074 ± 2 × 10 −3 0.077 ± 8 × 10 −3
+
+PRiMeFlow CFG5 0.74 ± 3 × 10 −3 0.015 ± 3 × 10 −3 0.11 ± 2 × 10 −3 0.19 ± 1 × 10 −2
+
+PRiMeFlow MLP CFG1 0.024 ± 6 × 10 −3 0.27 ± 3 × 10 −2 0.29 ± 2 × 10 −3 0.16 ± 4 × 10 −2
+
+PRiMeFlow MLP CFG3 0.054 ± 8 × 10 −3 0.27 ± 2 × 10 −2 0.31 ± 2 × 10 −3 0.25 ± 2 × 10 −2
+
+PRiMeFlow MLP CFG5 0.080 ± 9 × 10 −3 0.26 ± 2 × 10 −2 0.33 ± 4 × 10 −3 0.31 ± 1 × 10 −2
+
+FM PCA CFG1 0.50 ± 2 × 10 −3 0.053 ± 3 × 10 −3 0.062 ± 9 × 10 −5 0.067 ± 3 × 10 −3
+
+FM PCA CFG3 0.61 ± 3 × 10 −3 0.040 ± 2 × 10 −3 0.076 ± 6 × 10 −4 0.083 ± 1 × 10 −3
+
+FM PCA CFG5 0.63 ± 4 × 10 −3 0.034 ± 3 × 10 −3 0.11 ± 2 × 10 −3 0.15 ± 1 × 10 −2
+
+FM PCA OT CFG1 0.056 ± 5 × 10 −3 0.32 ± 2 × 10 −2 0.095 ± 7 × 10 −4 0.33 ± 2 × 10 −2
+
+FM PCA OT CFG3 0.060 ± 6 × 10 −3 0.32 ± 2 × 10 −2 0.094 ± 8 × 10 −4 0.32 ± 2 × 10 −2
+
+FM PCA OT CFG5 0.065 ± 7 × 10 −3 0.32 ± 2 × 10 −2 0.094 ± 8 × 10 −4 0.32 ± 2 × 10 −2
+
+CPA 0.76 ± 4 × 10 −3 0.0067 ± 2 × 10 −3 0.046 ± 4 × 10 −4 0.019 ± 3 × 10 −3
+
+CPA (noAdv) 0.77 ± 1 × 10 −2 0.0053 ± 3 × 10 −3 0.046 ± 1 × 10 −3 0.017 ± 1 × 10 −3
+
+SAMS-VAE 0.45 ± 2 × 10 −2 0.019 ± 7 × 10 −3 0.084 ± 7 × 10 −4 0.025 ± 4 × 10 −3
+
+SAMS-VAE (S) 0.78 ± 6 × 10 −3 0.020 ± 4 × 10 −3 0.047 ± 2 × 10 −3 0.030 ± 6 × 10 −3
+
+Biolord 0.45 ± 8 × 10 −3 0.026 ± 4 × 10 −3 0.083 ± 2 × 10 −4 0.034 ± 2 × 10 −3
+
+Latent 0.79 ± 1 × 10 −2 0.005 ± 2 × 10 −3 0.043 ± 4 × 10 −4 0.014 ± 1 × 10 −3
+
+Decoder 0.73 ± 2 × 10 −2 0.017 ± 6 × 10 −3 0.043 ± 3 × 10 −4 0.014 ± 4 × 10 −4
+
+Linear 0.60 ± 2 × 10 −2 0.035 ± 4 × 10 −3 0.057 ± 3 × 10 −3 0.016 ± 8 × 10 −4
+
+Table 6: Performance of PRiMeFlow on traditional pseudobulk-based metrics in Jiang24 dataset. Model Cosine Cosine RMSE RMSE logFC logFC rank mean mean rank PRiMeFlow CFG1 0.47 ± 5 × 10 −3 0.39 ± 2 × 10 −2 0.019 ± 3 × 10 −4 0.40 ± 2 × 10 −2
+
+PRiMeFlow CFG3 0.41 ± 4 × 10 −3 0.38 ± 1 × 10 −2 0.034 ± 5 × 10 −4 0.43 ± 1 × 10 −2
+
+PRiMeFlow CFG5 0.36 ± 4 × 10 −3 0.37 ± 1 × 10 −2 0.045 ± 5 × 10 −4 0.43 ± 7 × 10 −3
+
+PRiMeFlow MLP CFG1 0.053 ± 1 × 10 −4 0.45 ± 5 × 10 −3 0.33 ± 6 × 10 −4 0.46 ± 1 × 10 −3
+
+PRiMeFlow MLP CFG3 0.053 ± 7 × 10 −5 0.43 ± 1 × 10 −2 0.33 ± 6 × 10 −4 0.46 ± 3 × 10 −3
+
+PRiMeFlow MLP CFG5 0.053 ± 9 × 10 −5 0.43 ± 1 × 10 −2 0.33 ± 7 × 10 −4 0.47 ± 3 × 10 −3
+
+FlowMatching PCA CFG1 0.071 ± 8 × 10 −5 0.37 ± 9 × 10 −3 0.10 ± 0 0.39 ± 9 × 10 −3
+
+FlowMatching PCA CFG3 0.072 ± 1 × 10 −4 0.36 ± 4 × 10 −3 0.10 ± 9 × 10 −5 0.42 ± 5 × 10 −3
+
+FlowMatching PCA CFG5 0.072 ± 3 × 10 −4 0.36 ± 5 × 10 −3 0.10 ± 2 × 10 −4 0.44 ± 5 × 10 −3
+
+FlowMatching PCA OT CFG1 0.068 ± 3 × 10 −4 0.47 ± 2 × 10 −2 0.10 ± 8 × 10 −4 0.47 ± 4 × 10 −3
+
+FlowMatching PCA OT CFG3 0.068 ± 4 × 10 −4 0.47 ± 2 × 10 −2 0.11 ± 2 × 10 −4 0.47 ± 8 × 10 −4
+
+FlowMatching PCA OT CFG5 0.068 ± 6 × 10 −4 0.47 ± 1 × 10 −2 0.11 ± 2 × 10 −3 0.47 ± 3 × 10 −3
+
+CPA 0.60 ± 2 × 10 −3 0.40 ± 9 × 10 −3 0.015 ± 5 × 10 −5 0.41 ± 1 × 10 −2
+
+CPA (noAdv) 0.60 ± 2 × 10 −3 0.39 ± 1 × 10 −2 0.015 ± 4 × 10 −5 0.40 ± 1 × 10 −2
+
+SAMS-VAE 0.59 ± 3 × 10 −3 0.43 ± 1 × 10 −2 0.017 ± 1 × 10 −4 0.43 ± 1 × 10 −2
+
+SAMS-VAE (S) 0.57 ± 5 × 10 −2 0.43 ± 1 × 10 −2 0.017 ± 2 × 10 −3 0.42 ± 4 × 10 −2
+
+Latent 0.47 ± 1 × 10 −3 0.38 ± 6 × 10 −3 0.015 ± 6 × 10 −5 0.38 ± 7 × 10 −3
+
+Decoder 0.64 ± 1 × 10 −3 0.32 ± 8 × 10 −3 0.015 ± 3 × 10 −5 0.32 ± 5 × 10 −3
+
+Linear 0.17 ± 9 × 10 −5 0.34 ± 2 × 10 −4 0.038 ± 5 × 10 −5 0.43 ± 1 × 10 −3
+
+13 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+> Table 7: All distributional metrics performance on the  Srivatsan20  dataset. Model  MMD  MMD  MMD  MMD  DEG  DEG GEX  GEX rank  PCA  PCA rank  recall  recall rank PRiMeFlow CFG1  0.13  ± 4 × 10 −3 0.13  ± 8 × 10 −3 0.14  ± 8 × 10 −3 0.14  ± 9 × 10 −3 0.26  ± 1 × 10 −2 0.27  ± 2 × 10 −2
+> PRiMeFlow CFG3  0.25  ± 2 × 10 −3 0.22  ± 7 × 10 −3 0.31  ± 1 × 10 −2 0.21  ± 9 × 10 −3 0.27  ± 6 × 10 −3 0.24  ± 1 × 10 −2
+> PRiMeFlow CFG5  0.47  ± 1 × 10 −2 0.29  ± 2 × 10 −2 0.60  ± 2 × 10 −2 0.26  ± 9 × 10 −3 0.25  ± 5 × 10 −3 0.24  ± 1 × 10 −2
+> PRiMeFlow MLP CFG1  14 . ± 5 × 10 −2 0.43  ± 2 × 10 −2 8.8 ± 1 × 10 −1 0.42  ± 2 × 10 −2 0.011  ± 8 × 10 −4 0.47  ± 6 × 10 −3
+> PRiMeFlow MLP CFG3  15 . ± 2 × 10 −1 0.44  ± 2 × 10 −2 11 . ± 6 × 10 −1 0.43  ± 5 × 10 −3 0.11  ± 2 × 10 −2 0.49  ± 2 × 10 −2
+> PRiMeFlow MLP CFG5  18 . ± 8 × 10 −1 0.47  ± 2 × 10 −2 18 . ± 1 × 10 0 0.46  ± 2 × 10 −2 0.13  ± 1 × 10 −2 0.49  ± 4 × 10 −2
+> FM PCA CFG1  1.2 ± 7 × 10 −3 0.26  ± 6 × 10 −3 0.50  ± 2 × 10 −2 0.24  ± 1 × 10 −2 0.042  ± 2 × 10 −3 0.46  ± 6 × 10 −3
+> FM PCA CFG3  1.3 ± 5 × 10 −3 0.25  ± 7 × 10 −3 0.44  ± 1 × 10 −2 0.22  ± 8 × 10 −3 0.071  ± 3 × 10 −3 0.39  ± 1 × 10 −2
+> FM PCA CFG5  1.4 ± 4 × 10 −3 0.29  ± 4 × 10 −3 0.53  ± 1 × 10 −2 0.26  ± 6 × 10 −3 0.10  ± 3 × 10 −3 0.36  ± 9 × 10 −3
+> FM PCA OT CFG1  1.3 ± 3 × 10 −2 0.43  ± 2 × 10 −2 0.62  ± 5 × 10 −3 0.40  ± 3 × 10 −2 0.023  ± 4 × 10 −4 0.51  ± 3 × 10 −3
+> FM PCA OT CFG3  1.3 ± 3 × 10 −2 0.42  ± 2 × 10 −2 0.61  ± 4 × 10 −3 0.40  ± 3 × 10 −2 0.024  ± 6 × 10 −4 0.51  ± 2 × 10 −3
+> FM PCA OT CFG5  1.3 ± 3 × 10 −2 0.43  ± 2 × 10 −2 0.60  ± 4 × 10 −3 0.39  ± 2 × 10 −2 0.024  ± 6 × 10 −4 0.51  ± 4 × 10 −3
+> CPA  2.4 ± 1 × 10 −2 0.30  ± 9 × 10 −3 0.53  ± 4 × 10 −3 0.20  ± 9 × 10 −3 0.0073  ± 2 × 10 −3 0.46  ± 5 × 10 −3
+> CPA (noAdv)  2.3 ± 3 × 10 −2 0.25  ± 5 × 10 −3 0.49  ± 1 × 10 −2 0.13  ± 1 × 10 −2 0.0040  ± 2 × 10 −3 0.48  ± 5 × 10 −2
+> SAMS-VAE  2.5 ± 2 × 10 −2 0.30  ± 8 × 10 −3 0.69  ± 1 × 10 −2 0.060  ± 3 × 10 −3 0 ± 0 0.50  ± 4 × 10 −2
+> SAMS-VAE (S)  2.9 ± 1 × 10 −2 0.28  ± 5 × 10 −3 0.79  ± 1 × 10 −2 0.18  ± 2 × 10 −2 0 ± 0 0.50  ± 4 × 10 −2
+> Biolord  4.9 ± 3 × 10 0 0.36  ± 2 × 10 −1 4.3 ± 4 × 10 0 0.32  ± 2 × 10 −1 4.7e − 05  ± 1 × 10 −4 0.49  ± 2 × 10 −2
+> Latent  4.3 ± 2 × 10 −1 0.26  ± 6 × 10 −2 2.0 ± 2 × 10 −1 0.26  ± 5 × 10 −2 0.0 ± 0.0 0.49  ± 3 × 10 −2
+> Decoder  4.2 ± 4 × 10 −3 0.16  ± 2 × 10 −2 1.9 ± 5 × 10 −3 0.15  ± 1 × 10 −2 N/A  N/A Linear  2.2 ± 7 × 10 −3 0.31  ± 1 × 10 −3 0.76  ± 9 × 10 −4 0.30  ± 3 × 10 −4 0.0036  ± 3 × 10 −4 0.49  ± 5 × 10 −2
+
+14 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+> Table 8: All distributional metrics performance on the  Norman19  dataset. Model  MMD  MMD  MMD  MMD  DEG  DEG GEX  GEX rank  PCA  PCA rank  recall  recall rank PRiMeFlow CFG1  0.26  ± 7 × 10 −3 0.019  ± 4 × 10 −3 0.34  ± 2 × 10 −2 0.023  ± 5 × 10 −3 0.54  ± 2 × 10 −2 0.024  ± 6 × 10 −3
+> PRiMeFlow CFG3  0.61  ± 3 × 10 −2 0.066  ± 9 × 10 −3 0.86  ± 5 × 10 −2 0.063  ± 6 × 10 −3 0.61  ± 8 × 10 −3 0.0060  ± 3 × 10 −3
+> PRiMeFlow CFG5  1.3 ± 4 × 10 −2 0.17  ± 1 × 10 −2 1.8 ± 5 × 10 −2 0.14  ± 1 × 10 −2 0.56  ± 1 × 10 −2 0.0085  ± 2 × 10 −3
+> PRiMeFlow MLP CFG1  7.2 ± 8 × 10 −2 0.19  ± 4 × 10 −2 3.7 ± 1 × 10 −1 0.16  ± 4 × 10 −2 0.057  ± 8 × 10 −3 0.42  ± 2 × 10 −2
+> PRiMeFlow MLP CFG3  7.6 ± 9 × 10 −2 0.27  ± 2 × 10 −2 4.5 ± 2 × 10 −1 0.25  ± 2 × 10 −2 0.20  ± 3 × 10 −2 0.28  ± 1 × 10 −2
+> PRiMeFlow MLP CFG5  8.5 ± 2 × 10 −1 0.32  ± 8 × 10 −3 6.3 ± 4 × 10 −1 0.31  ± 1 × 10 −2 0.30  ± 3 × 10 −2 0.21  ± 3 × 10 −2
+> FM PCA CFG1  0.77  ± 4 × 10 −3 0.059  ± 3 × 10 −3 0.61  ± 5 × 10 −3 0.066  ± 4 × 10 −3 0.37  ± 2 × 10 −3 0.069  ± 9 × 10 −3
+> FM PCA CFG3  1.1 ± 8 × 10 −3 0.098  ± 2 × 10 −3 0.82  ± 9 × 10 −3 0.076  ± 1 × 10 −3 0.45  ± 2 × 10 −3 0.030  ± 2 × 10 −3
+> FM PCA CFG5  1.9 ± 4 × 10 −2 0.18  ± 1 × 10 −2 1.6 ± 4 × 10 −2 0.12  ± 4 × 10 −3 0.43  ± 4 × 10 −3 0.031  ± 3 × 10 −3
+> FM PCA OT CFG1  2.6 ± 1 × 10 −2 0.33  ± 2 × 10 −2 1.8 ± 2 × 10 −2 0.32  ± 2 × 10 −2 0.0012  ± 9 × 10 −4 0.56  ± 2 × 10 −2
+> FM PCA OT CFG3  2.6 ± 1 × 10 −2 0.32  ± 2 × 10 −2 1.8 ± 2 × 10 −2 0.32  ± 2 × 10 −2 0.0017  ± 1 × 10 −3 0.55  ± 2 × 10 −2
+> FM PCA OT CFG5  2.6 ± 2 × 10 −2 0.32  ± 2 × 10 −2 1.8 ± 3 × 10 −2 0.32  ± 2 × 10 −2 0.0020  ± 1 × 10 −3 0.54  ± 2 × 10 −2
+> CPA  5.6 ± 3 × 10 −2 0.14  ± 9 × 10 −3 2.2 ± 2 × 10 −2 0.044  ± 5 × 10 −3 0.032  ± 4 × 10 −3 0.30  ± 5 × 10 −2
+> CPA (noAdv)  5.5 ± 1 × 10 −1 0.13  ± 2 × 10 −2 2.2 ± 1 × 10 −1 0.038  ± 5 × 10 −3 0.016  ± 9 × 10 −3 0.28  ± 5 × 10 −2
+> SAMS-VAE  4.1 ± 4 × 10 −2 0.034  ± 1 × 10 −2 1.9 ± 3 × 10 −2 0.020  ± 2 × 10 −3 0 ± 0 0.46  ± 4 × 10 −2
+> SAMS-VAE (S)  3.3 ± 5 × 10 −2 0.088  ± 6 × 10 −3 0.74  ± 5 × 10 −2 0.029  ± 4 × 10 −3 0.028  ± 6 × 10 −3 0.38  ± 3 × 10 −2
+> Biolord  2.8 ± 5 × 10 −3 0.066  ± 3 × 10 −3 1.6 ± 5 × 10 −3 0.042  ± 3 × 10 −3 0 ± 0 0.47  ± 3 × 10 −2
+> Latent  6.7 ± 4 × 10 −3 0.012  ± 1 × 10 −3 3.2 ± 6 × 10 −3 0.013  ± 8 × 10 −4 0.00043  ± 3 × 10 −4 0.50  ± 1 × 10 −2
+> Decoder  6.7 ± 6 × 10 −3 0.0090  ± 8 × 10 −4 3.2 ± 4 × 10 −3 0.0098  ± 4 × 10 −4 N/A  N/A Linear  2.5 ± 4 × 10 −2 0.026  ± 2 × 10 −3 1.2 ± 4 × 10 −2 0.017  ± 4 × 10 −4 0.018  ± 2 × 10 −3 0.40  ± 4 × 10 −2
+
+15 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+> Table 9: All distributional metrics performance on the  Jiang24  dataset. Model  MMD  MMD  MMD  MMD  DEG  DEG GEX  GEX rank  PCA  PCA rank  recall  recall rank PRiMeFlow CFG1  0.14  ± 4 × 10 −3 0.41  ± 9 × 10 −3 0.057  ± 6 × 10 −4 0.39  ± 1 × 10 −2 0.099  ± 5 × 10 −3 0.41  ± 3 × 10 −2
+> PRiMeFlow CFG3  0.37  ± 4 × 10 −2 0.44  ± 1 × 10 −2 0.38  ± 2 × 10 −2 0.44  ± 8 × 10 −3 0.061  ± 4 × 10 −3 0.43  ± 7 × 10 −3
+> PRiMeFlow CFG5  0.73  ± 7 × 10 −2 0.44  ± 9 × 10 −3 0.73  ± 3 × 10 −2 0.44  ± 9 × 10 −3 0.056  ± 3 × 10 −3 0.43  ± 2 × 10 −2
+> PRiMeFlow MLP CFG1  17 . ± 7 × 10 −2 0.46  ± 2 × 10 −3 9.5 ± 8 × 10 −2 0.46  ± 3 × 10 −3 0.0037  ± 3 × 10 −4 0.45  ± 1 × 10 −2
+> PRiMeFlow MLP CFG3  17 . ± 4 × 10 −2 0.46  ± 3 × 10 −3 9.8 ± 1 × 10 −1 0.46  ± 2 × 10 −3 0.0031  ± 3 × 10 −4 0.44  ± 4 × 10 −3
+> PRiMeFlow MLP CFG5  17 . ± 5 × 10 −2 0.47  ± 3 × 10 −3 9.8 ± 1 × 10 −1 0.46  ± 2 × 10 −3 0.0033  ± 5 × 10 −4 0.45  ± 1 × 10 −2
+> FlowMatching PCA CFG1  6.2 ± 9 × 10 −3 0.46  ± 2 × 10 −3 4.2 ± 4 × 10 −3 0.45  ± 3 × 10 −3 0.0055  ± 0 0.46  ± 0
+> FlowMatching PCA CFG3  6.8 ± 3 × 10 −2 0.46  ± 3 × 10 −3 4.0 ± 1 × 10 −2 0.44  ± 6 × 10 −3 0.0055  ± 0 0.46  ± 0
+> FlowMatching PCA CFG5  7.1 ± 7 × 10 −2 0.46  ± 2 × 10 −3 4.1 ± 3 × 10 −2 0.44  ± 7 × 10 −3 0.0056  ± 6 × 10 −5 0.46  ± 3 × 10 −3
+> FlowMatching PCA OT CFG1  6.3 ± 9 × 10 −2 0.47  ± 9 × 10 −4 3.7 ± 2 × 10 −2 0.47  ± 4 × 10 −3 0.0055  ± 0 0.46  ± 0
+> FlowMatching PCA OT CFG3  6.5 ± 1 × 10 −1 0.47  ± 3 × 10 −3 3.6 ± 2 × 10 −2 0.47  ± 4 × 10 −3 0.0055  ± 0 0.46  ± 3 × 10 −4
+> FlowMatching PCA OT CFG5  6.7 ± 2 × 10 −1 0.47  ± 1 × 10 −3 3.6 ± 4 × 10 −2 0.47  ± 5 × 10 −3 0.0057  ± 2 × 10 −4 0.46  ± 4 × 10 −3
+> CPA  8.0 ± 2 × 10 −3 0.44  ± 7 × 10 −3 2.5 ± 4 × 10 −3 0.43  ± 4 × 10 −3 0.0044  ± 2 × 10 −3 0.48  ± 5 × 10 −3
+> CPA (noAdv)  8.0 ± 2 × 10 −3 0.44  ± 6 × 10 −3 2.5 ± 3 × 10 −3 0.42  ± 4 × 10 −3 0.0052  ± 6 × 10 −4 0.48  ± 1 × 10 −2
+> SAMS-VAE  4.5 ± 7 × 10 −3 0.47  ± 3 × 10 −3 0.32  ± 5 × 10 −3 0.43  ± 1 × 10 −2 1.8e − 05  ± 4 × 10 −5 0.48  ± 1 × 10 −3
+> SAMS-VAE (S)  6.5 ± 2 × 10 0 0.44  ± 2 × 10 −2 1.6 ± 1 × 10 0 0.43  ± 1 × 10 −2 0.0015  ± 1 × 10 −4 0.48  ± 4 × 10 −3
+> Latent  8.0 ± 9 × 10 −4 0.41  ± 5 × 10 −3 2.6 ± 2 × 10 −3 0.40  ± 5 × 10 −3 0.0010  ± 5 × 10 −4 0.47  ± 6 × 10 −3
+> Decoder  8.0 ± 2 × 10 −3 0.36  ± 9 × 10 −3 2.6 ± 2 × 10 −3 0.38  ± 8 × 10 −3 N/A  N/A Linear  3.1 ± 2 × 10 −3 0.44  ± 1 × 10 −3 1.3 ± 2 × 10 −3 0.45  ± 6 × 10 −4 0.0033  ± 2 × 10 −4 0.48  ± 3 × 10 −3
+
+16 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+# B Additional PCA visualization for Srivatsan20 dataset A
+
+# B
+
+Figure 2: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): SB431542 perturbation in k562 cell line; B) Obatoclax Mesylate (GX15-070) perturbation in mcf7 cell line. 17 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT A
+
+# B
+
+Figure 3: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): GSK J1 perturbation in k562 cell line; B) Tacedinaline (C1994) perturbation in k562 cell line. 18 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+# C PCA visualization for Jiang24 dataset A
+
+# B
+
+Figure 4: Visualization of cells (ground truth and model predictions) in Jiang24 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): DR1 perturbation in mcf7 cell line and treated with INS; B) ZC3H3 (C1994) perturbation in hap1 cell line and treated with IFNG. 19 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT A
+
+# B
+
+Figure 5: Visualization of cells (ground truth and model predictions) in Jiang24 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): SP1 perturbation in ht29 cell line and treated with INS; B) PIK3CA perturbation in k562 cell line and treated with INS. 20 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+# D Dataset information 
+
+In this section, we recapitulate the information of the three main benchmarking datasets used in our paper, based on the original information provided in Wu et al. (2024) section D.1. 
+
+Dataset 1 ( Srivatsan20 ) This dataset is originally curated from Srivatsan et al. (2020), featuring 188 small molecule perturbations across the K562, A549, and MCF-7 cell lines, and filtered to contain only the perturbation with the highest dose. In each of the three cell lines, 30% of perturbations are selected and assigned to val/test split while ensuring they have been observed in the other two cell lines. 
+
+Dataset 2 ( Jiang24 ) This dataset is originally curated from Jiang et al. (2024), featuring 219 genetic perturbations across 6 cell lines and 5 cytokine treatments. From the 30 distinct biological states (6 cell lines × 5 cytokine treatments), we selected 12 states and held out 70% of the perturbations within them for validation and testing. 
+
+Dataset 3 ( Norman19 ) This datasets is originally curated from Norman et al. (2019), featuring 287 gene overexpres-sion perturbations where 131 are dual perturbations in K562 cells. 
+
+21 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+# E Hyperparameters 
+
+Hyperparameters for PRiMeFlow MLP and FM PCA are found through 60-trial HPO sweeps with Optuna (Akiba et al., 2019). All activation functions in our models are torch.nn.SiLU (Paszke et al., 2019). Table 10: Manually selected hyperparameters for PRiMeFlow in Srivatsan20 dataset. 
+
+Hyperparameter Value Description 
+
+architecture U-Net Architecture choice for the velocity field 
+
+num_res_blocks 2 Number of residual blocks after each down/upsampling 
+
+hidden_dim 256 Base feature dim in U-Net and in input MLPs 
+
+dropout 0.1 Dropout rate 
+
+channel_mult [1, 2, 2, 4, 4] Hidden dim multipliers at each level 
+
+conv_resample True Learnable up/downsampling 
+
+num_heads 8 Number of attention heads 
+
+attention_resolutions [16] Resolution levels using multihead self-attention 
+
+n_layers_gene_expression 2 MLP layers for gene expression input 
+
+n_layers_conditions 2 MLP layers for condition input 
+
+n_layers_time 2 MLP layers for time input 
+
+prob_unconditional 0.2 Probability of dropping out conditions 
+
+interpl_type Linear Interpolation type in conditional probability path 
+
+sigma 0. Constant noise schedules 
+
+learning_rate 5e-5 Learning rate 
+
+weight_decay 0. Weight decay 
+
+batch_size 54 Batch size 
+
+num_gpus 4 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 4 Number of gradient accumulation steps 
+
+Table 11: Manually selected hyperparameters for PRiMeFlow in Norman19 dataset. 
+
+Hyperparameter Value Description 
+
+architecture U-Net Architecture choice for the velocity field 
+
+num_res_blocks 2 Number of residual blocks after each down/upsampling 
+
+hidden_dim 256 Base feature dim in U-Net and in input MLPs 
+
+dropout 0.1 Dropout rate 
+
+channel_mult [1, 1, 2, 2, 4] Hidden dim multipliers at each level 
+
+conv_resample True Learnable up/downsampling 
+
+num_heads 8 Number of attention heads 
+
+attention_resolutions [16] Resolution levels using multihead self-attention 
+
+n_layers_gene_expression 2 MLP layers for gene expression input 
+
+n_layers_conditions 2 MLP layers for condition input 
+
+n_layers_time 2 MLP layers for time input 
+
+prob_unconditional 0.2 Probability of dropping out conditions 
+
+interpl_type Linear Interpolation type in conditional probability path 
+
+sigma 0. Constant noise schedules 
+
+learning_rate 5e-5 Learning rate 
+
+weight_decay 0. Weight decay 
+
+batch_size 100 Batch size 
+
+num_gpus 4 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 4 Number of gradient accumulation steps 
+
+22 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 12: HPO selected hyperparameters for PRiMeFlow MLP in Srivatsan20 dataset. 
+
+Hyperparameter Value Description 
+
+architecture MLP Architecture choice for the velocity field 
+
+hidden_dim 3072 Base feature dim in input MLPs and decoding MLP 
+
+dropout 0.0 Dropout rate 
+
+n_layers_gene_expression 1 MLP layers for gene expression input 
+
+n_layers_conditions 1 MLP layers for condition input 
+
+n_layers_time 3 MLP layers for time input 
+
+n_layers_decoding 2 MLP layers for decoding 
+
+prob_unconditional 0.0 Probability of dropping out conditions 
+
+interpl_type Linear Interpolation type in conditional probability path 
+
+sigma 0.01 Constant noise schedules 
+
+learning_rate 3.71e-05 Learning rate 
+
+weight_decay 4.05e-07 Weight decay 
+
+batch_size 512 Batch size 
+
+Non HPO hyperparameters 
+
+num_gpus 1 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 1 Number of gradient accumulation steps 
+
+Table 13: HPO selected hyperparameters for PRiMeFlow MLP in Norman19 dataset. 
+
+Hyperparameter Value Description 
+
+architecture MLP Architecture choice for the velocity field 
+
+hidden_dim 2048 Base feature dim in input MLPs and decoding MLP 
+
+dropout 0.1 Dropout rate 
+
+n_layers_gene_expression 2 MLP layers for gene expression input 
+
+n_layers_conditions 3 MLP layers for condition input 
+
+n_layers_time 5 MLP layers for time input 
+
+n_layers_decoding 1 MLP layers for decoding 
+
+prob_unconditional 0.1 Probability of dropping out conditions 
+
+interpl_type Trigonometric Interpolation type in conditional probability path 
+
+sigma 0.1 Constant noise schedules 
+
+learning_rate 8.56e-06 Learning rate 
+
+weight_decay 9.58e-07 Weight decay 
+
+batch_size 1024 Batch size 
+
+Non HPO hyperparameters 
+
+num_gpus 1 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 1 Number of gradient accumulation steps 
+
+23 PRiMeFlow: capturing complex expression heterogeneity in perturbation response modelling A P REPRINT 
+
+Table 14: HPO selected hyperparameters for FM PCA in Srivatsan20 dataset. 
+
+Hyperparameter Value Description 
+
+architecture MLP Architecture choice for the velocity field 
+
+hidden_dim 3072 Base feature dim in input MLPs and decoding MLP 
+
+dropout 0.2 Dropout rate 
+
+n_layers_gene_expression 2 MLP layers for gene expression input 
+
+n_layers_conditions 3 MLP layers for condition input 
+
+n_layers_time 4 MLP layers for time input 
+
+n_layers_decoding 4 MLP layers for decoding 
+
+prob_unconditional 0.4 Probability of dropping out conditions 
+
+interpl_type Trigonometric Interpolation type in conditional probability path 
+
+sigma 0.1 Constant noise schedules 
+
+learning_rate 8.18e-05 Learning rate 
+
+weight_decay 1.28e-10 Weight decay 
+
+batch_size 1024 Batch size 
+
+Non HPO hyperparameters 
+
+num_gpus 1 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 1 Number of gradient accumulation steps 
+
+Table 15: HPO selected hyperparameters for FM PCA in Norman19 dataset. 
+
+Hyperparameter Value Description 
+
+architecture MLP Architecture choice for the velocity field 
+
+hidden_dim 1792 Base feature dim in input MLPs and decoding MLP 
+
+dropout 0.2 Dropout rate 
+
+n_layers_gene_expression 4 MLP layers for gene expression input 
+
+n_layers_conditions 2 MLP layers for condition input 
+
+n_layers_time 2 MLP layers for time input 
+
+n_layers_decoding 4 MLP layers for decoding 
+
+prob_unconditional 0.4 Probability of dropping out conditions 
+
+interpl_type Trigonometric Interpolation type in conditional probability path 
+
+sigma 0.01 Constant noise schedules 
+
+learning_rate 1.73e-04 Learning rate 
+
+weight_decay 6.75e-06 Weight decay 
+
+batch_size 2048 Batch size 
+
+Non HPO hyperparameters 
+
+num_gpus 1 Number of GPUs 
+
+grad_clip_threshold 5.0 Gradient clipping threshold 
+
+grad_accum_batches 1 Number of gradient accumulation steps 
+
+Table 16: Additional hyperparameters for FM PCA OT in Srivatsan20 dataset. 
+
+num_samples_per_condition 128 Number of cells sampled per condition to com-pute the mini-batch OT coupling 
+
+solver_type unbalanced OT solver algorithm 
+
+tau_a 1.0 Source marginal constraint weight 
+
+tau_b 1.0 Target marginal constraint weight 
+
+Table 17: Additional hyperparameters for FM PCA OT in Norman19 dataset. 
+
+num_samples_per_condition 256 Number of cells sampled per condition to com-pute the mini-batch OT coupling 
+
+solver_type unbalanced OT solver algorithm 
+
+tau_a 1.0 Source marginal constraint weight 
+
+tau_b 1.0 Target marginal constraint weight 
+
+24

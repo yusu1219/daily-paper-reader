@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-001.webp",
+      "caption": "Fig 2. FVA max as best CausalFlux variant on TMs: (A) Topology of TM1 (integrated GRN-GSMM system; see S1 Fig. for the topology of TM2 and TM3). (B-C) Scatter plots between the normalized predicted and actual fluxes for TM1 under the 320 exchange rate for “X” and “A” gene KOs, where predictions are by CausalFlux’s FBA and FVA (min and max) variants. Spearman’s ρ and associated p-value are also shown atop each plot. (D) Scatter plots (with jitter of 0.05 units) of the ρ computed between different CausalFlux variants’ predicted and actual fluxes for each of the 39 TM cases. (E) Different simulation scenarios/cases for each TM and associated correlation tests performed (points in plot D) are listed.",
+      "page": 6,
+      "index": 1,
+      "width": 773,
+      "height": 813
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-002.webp",
+      "caption": "Fig 3. Comparing CausalFlux, TRIMER and GIMME on TMs: (A) Scatter plot (with jitter of 0.05 units) of ρ computed between CausalFlux (FVA max) and actual (vs.) TRIMER and actual for all the WT/KO cases across all TMs under different exchange rates. (B) Similar plot as (A) but with TRIMER replaced by GIMME (FVA max). (C) and (D) are the same as (A) and (B), respectively, but the points are colored based on the exchange rates. (E), (F), and (G) Actual vs predicted (CausalFlux (FVA max), TRIMER, and GIMME (FVA max) respectively) fluxes of the biomass reaction across the WT/KO cases in all TMs under different exchange rates.",
+      "page": 7,
+      "index": 2,
+      "width": 524,
+      "height": 996
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-003.webp",
+      "caption": "Fig 5. Exploring the role of metabolic feedback through ablation studies: (A) Five different ablation studies were performed by removing the metabolite feedback edges to gene(s) that have high influence on single-gene KOs. Information on genes misclassified as essential after ablation are also shown. (B) Illustration of the fourth ablation study (fourth row) shown in panel A. (C and D) Scatter plot (with default jitter) showing the biomass of the 798 single-gene KOs before vs. after removal of feedback edges to: the gene crp (panel C); and the 10 metabolic feedback genes with the most influence on single-gene KOs (panel D).",
+      "page": 10,
+      "index": 3,
+      "width": 785,
+      "height": 754
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-004.webp",
+      "caption": "Fig 7. CausalFlux predictions under different media conditions: (A, B) Each is a scatter plot (with jitter 0.1 units) of predicted growth rate (biomass) under the two indicated media conditions. (C) Bar plot showing the number of predicted essential genes (predicted growth rate of zero) under the indicated media conditions. Common genes (orange) represent the number of predicted essential genes shared across all media conditions.",
+      "page": 14,
+      "index": 4,
+      "width": 771,
+      "height": 249
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-005.webp",
+      "caption": "Fig 1. Overview of our CausalFlux method: (A) CausalFlux integrates GRN model and GSMM using prior knowledge on two-way feedback interactions between them, in an iterative fashion. (B) A key step in CausalFlux is performing causal surgery on a conditioning variable like gene “C” (which may be a transcription factor in the GRN) – incoming edges from the parents of “C” (“A” and “B”) are severed to obtain a mutilated GRN, and “C”’s value forced to 1 to reflect activation feedback from M2 metabolite. Conditional probability of “D” before and after causal surgery is shown. (C) CausalFlux flowchart (see Algorithm 1 and Methods for details; FVA is flux variability analysis). (D & E) Comparison of predictive performance of CausalFlux vs. one-way feedback method TRIMER (or GIMME) on: (D) three testbed GRN+GSMM integrated models, with fluxes simulated using ODEs under various exchange rates and gene KOs (ODE is Ordinary Differential Equation); and (E) real-world E. coli model, with growth/no-growth outcomes measured under 798 single-gene KOs.",
+      "page": 4,
+      "index": 5,
+      "width": 654,
+      "height": 855
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-006.webp",
+      "caption": "Fig 6. Benchmarking CausalFlux on PROM and rFBA datasets: (A) Scatter plot (with jitter 1.75 units) between the accuracy computed between CausalFlux predictions and Actual vs. the accuracy between rFBA predictions and Actual for the 100 media conditions. (B) Scatter plot (with jitter 1.75 units) between the accuracy computed between CausalFlux predictions and Actual vs. the accuracy between PROM predictions and Actual for the 100 media conditions. (C) Performance comparisons of CausalFlux and rFBA for the various Carbon sources, Nitrogen sources and Double-Nitrogen sources and overall 100 media conditions. (D) Performance comparisons of CausalFlux and PROM for the various Carbon sources, Nitrogen sources and Double-Nitrogen sources and overall 100 media conditions. (E) Comparison of classification metrics (TP: true positives [essential], FN: false negatives, FP: false positives, TN: true negatives [non-essential]) for CausalFlux applied to the rFBA and PROM datasets (usual definition of essential/non-essential), along with Random Classifier, rFBA, and PROM predictions across 1500 data points (100 media conditions × 15 gene KOs).",
+      "page": 12,
+      "index": 6,
+      "width": 766,
+      "height": 862
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717623-v1/fig-007.webp",
+      "caption": "Fig 4. Comparing CausalFlux and TRIMER on E. coli datasets: (A) Comparing the performances of CausalFlux, TRIMER, and a random classifier for predicting growth/no growth in 798 single-gene KO cases in E. coli. (B) Comparing the predictions and (C) metrics for CausalFlux across 0th, 1st iterations and after the algorithm had converged to show the effect of metabolic feedback. Note: True positives: essential genes predicted as essential; True negatives: non-essential genes predicted as non-essential; False positives: non-essential genes predicted as essential; and False negatives: essential genes predicted as non-essential.",
+      "page": 9,
+      "index": 7,
+      "width": 609,
+      "height": 633
+    }
+  ]
+}

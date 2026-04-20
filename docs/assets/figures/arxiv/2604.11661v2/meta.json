@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-001.webp",
+      "caption": "Figure 1: An Overview of the VCR-Agent Multi-Agent Framework. The Report Generator accepts the perturbation and cellular context, performing knowledge retrieval and synthesis to produce a comprehensive, biologically grounded report. The Explanation Constructor then translates this report into the formal structured mechanistic explanation. This generated structured explanation is subsequently evaluated by the Verifier for factual validation and filtering.",
+      "page": 2,
+      "index": 1,
+      "width": 894,
+      "height": 321
+    },
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-002.webp",
+      "caption": "Figure 5: An example of verifier-based filtering process. The pipeline processes initial structured explanation (top) through verifiers (middle) to produce filtered output (bottom). Same colors link the action primitive to their corresponding verifiers.",
+      "page": 7,
+      "index": 2,
+      "width": 456,
+      "height": 391
+    },
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-003.webp",
+      "caption": "Figure 2: An overview of structured reasoning. (a) Given an input (p, c) =(Binimetinib, C32), the model generates mechanistic reasoning traces. Blue and light blue indicate the action primitives and the arguments, respectively. The elements within the <dag> tag represent the edge list defining the reasoning graph. (b) An example of DAG. Same color indicates the same action primitive.",
+      "page": 3,
+      "index": 3,
+      "width": 922,
+      "height": 341
+    },
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-004.webp",
+      "caption": "Figure 6: TahoeQA performance. Baselines are categorized by model type: statistical and gene foundation models are shown in shades of gray, LLM-based baselines in shades of blue, and our model with structured explanation in brown. Average denotes the mean F1-score across the five individual cell-line test sets while Union denotes the performance on a test set combining all five cell lines.",
+      "page": 8,
+      "index": 4,
+      "width": 891,
+      "height": 327
+    },
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-005.webp",
+      "caption": "Figure 3: An overview of action spaces. The sub-categories are represented with bold and action primitives with verifier are represented with purple. The argument schemes are in Appendix A.",
+      "page": 4,
+      "index": 5,
+      "width": 460,
+      "height": 439
+    },
+    {
+      "url": "assets/figures/arxiv/2604.11661v2/fig-006.webp",
+      "caption": "Figure 4: An example of generated report. The input perturbation - cellular context pair follows the one in Figure 2a.",
+      "page": 5,
+      "index": 6,
+      "width": 458,
+      "height": 396
+    }
+  ]
+}

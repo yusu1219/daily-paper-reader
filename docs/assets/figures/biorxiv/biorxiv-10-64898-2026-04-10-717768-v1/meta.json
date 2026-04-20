@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-04-10-717768-v1/fig-001.webp",
+      "caption": "Figure 1: HiDDEN/found overview and demonstration A: Schematic of the HiDDEN pipeline, including embedding, continuous scoring, and discretization steps. B: Example usage of the found library in Python. C: Example usage of the found library in R. D: Example usage of visualization utilities from the found.pl module in Python. E: Evaluation of HiDDEN outputs on IL-15-stimulated PBMC data (PBS as control).",
+      "page": 17,
+      "index": 1,
+      "width": 918,
+      "height": 380
+    }
+  ]
+}

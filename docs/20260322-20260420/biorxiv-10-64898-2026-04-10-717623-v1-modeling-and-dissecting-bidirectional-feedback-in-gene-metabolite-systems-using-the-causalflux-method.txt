@@ -1,0 +1,2180 @@
+Title: Modeling and dissecting bidirectional feedback in gene-metabolite systems using the CausalFlux method
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.04.10.717623v1.full.pdf
+
+Number of Pages: 30
+
+Markdown Content:
+# Modeling and dissecting bidirectional feedback in gene-metabolite systems using the CausalFlux method 
+
+Nilesh Subramanian 1,2,3 , S Pavan Kumar 2,3,4 , Raghunathan Rengaswamy 2,3,5,6 , Nirav Pravinbhai Bhatt 2,3,4,5 , Manikandan Narayanan 1,2,3* 
+
+1 Department of Computer Science & Engineering, Indian Institute of Technology (IIT) Madras, Chennai-600036, Tamil Nadu, India 
+
+2 Centre for Integrative Biology and Systems Medicine, Indian Institute of Technology (IIT) Madras, Chennai-600036, Tamil Nadu, India 
+
+3 Wadhwani School of Data Science and AI, Indian Institute of Technology (IIT) Madras, Chennai-600036, Tamil Nadu, India 
+
+4 BioSystems Engineering and Control (BiSECt) Lab, Department of Biotechnology, Indian Institute of Technology (IIT) Madras, Chennai-600036, Tamil Nadu, India 
+
+5 IIT Madras Zanzibar Campus, Bweleo, Zanzibar, Republic of Tanzania 
+
+6 Department of Chemical Engineering, Indian Institute of Technology (IIT) Madras, Chennai-600036, Tamil Nadu, India * nmanik@cse.iitm.ac.in 
+
+# Abstract 
+
+Predicting cellular behaviors, a central task in systems biology and metabolic engineering, can be enhanced through integrative modeling of processes such as gene regulation and metabolism. Information flow from gene regulation (modeled via a gene regulatory network) to metabolism (modeled via a genome-scale metabolic model) is well-studied, but the reciprocal regulation of genes by metabolites is less explored. We introduce CausalFlux, a method that models bidirectional feedback between genes and metabolites, in order to predict steady-state reaction fluxes under wild-type (WT) or perturbed (e.g., gene knockout/KO) conditions. CausalFlux does so by iteratively performing causal surgery on a Bayesian gene regulatory network and constraint-based analysis of a coupled metabolic model. CausalFlux enabled us to assess the impact of two-way feedback in several testbed models and real-world biological systems by comparing its predictions to those of TRIMER, a state-of-the-art model of gene-to-metabolite one-way feedback. Incorporating bidirectional feedback, as in CausalFlux, improved the Spearman correlation between actual and predicted fluxes in 92% of the 39 distinct simulation conditions relative to TRIMER. For predicting growth/no-growth phenotype following single-gene KOs in E. coli , CausalFlux achieved a balanced accuracy of 0 .79 in identifying essential genes, and TRIMER achieved 0 .71 for the same task, again highlighting the importance of modeling two-way feedback. In ablation studies that further dissect the role of specific metabolite →gene feedback edges in E. coli , the F1 scores of gene essentiality predictions decreased by 7 .5% and 13% upon ablation of feedback edges from any metabolite to the crp gene and the 10 metabolic feedback genes with the highest influence on the KO genes, respectively. Finally, we highlight the application of CausalFlux to predict the essentiality of several hundred genes under different media conditions. Overall, our findings show that CausalFlux can crucially utilize information on feedback metabolites to predict trends in reaction fluxes and qualitative (growth/no-growth) outcomes; thereby encouraging April 7, 2026 1/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+future systems modeling efforts to carefully incorporate not only gene-to-metabolite but also metabolite-to-gene interactions. 
+
+Availability: Code pertaining to the CausalFlux method, and its benchmarking and application is publicly available at: https://github.com/BIRDSgroup/CausalFlux .
+
+# Author summary 
+
+The myriad processes within a living cell, such as gene regulation or metabolism, are tightly interconnected. Modeling these interconnected processes can offer a deeper mechanistic understanding of cellular behaviors, as well as guide efforts that engineer the metabolic output of a cell. In this work, we develop a novel integrated model of gene regulation and metabolism that incorporates bidirectional feedback between these two processes, via the concept of metabolite-induced causal surgery on a gene regulatory network and gene-induced constraints on the fluxes of metabolic reactions. Our model, which we call CausalFlux, represents an advance over most existing models that capture just the one-way gene-to-metabolism feedback (i.e., genes coding for enzymes that control metabolic reactions). Our CausalFlux methodology opens up an unique opportunity to quantify the impact of two-way feedback in gene-metabolite systems, via comparison of CausalFlux’s predictions to those of TRIMER, a published model incorporating one-way feedback alone. For predicting reaction fluxes in testbed models and essential genes in E. coli , quantitative comparison of the performance of CausalFlux vs. TRIMER showed that accounting for two-way feedback leads to more accurate and biologically meaningful predictions. CausalFlux also enabled us to quantify the effect of two-way feedback by comparing prediction performance before and after ablation of certain feedback edges from metabolites to genes. Overall, our findings highlight the importance of modeling gene regulation and metabolism as two-way interconnected systems within a living cell, and encourage future works to incorporate gene ↔metabolite feedback into their analyses. 
+
+# Introduction 1
+
+Thousands of genome-scale metabolic models (GSMM) have been constructed in the 2
+
+past two decades. These network-based models comprehensively represent an organism’s 3
+
+metabolism, capturing the network of biochemical reactions as a stoichiometric matrix 4
+
+and gene-protein-reaction (GPR) rules that govern the activity of specific metabolic 5
+
+reaction. Very often, the gene regulatory state of the cell inferred via transcriptomic 6
+
+(gene expression) measurements and/or knowledge of the gene regulatory network 7
+
+(GRN) is integrated as a constraint to improve GSMMs’ predictions. Existing methods 8
+
+that integrate gene regulatory constraints into GSMMs can be broadly classified into 9
+
+three categories [ 1 ]: (i) Integration through transcriptomics data: These methods filter 10 
+
+out (or capture) certain metabolic reactions by evaluating the GPR rules using the gene 11 
+
+expression evidence, thereby representing the metabolic reactions as either ON (active) 12 
+
+or OFF (inactive). Examples include context-specific model-building algorithms such as 13 
+
+GIMME [ 2], and Fastcore [ 3]. One of the major limitations of these approaches is their 14 
+
+inability to predict fluxes when gene expression data corresponding to the KO 15 
+
+(Knockout) perturbation of interest is not available; (ii) Integration through Boolean 16 
+
+GRNs: Methods like rFBA [ 4 , 5] and SR-FBA [ 6, 7 ] represent gene expression states as 17 
+
+ON/OFF and model regulatory programs using a network of Boolean relations involving 18 
+
+these genes. They also model metabolic regulation of genes into this Boolean network 19 
+
+formulation to capture bidirectional gene-metabolite feedback, but they require 20 
+
+extensive literature searches to define the Boolean relations/rules and can be 21 
+
+April 7, 2026 2/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+challenging to scale up to a genome-wide model of complex systems; and (iii) 22 
+
+Probabilistic representation of the GRN: Methods like PROM [ 8 ] and TRIMER [ 9] infer 23 
+
+the conditional probabilities of genes (e.g., target genes) conditioned on the state of 24 
+
+their regulating genes (e.g., corresponding transcription factors). The advantage of 25 
+
+TRIMER over PROM is the use of a GRN reconstructed from expression data and 26 
+
+prior-known gene regulatory interactions. However, these methods do not account for 27 
+
+the feedback from the metabolic network to the GRN. 28 
+
+Multi-omics studies on E. coli and yeast have revealed the presence of certain 29 
+
+metabolites that regulate the expression of genes in the GRN [10], thereby exerting 30 
+
+feedback on gene expression and creating crosstalk between metabolic and regulatory 31 
+
+systems. Carthew provides examples of metabolites acting as signaling molecules to 32 
+
+regulate genes in the GRN [11]. Kumar et al. utilize this knowledge of metabolite 33 
+
+feedback to construct different network modules of the GRN, both with and without 34 
+
+feedback, to understand the underlying causal structure of the GRN in E. coli and 35 
+
+B. subtilis [12]. These studies emphasize that incorporating metabolic feedback into the 36 
+
+GRN is crucial to obtain a tightly integrated model of the cellular subsystems involved, 37 
+
+and thereby encourages extending current efforts that mostly model one-way feedback 38 
+
+from gene regulation to metabolism to explicitly capture bidirectional feedback. 39 
+
+Towards addressing the above research gap, this study makes the following broad 40 
+
+contributions: 41 
+
+i Methodological: We propose ‘CausalFlux’, an integrated framework that captures 42 
+
+the complex interactions within and between the metabolic and gene networks 43 
+
+(see Fig. 1[A–C]). CausalFlux specifically models the bidirectional feedback 44 
+
+between gene regulation and metabolism in an iterative fashion. CausalFlux’s 45 
+
+unique contribution is to model metabolite-to-gene interactions, i.e., feedback 46 
+
+metabolites that regulate gene activity, via the techniques of iterative causal 47 
+
+surgery on a Bayesian network representation of GRN, and constraint-based 48 
+
+analysis of a coupled metabolic model (see Fig. 1[B–C]). 49 
+
+ii Conceptual: Equipped with CausalFlux, we systematically quantified the impact 50 
+
+of bidirectional feedback in a cellular system by comparing CausalFlux’s 51 
+
+predictive performance to that of TRIMER, and via ablation of certain feedback 52 
+
+edges. We performed the comparative analyses on testbed models (TMs) with 53 
+
+simulated steady-state fluxes, and a real-world E. coli dataset with ground-truth 54 
+
+information on growth/no-growth phenotype of 798 single-gene knockouts (KOs; 55 
+
+see Fig. 1[D–E]); and ablation studies on the E. coli dataset. 56 
+
+iii Application: We highlight an application of CausalFlux to predict gene essentiality 57 
+
+of several hundred genes under different growth media conditions (minimal to rich 58 
+
+media). Such prospective predictions can aid metabolic engineering efforts by 59 
+
+prioritizing single-gene KOs that yield the desired phenotype of interest. 60 
+
+Overall, the results from the analyses and application above showed that the 61 
+
+CausalFlux method that we developed can crucially utilize information on feedback 62 
+
+metabolites to predict trends in reaction fluxes and qualitative (growth/no-growth) 63 
+
+outcomes; thereby encouraging future systems modeling efforts to carefully incorporate 64 
+
+not only gene-to-metabolite but also metabolite-to-gene interactions. 65 
+
+# Results 66 
+
+As seen in Fig. 1, CausalFlux integrates GRN and GSMM iteratively, through 67 
+
+bidirectional feedback to perform causal surgery on the GRN, followed by 68 
+
+April 7, 2026 3/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint CausalFlux pipeline
+
+AGene Regulatory network (GRN) Metabolic model (GSMM) CausalFlux B
+
+P(D = 1| C = 1) P(D = 1| do(C = 1)) M2 level is low, so feedback is inactive 
+
+A BCD
+
+M2 Parents of C GSMM GRN 
+
+M1 M2 M1 RGenes Metabolites (M) Activation Reaction RR
+
+C
+
+Initialization procedure GRN initialization: Bayesian network structure and parameter learning of GRN 
+
+GSMM initialization: Add sink reactions for feedback metabolites to GSMM; Perform constraint -based analysis (FVA) on GSMM 
+
+Convergence ?No Perform causal surgery on the GRN (using active feedback metabolites) 
+
+Probabilistic inference on the mutilated GRN 
+
+Modify lower and upper bounds of GSMM reactions 
+
+Obtain fluxes via constraint-based analysis of GSMM 
+
+Identify active metabolites in GSMM that contribute to feedback in GRN Yes STOP Integration step Iterative execution 
+
+Testbed models to study feedback Real-world models to study feedback and predict gene essentiality DE
+
+A BCDCausalFlux or TRIMER CausalFlux pipeline Prediction under various media conditions from minimal media to rich media Gene-Protein-Reaction feedback into GSMM Metabolic feedback into GRN 
+
+> Inputs: KO gene, Testbed model topology
+> Output: Reaction fluxes
+> CausalFlux or TRIMER
+> Inputs: KO gene, E. coli GRN-GSMM model
+> Output: Growth/ No-Growth outcome M2 level is high, so feedback is active Illustration of Causal Surgery Workflow of CausalFlux
+
+Fig 1. Overview of our CausalFlux method : (A) CausalFlux integrates GRN model and GSMM using prior knowledge on two-way feedback interactions between them, in an iterative fashion. (B) A key step in CausalFlux is performing causal surgery on a conditioning variable like gene “C” (which may be a transcription factor in the GRN) – incoming edges from the parents of “C” (“A” and “B”) are severed to obtain a mutilated GRN, and “C”’s value forced to 1 to reflect activation feedback from M2 metabolite. Conditional probability of “D” before and after causal surgery is shown. (C) CausalFlux flowchart (see Algorithm 1 and Methods for details; FVA is flux variability analysis). (D & E) Comparison of predictive performance of CausalFlux vs. one-way feedback method TRIMER (or GIMME) on: (D) three testbed GRN+GSMM integrated models, with fluxes simulated using ODEs under various exchange rates and gene KOs (ODE is Ordinary Differential Equation); and (E) real-world E. coli model, with growth/no-growth outcomes measured under 798 single-gene KOs. constraint-based analysis of the GSMM. After convergence, CausalFlux predicts the 69 
+
+steady-state reaction fluxes in the GSMM by implementing Flux Balance Analysis 70 
+
+(FBA) and Flux Variability Analysis (FVA), yielding FBA solutions as well as minimum 71 
+
+April 7, 2026 4/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint and maximum FVA fluxes (FVA min and FVA max) for each reaction. We evaluate 72 
+
+CausalFlux using multiple testbed models (TMs) (see Fig. 2A for the topology of TM 1; 73 
+
+topologies of TM2 and TM3 are in S1 Fig), and real-world datasets, as described in the 74 
+
+subsequent sections. 75 
+
+Evaluating CausalFlux on testbed models 76 
+
+To evaluate our method, we computed the Spearman correlation ( ρ) between 77 
+
+ODE-simulated ground-truth fluxes (see Methods for flux simulations) and predicted 78 
+
+fluxes across 39 TM cases (see Fig. 2E). For CausalFlux, we selected the 79 
+
+best-performing variant among FBA, FVA min, and FVA max. We then compared 80 
+
+these results with predictions from other methods applied to TMs, namely GIMME 81 
+
+(FVA max) and TRIMER (sFBA). GIMME (FVA max) was chosen based on its 82 
+
+superior performance relative to GIMME (FVA min) and GIMME (FBA), while sFBA 83 
+
+was the best-performing TRIMER variant as reported in the original study [9]. An 84 
+
+overview of the simulation-based benchmarking pipeline is shown in S2B Fig. 85 
+
+FVA max achieves superior performance among CausalFlux variants 86 
+
+To identify the best-performing CausalFlux variant among FBA, FVA max, and FVA 87 
+
+min, we compared predicted reaction fluxes with ground-truth ODE-simulated fluxes. 88 
+
+The median of the ODE flux simulations was taken as the ground truth (see Methods 89 
+
+for details). Scatter plots comparing actual and predicted fluxes for FBA, FVA min, 90 
+
+and FVA max variants of CausalFlux for “X” and “A” gene knockouts in TM1 are 91 
+
+shown in Fig. 2B and C. These plots indicate that the FVA max variant performs better 92 
+
+than FVA min and FBA, as reflected by higher correlation ( ρ) values for both knockout 93 
+
+cases. We next expanded our evaluation from these two KO cases to all 39 TM cases. In 94 
+
+a majority of these TM cases, we found that the predicted fluxes of CausalFlux (FVA 95 
+
+max) showed higher ρ values (i.e., higher correlation with actual fluxes) than other 96 
+
+CausalFlux variants, FVA min and FBA (Fig. 2D). Specifically, FVA max outperformed 97 
+
+FVA min and FBA in 92% and 84% of cases, respectively. Together, these results 98 
+
+indicate that the FVA max variant of CausalFlux consistently outperforms its FVA min 99 
+
+and FBA counterparts, and was therefore selected for subsequent comparative 100 
+
+evaluations. Refer to Supplementary Data 1 to view the ( ρ) computed for the various 101 
+
+methods for all the WT/KO cases done for all the TMS under various exchange rates. 102 
+
+CausalFlux (FVA max) is better than or comparable to other 103 
+
+state-of-the-art or baseline methods 104 
+
+To compare the performance of CausalFlux predictions with predictions from other 105 
+
+state-of-the-art baseline methods (which do not explicitly model two-way feedback as 106 
+
+mentioned earlier), we looked at the following aspects: (I) Overall CausalFlux 107 
+
+performance in predicting fluxes of all reactions across all 39 TM cases; (II) CausalFlux 108 
+
+performance in predicting the flux of the biomass reaction across the 39 TM cases; and 109 
+
+(III) Dissecting the role of feedback in the performance improvements. 110 
+
+Overall performance of CausalFlux across all the reactions in TMs: The 111 
+
+correlation ( ρ) computed between actual and predicted fluxes for GIMME (FVA max), 112 
+
+GIMME (FVA min), and GIMME (FBA) were largely comparable, with FVA max 113 
+
+performing slightly better; therefore, GIMME (FVA max) was selected for subsequent 114 
+
+comparisons (see S3 Fig). Using this configuration, CausalFlux (FVA max) 115 
+
+outperformed both TRIMER and GIMME (FVA max), achieving higher ρ values 116 
+
+between predicted and actual fluxes in 92% and 69% of the total TM cases, respectively 117 
+
+April 7, 2026 5/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+A B C         
+
+> R=0.28 , p=0.5 0.0 0.5 1.0 1.5 2.0 0.00 0.25 0.50 0.75 1.00
+
+ρ = 0.28, p = 0.5          
+
+> R=0.9 , p=0.0022 0.0 0.5 1.0 1.5 0.00 0.25 0.50 0.75 1.00
+
+ρ = 0.9, p = 0.0022          
+
+> R=0.28 , p=0.5 0.0 0.5 1.0 1.5 2.0 0.00 0.25 0.50 0.75 1.00
+
+ρ = 0.28, p = 0.5 
+
+CausalFlux (FBA) CausalFlux (FVA min) CausalFlux (FVA max) Predicted Fluxes Actual Fluxes (Median of ODE simulation) Predicted Fluxes Predicted Fluxes Actual Fluxes (Median of ODE simulation) Actual Fluxes (Median of ODE simulation) 
+
+TM cases 18 12 939 TM TM 1 TM 2 TM 3 WT, A KO, I KO, X KO WT, A KO, X KO, B KO, E KO, Z KO WT, A KO, X KO Conditions Exchange rates 3.2, 320, 3200 3.2, 320, 3200 3.2, 320, 3200 ETotal TM cases 
+
+Perform X - KO Predicted Fluxes          
+
+> R=0.17 , p=0.69
+> −0.5
+> 0.0 0.5 1.0 1.5 2.0 0.00 0.25 0.50 0.75 1.00
+
+ρ = 0.17, p = 0.69          
+
+> R=0.17 ,p=0.69
+> −0.5
+> 0.0 0.5 1.0 1.5 2.0 0.00 0.25 0.50 0.75 1.00
+
+ρ = 0.17, p = 0.69         
+
+> R=0.96, p=0.00012 010.00 0.25 0.50 0.75 1.00
+
+ρ = 0.96, p = 0.00012 
+
+CausalFlux (FBA) CausalFlux (FVA min) CausalFlux (FVA max) Actual Fluxes (Median of ODE simulation) Predicted Fluxes Predicted Fluxes Actual Fluxes (Median of ODE simulation) Actual Fluxes (Median of ODE simulation) Perform A - KO Testbed Models (TM) 
+
+TM 1 TM 2 TM 3 
+
+Dρ for CausalFlux (FVA min) and Actual      
+
+> ρ for CausalFlux (FVA max) and Actual
+> −0.5
+> 0.0 0.5 1.0
+> −0.5 0.0 0.5 1.0 0.5 1.0
+> −0.5
+> 0.0 0.5 1.0
+> −0.5 0.0
+
+ρ for CausalFlux (FBA) and Actual 
+
+> ρ for CausalFlux (FVA max) and Actual
+
+Testbed Model (TM) 1   
+
+> ABCZYEXDM1 M2 M3 M4 M5 C AND D R2 R3 C OR B R4 B OR D R5 C OR D R6 R7 Gene Regulatory Network (GRN) Metabolic Model (GSMM) R8 Genes Metabolites GPR Rules Activation Reactions RR1*
+
+*[Exchange rates: 3.2 mM/S or 320 mM/s or 3200 mM/s] Fig 2. FVA max as best CausalFlux variant on TMs: (A) Topology of TM1 (integrated GRN-GSMM system; see S1 Fig. for the topology of TM2 and TM3). (B-C) Scatter plots between the normalized predicted and actual fluxes for TM1 under the 320 exchange rate for “X” and “A” gene KOs, where predictions are by CausalFlux’s FBA and FVA (min and max) variants. Spearman’s ρ and associated p-value are also shown atop each plot. (D) Scatter plots (with jitter of 0.05 units) of the ρ computed between different CausalFlux variants’ predicted and actual fluxes for each of the 39 TM cases. (E) Different simulation scenarios/cases for each TM and associated correlation tests performed (points in plot D) are listed. (see Fig. 3[A–B]). This performance trend persists across varying exchange rates (see 118 
+
+Fig. 3[C–D]), suggesting that CausalFlux’s superior performance is robust against 119 
+
+changes in input exchange rates. 120 
+
+Performance of CausalFlux for the biomass reaction in TMs: The ρ between 121 
+
+biomass fluxes predicted by CausalFlux (FVA max) and the corresponding actual fluxes 122 
+
+is 0.80, which is higher than the ρ of 0.65 obtained using TRIMER predictions (see 123 
+
+Fig. 3[E–G]). This indicates that CausalFlux (FVA max) better captures the trends in 124 
+
+April 7, 2026 6/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint −0.5 0.0 0.5 1.0 −0.5 0.0 0.5 1.0 ρ for TRIMER and Actual 
+
+> ρ for CausalFlux (FVA max) and Actual
+
+−0.5 0.0 0.5 1.0 −0.5 0.0 0.5 1.0 ρ for GIMME (FVA max) and Actual Normalized Predicted Fluxes CausalFlux (FVA max) Normalized Actual Fluxes (Median of ODE simulations) TRIMER 
+
+AC
+
+GIMME (FVA Max) 
+
+B  
+
+> Toy Models (TM)
+> TM 1 TM 2 TM 3
+
+DE
+
+> Normalized Predicted Fluxes
+
+Normalized Actual Fluxes (Median of ODE simulations) Normalized Actual Fluxes (Median of ODE simulations) Normalized Predicted Fluxes 
+
+0.0 0.3 0.6 0.9 1.2 0.00 0.25 0.50 0.75 1.00 0.0 0.3 0.6 0.9 1.2 0.00 0.25 0.50 0.75 1.00 0.0 0.3 0.6 0.9 1.2 0.00 0.25 0.50 0.75 1.00      
+
+> R=0.8 ,p=1.1e−09
+
+ρ = 0.8, p = 1.1e-09      
+
+> R=0.65 ,p=6.8e−06
+
+ρ = 0.65 p = 6.8e-06      
+
+> R=0.8 ,p=6.5e−10
+
+ρ= 0.8 p = 6.5e-10 
+
+−0.5 0.0 0.5 1.0 −0.5 0.0 0.5 1.0 ρ for TRIMER and Actual Exchange rates 3.2 320 3200 −0.5 0.0 0.5 1.0 −0.5 0.0 0.5 1.0 ρ for GIMME (FVA max) and Actual 
+
+F G
+
+> ρ for CausalFlux (FVA max) and Actual
+> ρ for CausalFlux (FVA max) and Actual
+> ρ for CausalFlux (FVA max) and Actual
+
+Fig 3. Comparing CausalFlux, TRIMER and GIMME on TMs: (A) Scatter plot (with jitter of 0.05 units) of ρ computed between CausalFlux (FVA max) and actual (vs.) TRIMER and actual for all the WT/KO cases across all TMs under different exchange rates. (B) Similar plot as (A) but with TRIMER replaced by GIMME (FVA max). (C) and (D) are the same as (A) and (B), respectively, but the points are colored based on the exchange rates. (E), (F), and (G) Actual vs predicted (CausalFlux (FVA max), TRIMER, and GIMME (FVA max) respectively) fluxes of the biomass reaction across the WT/KO cases in all TMs under different exchange rates. biomass fluxes across TM wild-type and knockout cases and across all exchange rates. 125 
+
+CausalFlux (FVA max) and GIMME (FVA max) exhibit comparable performance, with 126 
+
+April 7, 2026 7/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint GIMME showing a slight advantage in terms of p-value. This difference may be 127 
+
+attributed to the additional information available to GIMME in the form of gene 128 
+
+expression data specific to the considered gene knockout. In contrast, CausalFlux 129 
+
+achieves comparable performance without relying on such KO-specific expression data. 130 
+
+Effect of feedback-imparting iterations on the CausalFlux outcome: To better 131 
+
+understand the role of feedback in our method, we examined whether the actual fluxes 132 
+
+were more strongly correlated with the fluxes predicted from successive iterations of 133 
+
+CausalFlux (compared to its earlier iterations where feedback is incorporated to a lesser 134 
+
+extent). ρ was computed between predictions from iteration 1 and the actual fluxes 135 
+
+across all 39 TM cases, and similarly between predictions from iteration 2 and the 136 
+
+actual fluxes. We observed that in certain cases, such as the “WT” and “X” knockouts 137 
+
+in TM1 and TM2, respectively, feedback improved performance, as reflected by 138 
+
+increased ρ values in successive iterations (see S4 Fig). In contrast, for most of the 139 
+
+other cases, the data points lie close to the x = y line, indicating that feedback had 140 
+
+little effect. In a few specific scenarios, such as the “I” knockout in TM2 and the 3200 141 
+
+exchange rate condition in TM1, feedback appeared to have a negative impact. 142 
+
+Together, all of the above observations suggest that the influence of feedback is 143 
+
+context-dependent, and a more careful examination in real-world settings is required to 144 
+
+understand its effects fully, which we perform next. 145 
+
+Real-world evaluation: Using CausalFlux to predict 146 
+
+growth/no-growth phenotype in E. coli 147 
+
+We applied CausalFlux and TRIMER to computationally model 798 single-gene KOs in 148 
+
+E. coli (see Methods on implementation) to predict fluxes. For each gene KO, if the 149 
+
+predicted flux for the biomass reaction is 0, then a “no-growth” phenotype is predicted 150 
+
+(i.e., the gene is predicted as an essential gene). If the gene KO leads to a prediction of 151 
+
+non-zero biomass flux, then we predict a growth phenotype (i.e., that the gene is 152 
+
+non-essential). Of all single-gene knockouts considered, 47 genes showed zero growth 153 
+
+upon knockout in the Keio collection and were therefore treated as ground-truth 154 
+
+essential; the rest were called ground-truth non-essential genes [13]. 155 
+
+CausalFlux performs better in predicting the no-growth cases (essential genes) 156 
+
+compared to TRIMER, and a random classifier, as seen in Fig. 4A. Here, the random 157 
+
+classifier refers to a classifier that predicts all the instances as the positive class 158 
+
+(essential or no-growth cases). CausalFlux predictions were better than those of 159 
+
+TRIMER in terms of F1 score and balanced accuracy (see Fig. 4A). Of the 47 160 
+
+ground-truth essential genes, 29 were accurately predicted by CausalFlux. While 161 
+
+TRIMER accurately predicted 22 out of the 47 essential genes, it also predicted a larger 162 
+
+number of false positives. 163 
+
+To assess the impact of metabolic feedback on CausalFlux predictions, we compared 164 
+
+the results and corresponding metrics at the end of three iterations of the algorithm: 165 
+
+the 0 th iteration (without any metabolic feedback), the 1 st iteration (after one round of 166 
+
+feedback incorporation), and the final iteration (the final converged state after multiple 167 
+
+feedback iterations), as shown in Fig. 4[B–C]. An improvement in both precision and F1 168 
+
+score can be clearly observed across these iterations, indicating that incorporating 169 
+
+metabolic feedback enhances the performance of CausalFlux. We could also observe 170 
+
+changes in true negatives (from 751 → 709 → 717) and false positives (from 171 
+
+0 → 42 → 34) over iterations. These findings show that feedback-imparting iterations 172 
+
+are useful to enhance the performance of CausalFlux in real-world E. coli benchmarks. 173 
+
+April 7, 2026 8/30   
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint CausalFlux TRIMER Random Classifier Metrics Precision Recall F1 score Balanced Accuracy 0.46 0.62 0.53 0.79 0.36 0.47 0.41 0.71 1.00 0.06 0.11 0.50
+
+AB0th iteration (no metabolic feedback) 1 st iteration (metabolic feedback is present) Final iteration (metabolic feedback is present) Metrics True Positives True Negatives False Positives False Negatives 0751 047 29 709 42 18 29 717 34 18 Metrics Precision Recall F1 score Balanced Accuracy NA 0.00 NA 0.50 0.41 0.62 0.50 0.78 0.46 0.62 0.53 0.79 C1st iteration (metabolic feedback is present) 0 th iteration (no metabolic feedback) Final iteration (metabolic feedback is present) Fig 4. Comparing CausalFlux and TRIMER on E. coli datasets: (A) Comparing the performances of CausalFlux, TRIMER, and a random classifier for predicting growth/no growth in 798 single-gene KO cases in E. coli . (B) Comparing the predictions and (C) metrics for CausalFlux across 0 th , 1 st iterations and after the algorithm had converged to show the effect of metabolic feedback. Note: True positives: essential genes predicted as essential; True negatives: non-essential genes predicted as non-essential; False positives: non-essential genes predicted as essential; and False negatives: essential genes predicted as non-essential. 
+
+Ablation of metabolic feedback edges to genes highlights the role 174 
+
+of feedback in regulating growth 175 
+
+To better understand the influence of metabolites on gene regulation, we performed a 176 
+
+series of ablation studies in which subsets of feedback edges from metabolites to genes 177 
+
+were removed (Fig. 5A). We focused on ablation study of metabolic feedback gene(s) 178 
+
+with high influence on single-gene KOs. Influence of a gene A is quantified by the 179 
+
+number of 798 single-KO genes that are in the 0-hop or 1-hop neighbourhood of A in 180 
+
+the GRN (see Table S4 for a list of metabolic feedback genes sorted by their influence). 181 
+
+The different ablation studies and the number of genes misclassified as essential after 182 
+
+ablation is summarized in Fig. 5A. Notably, several of these genes were immediate 183 
+
+(1-hop) neighbors of metabolic feedback genes. 184 
+
+In the first ablation study, we focused on the metabolic feedback gene with the 185 
+
+highest influence on the 798 single-KO genes, viz., gene crp . Note that crp is a global 186 
+
+transcriptional regulator that regulates multiple genes in the catabolic and anabolic 187 
+
+pathways in E. coli [14]. After ablation of the feedback edges to crp , the biomass 188 
+
+April 7, 2026 9/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint Genes that were misclassified as essential Edge connecting genes that are 1-hop away from the 10 metabolic feedback genes with most influence on single-KO genes                 
+
+> Top 10 metabolic feedback genes crp, fur, cra, lrp, pdhR, argR, purR, cysB, flhA, nagC Metabolites astC gabT cysA serC
+> cysW
+> cysP
+> cysU
+> argD
+> fdnI
+> ddpF
+> ddpD
+> ddpC
+> ddpB
+> ddpA
+> ddpX Feedback edges from metabolites to genes are removed
+> astC gabT cysA serC cysW cysP cysU argD 0.00 0.25 0.50 0.75 0.00 0.25 0.50 0.75 Biomass before the feedback to crp is removed Biomass after the feedback to crp is removed
+> fdnI ddpF ddpD ddpC ddpB ddpA ddpX astC gabT cysA serC cysW cysP cysU argD 0.00 0.25 0.50 0.75 0.00 0.25 0.50 0.75 Biomass after the feedback to 10 metabolic feedback genes with most influence on single-gene KOs are removed
+> R = 0.36, p <2.2e-16 R = 0.38, p <2.2e-16
+> True labels Essential genes Non-essential genes 1-hop gene away from metabolic feedback gene(s) Yes No
+
+BC DAThe gene(s) to which feedback from the metabolite(s) is removed # of non-essential genes misclassified as essential “crp” gene “fur” gene “cra” gene 10 metabolic feedback genes with most influence on single-gene KOs 8 20 00 015 88 840 metabolic feedback genes with most influence on single-gene KOs #of genes misclassified as essential & at most 1-hop away from a gene with metabolic feedback 
+
+> Biomass before the feedback to 10 metabolic feedback genes with most influence on single-gene KOs are removed
+
+Fig 5. Exploring the role of metabolic feedback through ablation studies: (A) Five different ablation studies were performed by removing the metabolite feedback edges to gene(s) that have high influence on single-gene KOs. Information on genes misclassified as essential after ablation are also shown. (B) Illustration of the fourth ablation study (fourth row) shown in panel A. (C and D) Scatter plot (with default jitter) showing the biomass of the 798 single-gene KOs before vs. after removal of feedback edges to: the gene crp (panel C); and the 10 metabolic feedback genes with the most influence on single-gene KOs (panel D). remained the same as before ablation under single-KO of most of the 798 genes (as seen 189 
+
+in Fig. 5C). However, interestingly, certain genes such as astC , gabT , cysA , serC , cysW , 190 
+
+cysP , cysU and argD (labeled in purple in Fig. 5C) were misclassified as essential genes 191 
+
+after ablation but not before; and out of these genes, gabT and serC are children of 192 
+
+(1-hop from) crp in the GRN, suggesting that allowing metabolic control of crp properly 193 
+
+modulates its effect on these two downstream genes. A deeper analysis of reaction fluxes 194 
+
+under gabT KO, comparing the model incorporating metabolic feedback of crp with the 195 
+
+ablated model without this feedback, revealed that 123 reactions exhibited non-zero flux 196 
+
+in the former model and zero flux in the latter ablated model. Among these, 27 197 
+
+reactions showed differences in GP R probabilities between the two models, with 24 of 198 
+
+these reactions directly regulated by genes downstream of crp . Notably, several of these 199 
+
+April 7, 2026 10/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint reactions are part of key metabolic pathways that produce metabolites that directly 200 
+
+contribute to the biomass reaction, and could explain why we see no growth in the 201 
+
+ablated model (examples of such reactions include “Succinyldiaminopimelate 202 
+
+transaminase”, “O-Phospho-4-hydroxy-L-threonine:2-oxoglutarate aminotransferase”, 203 
+
+and “Nicotinate-nucleotide diphosphorylase”, which are involved in biosynthesis of 204 
+
+lysine, serine, and de novo NAD respectively [ 15 , 16 , 17]; see Supplementary Data 2 for 205 
+
+other reaction names). A similar trend was observed under serC KO. That is, 144 206 
+
+reactions exhibited zero flux in the ablated model, of which 29 reactions showed 207 
+
+differences in GP R probabilities between the two models, and 24 of these 29 reactions 208 
+
+were directly regulated by genes downstream of crp . Consistent with the overall findings 209 
+
+above, previous studies have reported that crp regulates members of the gab gene family 210 
+
+as well as serC , which are involved in amino acid biosynthesis pathways such as lysine 211 
+
+and serine biosynthesis [18, 19]. 212 
+
+On the other hand, repeating the same ablation analysis separately on fur and cra , 213 
+
+the metabolic feedback genes with the 2 nd and 3 rd highest influence on single-KO genes, 214 
+
+respectively, did not affect biomass predictions (see S5[A–B] Fig). These observations 215 
+
+led us to perform ablation analysis on a set of 10 metabolic feedback genes with the 216 
+
+most influence on single-gene KOs to check the overall effect (see Fig. 5B, and 217 
+
+Methods). After this ablation, CausalFlux misclassified 15 genes (blue nodes in Fig. 5B 218 
+
+and labeled points in Fig. 5D) as essential, out of which 8 genes were 1-hop away from 219 
+
+(at least one of) the 10 metabolic feedback genes considered (see also fourth row in 220 
+
+Fig. 5A). A similar observation was also made from a similar ablation analysis 221 
+
+performed on 40 metabolic feedback genes with the most influence on single-gene KOs 222 
+
+(see S5C Fig.). In this case, 8 non-essential genes were misclassified as essential, all of 223 
+
+which were 1-hop neighbours of (at least one of) the 40 metabolic feedback genes. These 224 
+
+ablation-induced misclassifications (including the proximity of genes misclassified as 225 
+
+essential to highly influential metabolic feedback genes) indicates that the metabolic 226 
+
+feedback of multiple genes has a significant overall effect on biomass. 227 
+
+As a final ablation analysis, we quantitatively assessed the contribution of 228 
+
+metabolite-to-gene feedback to biomass by comparing CausalFlux’s performance metrics 229 
+
+before vs. after ablation (see Table S5). Excepting the two ablations involving fur and 230 
+
+cra , the percentage decrease in F1 score of the other three ablated models relative to the 231 
+
+non-ablated model ranged from 7 .5% to 13%. The ablation studies overall highlighted 232 
+
+multiple scenarios where metabolite-to-gene feedback edges play a crucial role in proper 233 
+
+modeling of cell growth. 234 
+
+Benchmarking CausalFlux with rFBA and PROM datasets 235 
+
+We also benchmarked our method against two other older methods, rFBA [5] and 236 
+
+PROM [8]. Chandrasekaran et al. in their work compare their work with rFBA by 237 
+
+predicting the biomass of E.coli under 100 media conditions for 15 gene KOs and 238 
+
+ground truth biomass values. The 100 media conditions comprise 58 carbon sources, 31 239 
+
+nitrogen sources, and 11 double-nitrogen sources. We used these results to compare the 240 
+
+performances of CausalFlux run on rFBA and PROM datasets for the same scenario 241 
+
+(See Methods for a more detailed description of the datasets). Consistent with our 242 
+
+real-world analyses, CausalFlux classifies genes as essential or non-essential based on 243 
+
+zero versus non-zero predicted biomass, and we maintain this definition here. In 244 
+
+contrast, for rFBA and PROM, a gene is classified as non-essential if the predicted 245 
+
+biomass is at least 5% of the wild-type (WT) biomass; otherwise, it is classified as 246 
+
+essential. 247 
+
+The biomass predictions of CausalFlux across 100 media conditions were categorised 248 
+
+as no growth and growth (in PROM and rFBA this is referred to as lethal/non-lethal 249 
+
+cases, respectively). The scatter plot in Fig. 6A compares the accuracy of CausalFlux 250 
+
+April 7, 2026 11/30         
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint 025 50 75 100 025 50 75 100 Accuracy between CausalFlux and Actual Accuracy between rFBA and Actual
+> 025 50 75 100 025 50 75 100 Accuracy between CausalFlux and Actual Accuracy between PROM and Actual
+> Performance comparisons across media Carbon Source (58) Nitrogen Source (31) Double-Nitrogen Source (11) Overall Sources (100) CausalFlux > rFBA CausalFlux = rFBA CausalFlux < rFBA
+
+43 312 814 950656 17 27 AA BCPerformance comparisons across media CausalFlux > PROM CausalFlux = PROM CausalFlux < PROM 152 5027 4110 0289 9DMethods CausalFlux (0% of WT) on rFBA datasets rFBA TP FN FP TN Precision Recall F1-score Balanced Accuracy 150 214 105 1031 0.59 0.41 0.48 0.66 258 106 187 949 0.58 0.71 0.64 0.77 PROM 364 0 1136 0 0.24 1 0.39 0.5 235 129 125 1011 0.65 0.65 0.65 0.77 ECarbon Source (58) Nitrogen Source (31) Double-Nitrogen Source (11) Overall Sources (100) CausalFlux (0% of WT) on PROM datasets 150 214 105 1031 0.59 0.41 0.48 0.66 Random classifier Fig 6. Benchmarking CausalFlux on PROM and rFBA datasets: (A) Scatter plot (with jitter 1.75 units) between the accuracy computed between CausalFlux predictions and Actual vs. the accuracy between rFBA predictions and Actual for the 100 media conditions. (B) Scatter plot (with jitter 1.75 units) between the accuracy computed between CausalFlux predictions and Actual vs. the accuracy between PROM predictions and Actual for the 100 media conditions. (C) Performance comparisons of CausalFlux and rFBA for the various Carbon sources, Nitrogen sources and Double-Nitrogen sources and overall 100 media conditions. (D) Performance comparisons of CausalFlux and PROM for the various Carbon sources, Nitrogen sources and Double-Nitrogen sources and overall 100 media conditions. (E) Comparison of classification metrics (TP: true positives [essential], FN: false negatives, FP: false positives, TN: true negatives [non-essential]) for CausalFlux applied to the rFBA and PROM datasets (usual definition of essential/non-essential), along with Random Classifier, rFBA, and PROM predictions across 1500 data points (100 media conditions 
+
+× 15 gene KOs). April 7, 2026 12/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint predictions with the ground truth (binary data of no-growth and growth outcomes) 251 
+
+against the corresponding accuracy of rFBA predictions for each media condition across 252 
+
+15 gene knockouts. Each red dot in the figure represents one media condition. The plot 253 
+
+shows that most points lie slightly below the diagonal, indicating that the accuracy of 254 
+
+CausalFlux predictions tends to be marginally higher than that of rFBA. As 255 
+
+summarised in Fig. 6C, CausalFlux outperforms rFBA in 56 out of 100 cases, performs 256 
+
+equally in 17 cases (points on the diagonal), and has lower performance in 27 cases 257 
+
+(points above the diagonal). The performance breakdown for each of the three major 258 
+
+sources is also provided in Fig. 6C. In comparison with PROM, most of the points lie 259 
+
+along the diagonal in Fig. 6B, indicating comparable performance (89 out of 100 cases, 260 
+
+as shown in Fig. 6D). However, in 9 out of 100 cases, CausalFlux performs slightly lower 261 
+
+than PROM. 262 
+
+We also analyzed the individual 1,500 data points (100 media conditions × 15 gene 263 
+
+KOs), and various performance metrics are reported for the predictions of CausalFlux 264 
+
+when applied to the rFBA and PROM datasets individually, as well as for a random 265 
+
+classifier that predicts all points as no-growth cases, and for the rFBA and PROM 266 
+
+predictions themselves (see Fig. 6E). CausalFlux outperforms the random classifier in 267 
+
+both cases. Compared to rFBA and PROM, the F1 scores of our approach are slightly 268 
+
+lower, primarily due to reduced recall values. However, our predictions exhibit fewer 269 
+
+false positives and a higher number of true negatives relative to the other methods, 270 
+
+indicating better specificity (0.91 for both CasualFlux predictions, 0.84 for rFBA and 271 
+
+0.89 for PROM). 272 
+
+We also varied the definition of no-growth and growth cases (based on predicted 273 
+
+biomass) using thresholds of 5% and 50% of the wild-type biomass values. 274 
+
+Chandrasekaran et al. previously defined no-growth cases as those with biomass less 275 
+
+than 5% of the wild-type biomass in their comparison with rFBA. Following this, we 276 
+
+used both 5% and 50% thresholds to explore the effect of this criterion and generated 277 
+
+the corresponding scatter plots and summary tables (Fig. 6) for CausalFlux predictions 278 
+
+on the rFBA and PROM datasets, with additional results provided in S6 and S7 Fig. 279 
+
+In the 5% scenario, the results of CausalFlux on rFBA were identical to those of the 280 
+
+default zero/non-zero case described earlier. When applied to the PROM datasets, 281 
+
+PROM outperformed CausalFlux in a greater number of conditions, and this trend 282 
+
+persisted in the 50% scenario. Nevertheless, across all three growth definitions, 283 
+
+CausalFlux performed better than rFBA in terms of the number of conditions where it 284 
+
+achieved higher accuracy. 285 
+
+Applying CausalFlux to predict growth/no-growth phenotype 286 
+
+under different media conditions 287 
+
+We applied CausalFlux to perform 798 single-gene KOs in E. coli under other media 288 
+
+conditions, namely M9 minimal medium and Tryptic Soy Broth (TSB). Knockout 289 
+
+analysis showed that while growth (nonzero biomass) was often maintained in both LB 290 
+
+and M9 media, M9 exhibited a higher number of zero-growth cases, indicating a greater 291 
+
+number of essential gene knockouts (Fig. 7[A–B]). This observation is expected, as M9 292 
+
+is a minimal media. In comparison with LB and TSB predictions, the prediction under 293 
+
+TSB conditions showed slightly more zero-growth cases than LB. Overall, M9 media 294 
+
+resulted in the highest number of predicted essential gene knockouts (133), followed by 295 
+
+TSB (93) and LB (63) (Fig. 7C). 296 
+
+In 70 single-gene KO cases, growth was observed in LB but not in M9 predictions, 297 
+
+indicating media-specific essentiality (see Table S3 for the gene list). Similarly, in 45 298 
+
+knockout cases, growth was observed in TSB but not in M9 predictions. Many of these 299 
+
+genes, including LeuD , LeuB , TrpA , TrpC , ArgH , and ArgC , are involved in amino acid 300 
+
+April 7, 2026 13/30             
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint ABC
+> 0.0 0.2 0.4 0.6 0.00 0.25 0.50 0.75 Growth rate in LB media Growth rate in M9 media
+> 0.00 0.25 0.50 0.75 0.00 0.25 0.50 0.75 Growth rate in LB media Growth rate in TSB media 050 100 Common genes LB media M9 media TSB media Number of Predicted essential genes CausalFlux predictions CausalFlux predictions CausalFlux predictions
+
+Fig 7. CausalFlux predictions under different media conditions: (A, B) Each is a scatter plot (with jitter 0.1 units) of predicted growth rate (biomass) under the two indicated media conditions. (C) Bar plot showing the number of predicted essential genes (predicted growth rate of zero) under the indicated media conditions. Common genes (orange) represent the number of predicted essential genes shared across all media conditions. biosynthesis pathways such as leucine, tryptophan, and arginine synthesis. This result is 301 
+
+expected because M9 minimal medium lacks amino acids; consequently, knockouts in 302 
+
+these biosynthetic pathways lead to zero-growth conditions. 303 
+
+# Discussion 304 
+
+Integrating gene regulatory networks (GRNs) and genome-scale metabolic models 305 
+
+(GSMMs) while accounting for bidirectional feedback mechanisms is crucial for 306 
+
+accurately modeling and understanding the complex interplay within biological systems. 307 
+
+In this work, we introduce CausalFlux, a novel methodology that integrates GRNs and 308 
+
+GSMMs to predict reaction fluxes under gene KO perturbations. CausalFlux operates 309 
+
+through an iterative process that combines causal surgery on the GRN to simulate the 310 
+
+impact of gene KOs with constraint-based analysis of the GSMM to predict the 311 
+
+resulting metabolic fluxes. We evaluated the performance of CausalFlux using three 312 
+
+testbed datasets, which enabled direct comparison of predicted steady-state fluxes with 313 
+
+ground-truth values obtained from ODE-based simulations. Across most evaluation 314 
+
+scenarios, CausalFlux demonstrated a clear advantage over TRIMER in capturing 315 
+
+trends in biomass fluxes across different testbed models, and this performance 316 
+
+advantage was consistently observed under varying conditions, such as different 317 
+
+exchange rates. These results underscore the importance of incorporating feedback 318 
+
+mechanisms into integrated modeling frameworks. We further applied CausalFlux to 319 
+
+predict growth versus no-growth phenotypes in E. coli across 798 single-gene KO cases, 320 
+
+achieving a balanced accuracy of 0.79, which again exceeded that of TRIMER. 321 
+
+Additionally, we predicted gene essentiality for these 798 genes under multiple growth 322 
+
+media conditions, including TSB and M9 minimal media. Together, these analyses 323 
+
+demonstrate the potential applicability of our algorithm. Overall, our results suggest 324 
+
+that CausalFlux effectively captures reaction flux trends (particularly qualitative trends 325 
+
+such as significant increases or decreases in reaction fluxes or the ability to distinguish 326 
+
+zero versus nonzero growth outcomes) under gene KO perturbations. 327 
+
+In testbed models, we clearly see that Causalflux outperforms other state-of-the-art 328 
+
+method like TRIMER in most of the KO conditions across all the testbed models. 329 
+
+While the existing method GIMME exhibited comparable to or sometimes better 330 
+
+performance than CausalFlux in predicting biomass reaction fluxes of testbed models, it 331 
+
+April 7, 2026 14/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint is important to note that GIMME requires extra information in the form of gene 332 
+
+expression data specific to the KO condition. In contrast, CausalFlux achieves similar 333 
+
+predictive power without relying on such condition-specific data, and only needs 334 
+
+expression data from a broad set of conditions to learn the initial Bayesian GRN, 335 
+
+making it more broadly applicable. 336 
+
+Several studies have emphasised the role of metabolites in regulating gene expression 337 
+
+in microorganisms, especially E. coli . Geng and Jiang, in their work, mention cAMP, a 338 
+
+well-known metabolite to regulate the crp gene, which is considered to be a global 339 
+
+regulator in E. coli [20]. Weeramange et al. discuss how the cra gene in E. coli is 340 
+
+regulated through the binding of fructose-1-phosphate, and note that this regulatory 341 
+
+mechanism has been experimentally validated in earlier studies [ 21 ]. Cui et al. in their 342 
+
+study state the effect of the metabolite leucine in regulating the lrp gene in E. coli [ 22]. 343 
+
+Kumar et al. curated 77 metabolite-to-gene interactions involving 66 unique metabolites 344 
+
+and 57 unique genes [ 12 ]. Given the significance of such metabolic feedback mechanisms 345 
+
+as mentioned in the earlier studies, we incorporate these metabolite-to-gene feedback 346 
+
+interactions into our CausalFlux algorithm. Using this information about the feedback 347 
+
+edges, we performed 798 single-gene KOs in E. coli to identify essential genes. A closer 348 
+
+inspection of this real-world analysis of gene essentiality reveals that incorporating 349 
+
+metabolic feedback into our algorithm results in performance improvements at each 350 
+
+iteration, with the F1 score increasing over time. The ablation study that we performed, 351 
+
+in which metabolite-to-gene edges were removed before running CausalFlux (on the 798 352 
+
+single-gene KOs), demonstrated the importance of modeling feedback, as performance 353 
+
+declined after edge removal. We could see the decrease in the F1 scores of the models 354 
+
+where the edges from metabolite to gene, like crp or the top 10 metabolic feedback 355 
+
+genes, were removed. Some of the non-essential genes like astC , cysA , argD , etc., were 356 
+
+misclassified as essential genes (i.e., the biomass after the gene KO was zero). 357 
+
+There are some caveats to our methodology. CausalFlux currently provides 358 
+
+qualitative predictions of reaction fluxes. This limitation arises from the lack of kinetic 359 
+
+parameters, which are essential for precise quantitative modeling of the integrated 360 
+
+system dynamics. Also, our algorithm can predict only single-gene KOs and at present 361 
+
+cannot handle multiple-gene KOs. In addition to comparing our method with TRIMER, 362 
+
+we also evaluated our approach with earlier approaches like rFBA and PROM [5, 8]. 363 
+
+Since rFBA is significantly older and no functional implementation is currently 364 
+
+available, a direct evaluation on predicting the essentiality of the 798 genes in E. coli 365 
+
+was not feasible. However, PROM benchmarks itself with rFBA and provides the 366 
+
+results for both methods on a separate dataset and gene KO conditions. We therefore 367 
+
+assessed our method on the same dataset and gene KO cases as performed by 368 
+
+Chandrasekaran et al., and compared our findings with the published performance 369 
+
+values for rFBA and PROM to allow a fair comparison. Our findings demonstrate that 370 
+
+CausalFlux outperforms rFBA at all thresholds used to classify gene KOs as essential 371 
+
+(no-growth cases) or non-essential (growth cases) on the dataset utilized by 372 
+
+Chandrasekaran et al. Relative to PROM, our method has comparable performance in 373 
+
+one of the three thresholds, while PROM remains better in others. These comparisons 374 
+
+show that CausalFlux remains competitive with both recent and earlier methods. 375 
+
+Nevertheless, CausalFlux’s ability to capture bidirectional interactions between the 376 
+
+gene regulatory and metabolic networks offers a more complete understanding of 377 
+
+cellular behaviour and has the potential to significantly impact fields such as metabolic 378 
+
+engineering, drug discovery, and systems biology. In future, this methodology can be 379 
+
+potentially applied to other model organisms, such as yeast and B. subtilis to 380 
+
+understand the bidirectional feedback. 381 
+
+April 7, 2026 15/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+# Materials and Methods 382 
+
+Background on separate GSMM and GRN models 383 
+
+GSMM models a network of interconnected metabolic reactions in a cellular system 384 
+
+using six components: set of all metabolic reactions in the model ( n reactions), set of all 385 
+
+metabolites participating in these reactions ( m metabolites), stoichiometric matrix 386 
+
+(S ∈ Rm×n) representing the metabolite substrates and products of the reactions, 387 
+
+vector of lower bounds on reaction fluxes ( vlb ∈ Rn), vector of upper bounds on 388 
+
+reaction fluxes ( vub ∈ Rn), and set of gene-protein-reaction ( GP R ) relations. A GPR 389 
+
+relation specifies the activity of a metabolic reaction using Boolean-logic-based rules 390 
+
+(specifically, a Boolean expression composed of “AND/OR” operators acting on the 391 
+
+expression states of genes, such as enzyme-coding genes, that regulate the reaction). 392 
+
+Steady-state fluxes of reactions in a GSMM can be predicted using well-known methods 393 
+
+such as Flux Balance Analysis (FBA) [23] and Flux Variability Analysis (FVA) [24]. 394 
+
+On the other hand, GRN model of transcriptional regulation is a directed 395 
+
+probabilistic graphical model, also known as a Bayesian network [ 25 ]. This Bayesian or 396 
+
+probabilistic GRN model has two components: (i) [GRN structure] a directed graph 397 
+
+whose nodes are all genes in the system (including transcription factors and target 398 
+
+genes), and directed edges represent regulatory influences between them, such as the 399 
+
+control of a target gene by a transcription factor; and (ii) [probabilistic model] a set of 400 
+
+parameters that describe the probability distributions governing the binary expression 401 
+
+states of all genes in the network (with each node/gene associated with a binary-valued 402 
+
+random variable that is 0 for inactive and 1 for active state of the gene). Being a 403 
+
+Bayesian network, the graph is directed and acyclic, and the joint distribution of its 404 
+
+random variables factorizes as the product of the conditional distribution of each gene 405 
+
+given its parents in the GRN. That is, P r [all genes in GRN] = 406 
+
+Q 
+
+> Gi∈all genes in GRN
+
+P r [Gi|Parents( Gi)]. More formally, if G1, . . . , G p denote the 407 
+
+random variables corresponding to all p genes in the GRN, and gk ∈ { 0, 1} the binary 408 
+
+state of Gk, 409 
+
+P r [G1 = g1, . . . , G p = gp] = 
+
+> p
+
+Y
+
+> i=1
+
+P r [Gi = gi | Gj = gj for each Gj ∈ Parents( Gi)] . (1) Hence, the parameters of the local conditional distributions (learnt from data) suffice to 410 
+
+specify the global joint distribution. 411 
+
+CausalFlux method 412 
+
+CausalFlux integrates the separate models of the two cellular subsystems described 413 
+
+above (GSMM for metabolism and GRN for transcriptional/gene regulation) by 414 
+
+crucially utilizing the bidirectional feedback interactions between them. The goal is to 415 
+
+simulate the coupled GRN and GSMM models, and thereby predict the steady-state flux 416 
+
+of reactions in the GSMM under this two-way feedback. The GRN-to-GSMM feedback 417 
+
+is specified using the GPR rules, and the reciprocal GSMM-to-GRN feedback is specified 418 
+
+by a set of feedback metabolites ( Mf b ⊆ all metabolites in GSMM) and the genes they 419 
+
+regulate. A key contribution of CausalFlux is to realize this reciprocal feedback using 420 
+
+the concept of “causal surgery” on the Bayesian GRN and of “sink reactions” added to 421 
+
+the GSMM, both of which are elaborated in this section as part of the overall workflow. 422 
+
+Given GRN, GSMM, and feedback information (GPR rules and genes regulated by 423 
+
+Mf b ) as the primary inputs, our overall CausalFlux method consists of a one-time 424 
+
+initialization procedure, followed by an integration step that is executed iteratively until 425 
+
+convergence (see Fig. 1C and the pseudocode in Algorithm 1 below). To complete the 426 
+
+April 7, 2026 16/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+specification of our CausalFlux method, we expand on the initialization procedure, the 427 
+
+integration step, and the iterative execution and convergence in the following three 428 
+
+subsections. 429 
+
+Algorithm 1 CausalFlux 
+
+Input: GRN prior and gene expression data D; GSM M and GPR rules; Metabolite-to-gene feedback ( Mf b 
+
+and the genes they regulate); Input KO gene (nil or ∅ if simulating WT condition); maxIter (maximum number of iterations; default 10) 
+
+Output: Vector of predicted steady-state flux of reactions 
+
+Initialization procedure (init.) :1. GRN ← LearnBayesianNetworkStructureAndParameter (D, GRN prior ) ▷ GRN init. 2. GRN ′ ←− PerformCausalSurgery (GRN , input KO gene, ∅)3. GSM M ′ ← addSinkReactions (GSM M, Mf b ) ▷ GSMM init. 4. v0min , v 0max ←− FVA (GSM M ′, Biomass LowerBound = 0) ▷ Other init. 5. A0 
+
+> f b
+
+← 0; M (active)  
+
+> f b
+
+← ∅ ▷ A f b is indicator vector of active feedback metabolites M (active) 
+
+> f b
+
+6. i ← 0
+
+Iterative execution :
+
+repeat Integration step :8. i ← i + 1 9. GRN ′′ ←− PerformCausalSurgery (GRN ′, genes repressed or activated by M (active)  
+
+> f b
+
+)10. PG ←−RunBayesianNetworkInference (GRN ′′ ) ▷ P G vector has probability of genes 11. PR ←− GPR Evaluation (GSM M ′, PG, GPR rules) ▷ P R vector has probability of reactions 12. GSM M ′′ ←− ModifyUpperAndLowerBounds (GSM M ′, PR, v0min , v0max )13. vsol ←− FBA (GSM M ′′ , Objective = biomass) 14. vi
+
+> min
+
+, v i 
+
+> max
+
+←− FVA (GSM M ′′ , Biomass LowerBound = flux of biomass in vsol )15. Aif b , M (active)  
+
+> f b
+
+←− BinarizationToFindActiveFeedbackMetabolites (vi
+
+> max
+
+, Mf b )
+
+until Aif b == Ai−1 
+
+> f b
+
+OR i == maxIter ▷ convergence check 
+
+return predictions vsol for FBA, vi 
+
+> min
+
+for FVA min or vi 
+
+> max
+
+for FVA max. 
+
+CausalFlux: Intialization procedure 430 
+
+GRN Initialization (Bayesian network learning and initial surgery): Given a 431 
+
+genome-wide gene expression (transcriptomic) dataset and a prior GRN structure as 432 
+
+input, we learn the Bayesian network structure and associated parameters of the 433 
+
+Bayesian GRN using the R package bnlearn [26]. In detail, we used the hill-climbing 434 
+
+heuristic in bnlearn for Bayesian network structure learning from the binarized gene 435 
+
+expression dataset and the prior edges present between the genes (provided as a “white 436 
+
+list” of edges to be required to be present in the learnt structure). Binarization of gene 437 
+
+expression data is done in a dataset-specific fashion, and details on the same are given 438 
+
+in the Methods sections below on application of CausalFlux to different 439 
+
+datasets/models. For structure learning, Bayesian Dirichlet equivalent was used as the 440 
+
+score/objective function, and other hyperparameters were set at default values, except 441 
+
+for the maximum number of parents and maximum iterations, which were set at 5 and 442 
+
+100, respectively. The learnt structure will contain all the prior edges (“white list”) and 443 
+
+possibly also additional edges supported by the data. With this learnt structure, we 444 
+
+perform a final maximum likelihood-based parameter estimation to learn the conditional 445 
+
+probability distribution of each gene in the GRN. The procedure explained here 446 
+
+corresponds to LearnBayesianNetworkStructureAndParameter step in Algorithm 1. 447 
+
+If an input KO gene denoted A is given, then fluxes must be predicted under this 448 
+
+causal perturbation. This initial perturbation is realized via causal surgery of the 449 
+
+April 7, 2026 17/30 
+
+.CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint Bayesian GRN that removes edges incoming to A from its parents and forces the 450 
+
+inactive (0) state on A with do (A = 0) operation (see below for more details on causal 451 
+
+surgery). 452 
+
+GSMM initialization (sink reactions and flux bounds): Standard 453 
+
+constraint-based modeling methods like FBA or FVA can be applied on the GSMM to 454 
+
+infer reaction fluxes, but metabolite concentration or activity levels cannot be directly 455 
+
+inferred. Still, CausalFlux needs to know the activity of feedback metabolites Mf b in 456 
+
+the GSMM to capture their impact on the GRN. To achieve this, we add a sink reaction 457 
+
+for each feedback metabolite to the GSMM. This maps to the addSinkReactions step in 458 
+
+Algorithm 1. A sink reaction is an exchange reaction with a zero lower flux bound; 459 
+
+therefore, it allows secretion but prevents uptake of the corresponding metabolite by the 460 
+
+system. If an exchange reaction is already present for a metabolite μ ∈ Mf b , then we 461 
+
+do not add an extra sink reaction. We simply force this reaction’s lower flux bound to 462 
+
+zero, provided this metabolite is not an essential metabolite that needs to be uptaken by 463 
+
+the system to grow. If it is an essential metabolite, then the lower bound is kept at a 464 
+
+minimal non-zero value (that is specified in the Methods sections below on application 465 
+
+of CausalFlux to different datasets/models). For convenience, we refer to all exchange 466 
+
+reactions involving the feedback metabolites as sink reactions hereafter. The fluxes 467 
+
+through these sink reactions are used to determine the activity of the feedback 468 
+
+metabolites. The upper bounds for these sink reactions are kept in such a way that the 469 
+
+optimal biomass reaction flux obtained by FBA does not change. Details on the bounds 470 
+
+of sink reactions are given in the Methods sections below on application of CausalFlux 471 
+
+to different datasets/models. 472 
+
+After all necessary sink reactions are added, we perform FVA on the GSMM to 473 
+
+obtain the minimum ( v0min ) and maximum ( v0max ) possible flux through each reaction 474 
+
+(with no restriction on the achievable biomass, other than the biomass being at least 0). 475 
+
+These two flux vectors are later used to modify the lower and upper bounds of the 476 
+
+metabolic model in the “Integration” step. 477 
+
+CausalFlux: Integration step 478 
+
+Causal surgery to mutilate GRN and perform inference: Causal surgery on a 479 
+
+random variable in a (causal) Bayesian network is an ideal intervention on the variable, 480 
+
+in which its value alone is externally fixed and its dependence on its parent variables is 481 
+
+removed [ 25 ]. More generally, any intervention on a node in a causal graph is referred to 482 
+
+as causal surgery [ 27]. Such an intervention severs the incoming edges from the parents 483 
+
+of the target node, resulting in a mutilated graph, and fixes the conditional probability 484 
+
+of the intervened node to a specified value. Mathematically, this operation is represented 485 
+
+using the “do-operator”, which defines the probability distribution of a target variable 486 
+
+when a conditioning variable is externally set to a particular value. A key contribution 487 
+
+of the CausalFlux framework is its ability to simulate feedback effects of metabolites on 488 
+
+genes through causal surgery on appropriate genes. This procedure is formalized in the 489 
+
+PerformCausalSurgery step of Algorithm 1, which takes as input the GRN along with 490 
+
+sets of repressed and active genes. Using the “do-operator”, genes in the repressed set 491 
+
+are fixed to 0, while genes in the active set are fixed to 1, after removing the 492 
+
+corresponding parental edges in the GRN. Importantly, causal surgeries on multiple 493 
+
+genes can be performed in any order without affecting the resulting GRN structure. 494 
+
+To illustrate this process, consider Fig. 1B. Prior to causal surgery, the conditional 495 
+
+probability of gene “D” depends on gene “C”, expressed as P (D = 1 | C = 1), where 496 
+
+the state of “C” itself depends on its parent genes “A” and “B”. When a metabolite 497 
+
+(M2) activates gene “C”, the “do-operator” is applied to set C = 1, yielding 498 
+
+P (D = 1 | do (C = 1)). This intervention removes the incoming edges from “A” and “B” 499 
+
+to “C” and fixes the activity of “C” to 1. 500 
+
+April 7, 2026 18/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+Once the causal surgery above is done, we perform inference on the mutilated 501 
+
+Bayesian network to infer the probability of each gene (collected in the vector PG across 502 
+
+all genes) – this process corresponds to the RunBayesianNetworkInference step of the 503 
+
+Algorithm 1. To clarify, for each gene, the above probability is actually the conditional 504 
+
+probability of the gene in the original Bayesian network given all the do(.) operations 505 
+
+on the affected genes (which includes the input KO gene as well as the genes controlled 506 
+
+by active feedback metabolites; note that the effect of input KO gene is also captured 507 
+
+via causal surgery as mentioned earlier, wherein the edges between the input KO gene 508 
+
+and its parents are severed and the input KO gene is forced to activity 0). This is done 509 
+
+using the cpquery() function from the bnlearn package in R [26]. 510 
+
+Bounds modification and constraint-based analysis: The conditional probability 511 
+
+of genes as calculated above is next used to obtain the conditional probability of the 512 
+
+activity of all metabolic reactions ( PR := {PRk }k) using the corresponding GPR rules. 513 
+
+This is performed by the GPR Evaluation step of Algorithm 1, which in turn uses the 514 
+
+GPReval() function from the COBRA Toolbox. In detail, this function analyzes the 515 
+
+k-th metabolic reaction denoted Rk (for all k) as follows. The conditional probability 516 
+
+PRk of reaction Rk is obtained by taking the maximum of the conditional probability of 517 
+
+genes in an OR rule in the GPR of Rk, and the minimum of conditional probability of 518 
+
+genes in an AND rule in the GPR of Rk; for complex GPR rules with multiple OR and 519 
+
+AND operators, GPReval() function uses standard operator precedence conventions (i.e., 520 
+
+prioritizes operators in the order: parentheses, AND, and OR) [28]. 521 
+
+Once the above probabilities are computed, the bounds of the k-th metabolic 522 
+
+reaction is updated (by the ModifyUpperAndLowerBounds component of Algorithm 1) 523 
+
+using the equations below. 524 
+
+vlb,k = v0min ,k × PRk (2) 
+
+vub,k = v0max ,k × PRk (3) The updated bounds of all reactions are incorporated into the metabolic model to 525 
+
+perform FVA and FBA. 526 
+
+Determination of activities of metabolites: By constructing a binarized vector 527 
+
+with values of 1 or 0, the activity of metabolites in Mf b is determined to be active or 528 
+
+inactive, respectively. In the case of CausalFlux, the following Eq 4 describe the 529 
+
+binarization procedure, 530 
+
+For any μ ∈ Mf b , we’ve 531 
+
+Aif b (μ) = 
+
+(
+
+1 if v i
+
+> max
+
+(μ) > 00 otherwise (4) Here, vi
+
+> max
+
+(μ) refers to the maximum flux obtained from FVA, passing through the sink 532 
+
+reaction corresponding to feedback metabolite μ in the ith iteration of CausalFlux. The 533 
+
+above procedure is captured within the BinarizationToFindActiveFeedbackMetabolites 534 
+
+component of Algorithm 1. 535 
+
+CausalFlux: Iterative execution and convergence 536 
+
+The integration step described above corresponds to one iteration, and we repeatedly 537 
+
+execute the integration step until convergence. 538 
+
+Checking convergence: The Af b vector indicating the activity status of Mf b in the 539 
+
+ith vs. ( i − 1) th iterations are compared. If they are identical, the algorithm converges. 540 
+
+When these vectors are not identical, the active metabolites in Mf b are incorporated 541 
+
+back to the GRN to perform causal surgery on the genes regulated by the active 542 
+
+metabolites. This iteration continues until the Af b vectors obtained between the ith and 543 
+
+April 7, 2026 19/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+(i − 1) th iterations are identical or till the iteration reaches the pre-defined maximum 544 
+
+number of iterations. 545 
+
+Predictions: To determine the final biomass after the algorithm terminates, the 546 
+
+following procedure was applied. If the algorithm terminated before reaching the 547 
+
+maximum number of iterations, the algorithm has converged and hence the biomass 548 
+
+value from that iteration was used as the final value. If the algorithm reached the 549 
+
+maximum iteration limit, two scenarios were possible: the algorithm has either 550 
+
+converged or stopped due to the iteration limit. To distinguish these cases, we examined 551 
+
+the fluxes of the feedback metabolite reactions (exchange and sink). In case of 552 
+
+convergence, the biomass from the last iteration was taken as the final biomass. In case 553 
+
+of non-convergence (e.g., if oscillations were present in the exchange/sink fluxes), the 554 
+
+average biomass flux from the last two iterations was taken as the final biomass. 555 
+
+Testbed Model (TM) benchmarks 556 
+
+To evaluate CausalFlux’s predictions, we consider three simplified TMs of integrated 557 
+
+GRN-GSMM systems (labeled TM1, TM2, and TM3). A testbed model is specified 558 
+
+using its topology (network structure), and a system of ODEs based on this topology 559 
+
+that govern the dynamics of the coupled GRN-GSMM system. Simulating these ODEs 560 
+
+yields ground-truth steady-state fluxes of reactions in the testbed model, which can 561 
+
+then be compared to steady-state fluxes predicted by CausalFlux applied on the testbed 562 
+
+model. 563 
+
+Topology of TMs 564 
+
+A testbed model consists of a small-scale GRN-like and GSMM-like component. The 565 
+
+network motifs prominent in biological systems served as the basis for constructing the 566 
+
+GRN components in the testbed models. We incorporated some well-known network 567 
+
+motifs, such as feedforward and feedback loops, single-input modules, and dense 568 
+
+overlapping regulons, into our testbed models due to their prevalence in the 569 
+
+transcription networks of biological systems [29]. The small-scale GSMM comprises a 570 
+
+few reactions, which operate on metabolites, and are catalyzed by enzymes (as per the 571 
+
+GPR rules based on enzyme-encoding genes). For simplicity, we formulate all these 572 
+
+metabolic reactions as irreversible reactions. In all TMs, we treat reaction R1 as the 573 
+
+exchange (nutrient import) reaction. We specify the biomass reaction to be the reaction 574 
+
+R4 in TM1, R11 in TM2, and R8 in TM3. This specification is required when three 575 
+
+methods, CausalFlux, TRIMER, and GIMME, are applied on the testbed models to 576 
+
+predict fluxes. The topology of TM1 is depicted in Fig. 2A (and of TM2 and TM3 in 577 
+
+S1 Fig), and the components of TMs (including metabolic reactions and gene-gene 578 
+
+interactions) are in Table S1. 579 
+
+ODE representation of TMs 580 
+
+The dynamics of the interacting molecules in TMs is represented using ODE equations. 581 
+
+The system of ODEs representing the different reactions in the TMs follows 582 
+
+Michaelis–Menten kinetics [30]. The following set of parameters are used to describe 583 
+
+reactions in the TMs: Michaelis–Menten kinetics maximum reaction velocity, Vmax 584 
+
+(mM/s); Michaelis–Menten kinetics maximum substrate concentration, Km (mM); sink 585 
+
+constant required for outflux reactions, Ks (mM/s); and time constant, T (s). Taking 586 
+
+TM1 as an example, this section describes the different reaction types in TM1 and the 587 
+
+ODEs that govern their kinetics; TM2 and TM3 can be described similarly using their 588 
+
+corresponding ODEs (listed in Suppl Section A.1). A TM has five types of reactions: 589 
+
+April 7, 2026 20/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+1) Nutrient import reaction (R1): All TMs have rate of nutrient uptake proportional to 590 
+
+the biomass reaction and the negative of the intracellular concentration of the nutrient. 591 
+
+The maximum nutrient uptake rate was fixed to 3.2 mM/s [31]. The nutrient uptake 592 
+
+reaction for TM1 is given by: 593 
+
+vR1 = 3 .2 × [M 4] − [M 1] (5) 2) Metabolite export reactions (R6 and R7): The rate of these reactions is directly 594 
+
+proportional to the concentration of the metabolites. For example, the rate of reaction 6 595 
+
+is given by: 596 
+
+vR6 = Ks × [M 4] (6) 3) Enzymatic reactions (R2, R3, R4, and R5): All enzymatic reactions are modeled 597 
+
+using Michaelis–Menten kinetics [30] with its two associated parameters: maximum 598 
+
+reaction rate, Vmax and Michaelis–Menten constant, Km. Vmax is modified to 599 
+
+incorporate the GPR rules. To illustrate this for reactions R2 and R3, please see the 600 
+
+equations below. 601 
+
+vR2 = [C × D] × Vmax × [M 1] [M 1] + Km
+
+(7) 
+
+> 602
+
+vR3 = [C + B − C × B] × Vmax × [M 1] [M 1] + Km
+
+(8) 4) Gene-Gene interaction reactions: Gene-gene interactions are captured using the 603 
+
+normalised Hill differential equations [32]. “ Fact (gene)” here represents the fractional 604 
+
+activation of a gene that follows normalised Hill kinetics. Gene B is represented by: 605 
+
+dB
+
+dt = 1
+
+T (Fact (X) − B) (9) 5) Metabolite–Gene interaction reactions: “ Fact (metabolite )” here represents the 606 
+
+fractional activation of a metabolite, indicating 1 if the species is greater than 50% of 607 
+
+concentrations and 0 otherwise. Gene X from TM1 is represented by: 608 
+
+dX
+
+dt = 1
+
+T (( Fact (M 4) + Fact (M 5) − Fact (M 4) × Fact (M 5)) − X) (10) Here, [ M 4], [ M 5] and [ M 1] refer to the concentrations of the metabolites M4, M5 and 609 
+
+M1, respectively. Also, C, D, and B refer to the fractional activation values of the genes 610 
+
+C, D, and B, respectively. 611 
+
+Simulation of ODE models to generate ground-truth steady-state fluxes and 612 
+
+gene expression data 613 
+
+Each of the three TMs we consider can be simulated under WT or different gene KO 614 
+
+conditions, and under three exchange rates. In total, this yields 39 TM scenarios/cases 615 
+
+to simulate as shown in Fig. 2E. For each of the 39 TM cases (specified by the TM, 616 
+
+WT/gene-KO condition, and exchange rate), we simulate the corresponding system of 617 
+
+ODEs under 100 distinct parameter configurations. These parameter configurations 618 
+
+were constructed from parameter ranges of the ODE parameters, Vmax , Km, Ks, and T 619 
+
+shown in Table S2, which were in turn based on parameter ranges reported in an earlier 620 
+
+study by Lee et al. [ 31 ] on an ODE-based modeling framework for metabolic, regulatory, 621 
+
+and signaling processes. 622 
+
+Given any of the 39 TM cases, we now elaborate on how we simulate the TM case 623 
+
+and generate relevant data. For each of the 100 distinct parameter configurations of the 624 
+
+given TM case, we simulate the corresponding ODE system for 10,000 time points, and 625 
+
+record the reaction fluxes and gene expression data from the last time point as the data 626 
+
+April 7, 2026 21/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+pertaining to steady-state behavior. This results in 100 sets of steady-state data (on 627 
+
+reaction fluxes and gene expression) pertaining to the different parameter 628 
+
+configurations. The median of these 100 steady-state flux values for each reaction is 629 
+
+taken as the ground-truth steady-state reaction fluxes for the given TM case. In 630 
+
+contrast, all 100 simulated steady-state gene expression values were retained without 631 
+
+aggregation, resulting in 100 expression instances per gene for the TM case. These 632 
+
+datasets can then be used to benchmark methods like CausalFlux or TRIMER. The 633 
+
+rationale for aggregating steady-state flux values is due to the constraint-based GSMM 634 
+
+that underlies the benchmarked methods, like CausalFlux or TRIMER in detail, the 635 
+
+GSMM components of these methods do not rely on any knowledge of the kinetic 636 
+
+parameters and are hence tuned to predict a steady-state behavior (reaction fluxes) that 637 
+
+is only representative of the actual steady-state behavior. We take this representative to 638 
+
+be the median of a set of possible steady-state behaviors for this benchmark. The 639 
+
+rationale for not aggregating gene expression instances is to enable learning of the GRN 640 
+
+component of these methods from multi-sample gene expression data. 641 
+
+We provide some additional information on the different exchange rate settings and 642 
+
+related analyses. The ODE systems of TMs were simulated under WT/gene-KO 643 
+
+condition across three exchange rates, the default 3.2 mM/s rate, and two additional 644 
+
+scaled rates of 320 and 3200 mM/s. To simulate scaled exchange rates, parameters Vmax 645 
+
+and Ks corresponding to the 3.2 mM/s exchange rate were each scaled proportionally 646 
+
+by 100-fold and 1000-fold for the 320 and 3200 exchange rates, respectively. When 647 
+
+applying CausalFlux, TRIMER, or GIMME, the 100 gene expression instances 648 
+
+generated for a given TM, condition, and exchange rate were treated as independent 649 
+
+samples. Refer to S2A Fig for a schematic overview of the simulation pipeline. 650 
+
+Application of methods on TM benchmarks 651 
+
+Application of CausalFlux on TM benchmarks 652 
+
+We used CausalFlux to predict steady-state fluxes for all reactions in testbed models, 653 
+
+TM1, TM2, and TM3, under WT and KO conditions across three different exchange 654 
+
+rates (a total of 39 TM cases; see Fig. 2E). To apply CausalFlux on each such TM case 655 
+
+(i.e., a TM under a given exchange rate and a WT or gene-KO condition), the following 656 
+
+inputs were used: (1) GRN prior and binarized gene expression data D: The 657 
+
+actual topology of the TM is provided as GRN prior to CausalFlux (see Table S1). The 658 
+
+continuous-valued gene expression data (obtained from simulating the system of ODEs 659 
+
+of the TM for the WT condition under the given exchange rate) is binarized (converted 660 
+
+to 0/1 data matrix D) using k-means clustering (binarize.kMeans() function from the 661 
+
+“BiTrinA” package [33] was used with k = 2). Please note that CausalFlux’s step 662 
+
+LearnBayesianNetworkStructureAndParameter can learn some additional edges based on 663 
+
+D, besides including the edges provided in GRN prior . Additionally, note that the input 664 
+
+D is always based on the WT simulated expression data, regardless of whether the TM 665 
+
+case on which CausalFlux is applied specifies the WT or KO condition, in order to 666 
+
+mimic real-world settings where expression data is more often available under WT than 667 
+
+gene-KO conditions. (2) GSM M and GPR rules: The small-scale GSMM component 668 
+
+of a particular testbed model is provided as input (see Table S1 for details on the GPR 669 
+
+rules, reactions, and metabolites for each TM). The lower bound for reaction “R1” in 670 
+
+the metabolic model is set to the exchange rate used in ODE simulations. The upper 671 
+
+bounds of all the reactions were set at 10000; (3) Metabolite-to-gene feedback: 672 
+
+Edges from metabolites to genes for each testbed model (see Table S1); and (4) Input 673 
+
+KO gene: nil or ∅ for the WT, and a specific gene for the KO condition (refer to 674 
+
+Fig. 2E for all KO genes, each of which were separately knocked out). 675 
+
+Once the GRN is obtained, the remaining components of the methodology are 676 
+
+April 7, 2026 22/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+implemented as mentioned earlier. The steady-state fluxes of every WT/KO condition 677 
+
+were predicted for every TM under every exchange rate. The correlation ( ρ) between 678 
+
+the actual and predicted fluxes (CausalFlux) was calculated for all the TMs under 679 
+
+WT/KO cases. The maximum number of iterations for running CausalFlux on TMs was 680 
+
+set at 10. While plotting the scatter plots between the ρ computed between actual and 681 
+
+predicted fluxes across the various TM cases, “jitter” from “ggplot2” function was used 682 
+
+to avoid overplotting of the points in Fig. 2[D-E] and Fig. 3[A-F]. 683 
+
+Application of other methods on TM benchmarks 684 
+
+GIMME (from COBRA Toolbox) [28] and TRIMER were applied to the same 39 TM 685 
+
+cases as CausalFlux to predict steady-state fluxes [2, 9]. Although these two studies 686 
+
+differ significantly from CausalFlux in terms of input types and approach, we wanted to 687 
+
+assess how well they performed on the TMs to estimate fluxes under WT or gene-KO 688 
+
+conditions. For each TM case, the GRNs and binary gene expression data provided as 689 
+
+input to CausalFlux is also provided as input to execute TRIMER. “sFBA” was used to 690 
+
+predict the steady-state fluxes in TRIMER, since it was their best performing mode [ 9]. 691 
+
+For each TM case, GIMME predicted fluxes using the average gene expression data 692 
+
+simulated under the particular condition (WT or gene-KO condition) and exchange rate 693 
+
+specified in the TM case. 694 
+
+Application of methods on real-world datasets 695 
+
+Application of CausalFlux on E. coli to perform single-gene KO 696 
+
+perturbations 697 
+
+We applied CausalFlux to perform single-gene KOs on 798 E. coli genes under LB 698 
+
+(Luria–Bertani) media to predict cellular growth. Ground-truth growth rates for these 699 
+
+knockout cases were obtained from the Keio collection, where zero measured growth 700 
+
+indicates no growth and non-zero values indicate growth [13]. The 798 genes were 701 
+
+selected because they had at least one edge in the GRN learnt/reconstructed from the 702 
+
+E. coli expression data and were included in at least one GPR rule of E. coli ’s metabolic 703 
+
+model (see below). Growth predictions were inferred from CausalFlux-predicted biomass 704 
+
+flux, with zero biomass indicating no growth and nonzero biomass indicating growth. 705 
+
+In this application of CausalFlux, the relevant inputs/datasets are as follows: (1) 706 
+
+GRN prior and binarized gene expression data D: Prior knowledge ( GRN prior ) on 707 
+
+gene-gene pairwise interactions was taken from RegulonDB v8.1 (3451 unique gene-gene 708 
+
+pairs without any cycles), similar to TRIMER [ 34 ]. The binarized gene expression data 709 
+
+for E. coli was taken from the TRIMER work, with the underlying raw expression data 710 
+
+of 4189 genes in 2198 samples based on the EcoMac work [35]. As described by the 711 
+
+TRIMER authors, the raw expression data were quantile-normalized and subsequently 712 
+
+binarized using a quantile-based threshold reported as 0.33 (hence if a gene’s normalized 713 
+
+expression in a given sample is less than or equal to the gene’s 33rd percentile value, it 714 
+
+is considered OFF (0), and otherwise considered ON (1)). The resulting OFF/ON (0/1) 715 
+
+binarized gene expression data is used for Bayesian network learning. The learnt GRN 716 
+
+for E. coli consisted of 3551 unique edges over 1607 genes. (2) GSM M and GPR 717 
+
+rules: We used iML1515 model for E. coli , consisting of 1877 metabolites, 2712 718 
+
+reactions, and 1516 genes [36]. The GPR rules are also taken from this model. The 719 
+
+lower bound of essential exchange reactions for feedback metabolites was set at −0.001, 720 
+
+and the upper bound of the sink reactions for feedback metabolites was set at 10. The 721 
+
+lower bound of vglucose (glucose exchange rate) and voxygen (oxygen exchange rate) in 722 
+
+the GSMM was set at −8.5 mm/gDCW/hr and −14 .5 mm/gDCW/hr respectively, as 723 
+
+described in TRIMER for aerobic conditions [9]. To simulate the LB media condition, 724 
+
+April 7, 2026 23/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+we modified the bounds for some of the exchange reactions that are present in the 725 
+
+media, as done in the work by Zimmermann et al. [37]. (3) Metabolite-to-gene 726 
+
+feedback: 77 unique edges between 66 feedback metabolites Mf b and 57 (transcription 727 
+
+factor) genes in E. coli taken from Kumar et al. [ 12 ]. (4) Input KO gene: We applied 728 
+
+CausalFlux to separately perform each of the 798 single-gene KOs. The Keio collection 729 
+
+has the growth rate experimentally measured for 3985 KO strains in E. coli under LB 730 
+
+media [ 13]. Additionally, we relied on the EcoCyc database [ 38 ] to determine whether a 731 
+
+gene is essential vs. non-essential for E. coli grown in LB media (note that an essential 732 
+
+gene is one whose KO leads to no growth, and is hence necessary for growth). 733 
+
+Application of other methods on E. coli to perform single-gene KO 734 
+
+perturbations 735 
+
+On the E. coli dataset covering 798 single-gene KO perturbations, the TRIMER 736 
+
+algorithm was applied using the same binarized gene expression data, the same set of 737 
+
+prior edges, and the same iML1515 metabolic model as used for CausalFlux. The 738 
+
+glucose and oxygen exchange rates, as well as the LB medium setup, were also identical 739 
+
+to those used in the CausalFlux application. Again, steady-state fluxes in TRIMER 740 
+
+were predicted using the sFBA mode, as it was reported to be the best-performing 741 
+
+configuration by TRIMER authors. 742 
+
+We did not apply GIMME to the 798 single-gene KO perturbations because it 743 
+
+requires gene expression data for each KO condition, which is difficult to obtain under 744 
+
+LB medium. Moreover, since our objective is to predict gene essentiality in E. coli , 745 
+
+acquiring steady-state gene expression data for essential genes is inherently troublesome, 746 
+
+as their KO would result in cell death. 747 
+
+Application of CausalFlux on E. coli to perform single-gene KO 748 
+
+perturbations under different media conditions 749 
+
+We modified the lower and upper bounds for exchange reactions corresponding to M9 750 
+
+and TSB media in the iML1515 E. coli model, with values taken from Zimmermann et 751 
+
+al. [37]. After modifying the GSMM, CausalFlux was applied as described in the 752 
+
+previous section (on its application on E. coli to perform single-gene KO perturbations 753 
+
+under the LB media). 754 
+
+Application of CausalFlux on rFBA/PROM E. coli datasets to perform 15 755 
+
+gene KOs across 100 media conditions 756 
+
+CausalFlux was applied separately to the rFBA and PROM datasets to predict biomass 757 
+
+(growth rate) for 15 gene knockouts (KOs) across 100 media conditions. These 100 758 
+
+media conditions comprised 58 carbon sources, 31 nitrogen sources, and 11 759 
+
+double-nitrogen sources. 760 
+
+For the rFBA datasets, the GRN information and feedback metabolite data were 761 
+
+extracted from Covert et al.’s work [5]. The iJR904 metabolic model was used for this 762 
+
+analysis. Since rFBA itself does not require gene expression data but CausalFlux does, 763 
+
+the gene expression data were taken from Chandrasekaran et al.’s work [8]. 764 
+
+For the PROM datasets, both the GRN information and the gene expression data 765 
+
+were obtained from Chandrasekaran et al.’s work. As the PROM framework does not 766 
+
+include metabolic feedback, the feedback information used in CausalFlux was kept 767 
+
+consistent with that used in the rFBA analysis. The iJR904 metabolic model was also 768 
+
+used for this case. 769 
+
+Chandrasekaran et al. presented results using the iJR904 model of E. coli and 770 
+
+provided rFBA predictions on the same model. The ground truth labels 771 
+
+April 7, 2026 24/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+(lethal/non-lethal cases), along with the rFBA and PROM predictions, were obtained 772 
+
+from their work. Covert et al. also provided the exchange reaction bounds in the iJR904 773 
+
+model required to simulate the 100 media conditions. 774 
+
+Applying CausalFlux following ablation of metabolite-to-gene 775 
+
+feedback edges 776 
+
+The metabolite-to-gene feedback interactions in E. coli considered in this work involved 777 
+
+54 unique genes, referred to as metabolic feedback genes. We define the influence of any 778 
+
+such metabolic feedback gene (on the single-gene KOs) as the number of single-KO 779 
+
+genes that are in the 0-hop or 1-hop neighbourhood of that gene in the GRN. The 780 
+
+metabolic feedback genes can then be ranked based on this influence measure. We 781 
+
+conducted five separate ablation studies in which the feedback edges from metabolite(s) 782 
+
+to gene(s) were removed and the change in prediction performance noted. Specifically, 783 
+
+in the first three studies, we ablated feedback edges to crp , fur , and cra , which are the 784 
+
+metabolic feedback genes with the highest, second-highest, and third-highest influence 785 
+
+(on the single-gene KOs) respectively. In the final two ablation studies, we considered a 786 
+
+set of 10 (and separately 40) metabolic feedback genes with the most influence on the 787 
+
+single-KO genes (with the latter representing approximately 75% of the total 54 genes) 788 
+
+and removed the incoming feedback edges from metabolites to all genes in the set. After 789 
+
+performing any of the above ablations of metabolite-to-gene edges, the CausalFlux 790 
+
+algorithm was applied to predict the biomass for each of the 798 single-gene KO 791 
+
+conditions, and these predictions compared to the ones obtained before ablation. 792 
+
+# Supporting information 793 
+
+S1 Fig. Topology of TM2 and TM3: The integrated GRN+MM network for TM2 794 
+
+and TM3 are shown. 795 
+
+S2 Fig. Framework for simulating ground-truth fluxes/gene expression for 796 
+
+a particular TM case; and evaluating CausalFlux, TRIMER, and GIMME 797 
+
+on this TM case: Consider a system of ODEs representing a given TM case, i.e., a 798 
+
+TM (integrated small-scale GRN+GSMM testbed system with two-way feedback) under 799 
+
+a specific WT/KO condition and a particular exchange rate. (A) For each of the 100 800 
+
+parameter configurations shown, we simulate this ODE system for 10,000 time points to 801 
+
+eventually obtain steady-state data (reaction fluxes and gene expression) matrix for the 802 
+
+given TM case. (B) Different methods (CausalFlux, TRIMER, and GIMME) are 803 
+
+applied on the resulting steady-state data to generate predicted fluxes. The median 804 
+
+value of steady-state fluxes across the 100 parameter configurations is taken as the 805 
+
+actual or ground-truth fluxes. The correlation ( ρ) between the predicted and 806 
+
+ground-truth fluxes can be used to evaluate the different methods. 807 
+
+S3 Fig. Comparison of GIMME variants (FVA max, FVA min and FBA) 808 
+
+with actual in TMs: Scatter plot of the correlation ( ρ) computed between the actual 809 
+
+and GIMME (FVA max) for the 39 TM cases is compared with ρ computed between 810 
+
+(A) actual and GIMME (FBA), (B) actual and GIMME (FVA min). 811 
+
+S4 Fig. Comparison of CausalFlux iteration 1 vs 2 for 39 TM cases: Scatter 812 
+
+plot (with jitter of 0.05 units) between the ρ computed between actual and CausalFlux 813 
+
+predicted fluxes at iteration 1 versus iteration 2 for the 39 TM cases. 814 
+
+April 7, 2026 25/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+S5 Fig. Exploring the role of metabolic feedback through ablation studies: 815 
+
+Scatter plots (with jitter of 0.05 units) for ablation studies done on (A) fur , (B) cra , (C) 816 
+
+Metabolic feedback to 40 metabolic feedback genes with the most influence on 817 
+
+single-gene KOs were removed. 818 
+
+S6 Fig. Threshold of 5% of WT is used to define essential/non-essential 819 
+
+cases : (A) Scatter plot (with jitter 1.75 units) between the accuracy computed between 820 
+
+CausalFlux predictions and Actual vs. the accuracy between rFBA predictions and 821 
+
+Actual for the 100 media conditions. (B) Scatter plot (with jitter 1.75 units) between 822 
+
+the accuracy computed between CausalFlux predictions and Actual vs. the accuracy 823 
+
+between PROM predictions and Actual for the 100 media conditions. (C) Performance 824 
+
+comparisons of CausalFlux and rFBA for the various Carbon sources, Nitrogen sources 825 
+
+and Double-Nitrogen sources and overall 100 media conditions. (D) Performance 826 
+
+comparisons of CausalFlux and PROM for the various Carbon sources, Nitrogen sources 827 
+
+and Double-Nitrogen sources and overall 100 media conditions. (E) Comparison of 828 
+
+classification metrics (TP: true positives [essential], FN: false negatives, FP: false 829 
+
+positives, TN: true negatives [non-essential]) for CausalFlux applied to the rFBA and 830 
+
+PROM datasets, along with Random Classifier, rFBA, and PROM predictions across 831 
+
+1500 data points (100 media conditions × 15 gene KOs). 832 
+
+S7 Fig. Threshold of 50% of WT is used to define essential/non-essential 833 
+
+cases : (A) Scatter plot (with jitter 1.75 units) between the accuracy computed between 834 
+
+CausalFlux predictions and Actual vs. the accuracy between rFBA predictions and 835 
+
+Actual for the 100 media conditions. (B) Scatter plot (with jitter 1.75 units) between 836 
+
+the accuracy computed between CausalFlux predictions and Actual vs. the accuracy 837 
+
+between PROM predictions and Actual for the 100 media conditions. (C) Performance 838 
+
+comparisons of CausalFlux and rFBA for the various Carbon sources, Nitrogen sources 839 
+
+and Double-Nitrogen sources and overall 100 media conditions. (D) Performance 840 
+
+comparisons of CausalFlux and PROM for the various Carbon sources, Nitrogen sources 841 
+
+and Double-Nitrogen sources and overall 100 media conditions. (E) Comparison of 842 
+
+classification metrics (TP: true positives [essential], FN: false negatives, FP: false 843 
+
+positives, TN: true negatives [non-essential]) for CausalFlux applied to the rFBA and 844 
+
+PROM datasets, along with Random Classifier, rFBA, and PROM predictions across 845 
+
+1500 data points (100 media conditions × 15 gene KOs). 846 
+
+Table S1 For each TM, the genes, metabolites, and reactions in the TM are provided, 847 
+
+which are in turn used to define and simulate a system of ODEs corresponding to the 848 
+
+TM. 849 
+
+Table S2 The range of parameter values used for simulating the ground truth data 850 
+
+from the ODE equations. The parameter range shown here are for 3.2 exchange rate. 851 
+
+Vmax and Ks were scaled proportionally by 100-fold and 1000-fold for the 320 and 3200 852 
+
+exchange rates. 853 
+
+Table S3 List of genes that vary under different media conditions when single-gene 854 
+
+KOs are performed on E. coli . 855 
+
+Table S4 For each metabolic feedback gene, this table shows its influence, i.e., the 856 
+
+number of its 1-hop neighbors in the GRN that overlap with the set of 798 single-gene 857 
+
+KOs in the E. coli dataset. 858 
+
+April 7, 2026 26/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+Table S5 Performance metrics of the original model and 5 different ablation models 859 
+
+for predicting essentiality of genes (i.e., growth vs. no-growth phenotype under 860 
+
+single-gene KOs). 861 
+
+Supplementary Data 1. Spearman’s ρ between actual and predicted fluxes 862 
+
+for all the reactions in TMs. Spearman correlation and its p-value computed 863 
+
+between the actual and predicted fluxes (across all the methods) for the 39 cases of 864 
+
+TMs are given in this file. 865 
+
+Supplementary Data 2. Reactions with zero flux in the “gabT” and “serC” 866 
+
+KO models with the metabolic feedback to “crp” removed. This file lists the 867 
+
+identifiers of the following reactions. A total of 123 reactions had zero flux, of which 27 868 
+
+had different GPR probabilities for the “gabT” KO model with metabolic feedback to 869 
+
+“crp” removed. Similarly, a total of 144 reactions had zero flux, of which 29 had different 870 
+
+GPR probabilities for the “serC” KO model with metabolic feedback to “crp” removed. 871 
+
+# Acknowledgments 872 
+
+We thank members of our research group BIRDS (Bioinformatics and Integrative Data 873 
+
+Science) and research center IBSE (Centre for Integrative Biology and Systems 874 
+
+Medicine) at IIT Madras for their valuable inputs during the course of this work. This 875 
+
+work was supported by the Wellcome Trust/DBT India Alliance Intermediate 876 
+
+Fellowship Grant IA/I/17/2/503323 awarded to MN. We acknowledge the use of LLMs 877 
+
+(Large Language Models, mainly ChatGPT, Gemini, and Grammarly) for copy-editing 878 
+
+purposes (checking spelling and grammar, and polishing certain sentences/phrases). 879 
+
+# Author contributions statement 880 
+
+NS : Conceptualization, Data Curation, Methodology, Software, Validation, Formal 881 
+
+analysis, Writing - Original Draft, Writing - Review & Editing, Visualization. SPK : 882 
+
+Conceptualization, Methodology, Software, Validation, Writing - Review & Editing, 883 
+
+Visualization. RR : Supervision, Conceptualization, Visualization. NPB : Supervision, 884 
+
+Conceptualization, Writing - Review & Editing, Visualization. MN : Supervision, 885 
+
+Conceptualization, Methodology, Writing - Review & Editing, Visualization, Resources, 886 
+
+Funding acquisition. 887 
+
+# References 
+
+1. Vivek-Ananth R, Samal A. Advances in the integration of transcriptional regulatory information into genome-scale metabolic models. Biosystems. 2016;147:1–10. 2. Becker SA, Palsson BO. Context-specific metabolic networks are consistent with experiments. PLOS Computational Biology. 2008;4(5):e1000082. 3. Pacheco MP, Sauter T. The FASTCORE family: For the fast reconstruction of compact context-specific metabolic networks models. Metabolic Network Reconstruction and Modeling: Methods and Protocols. 2018; p. 101–110. 4. Covert MW, Palsson BØ. Transcriptional regulation in constraints-based metabolic models of Escherichia coli. Journal of Biological Chemistry. 2002;277(31):28058–28064. April 7, 2026 27/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+5. Covert MW, Knight EM, Reed JL, Herrgard MJ, Palsson BO. Integrating high-throughput and computational data elucidates bacterial networks. Nature. 2004;429(6987):92–96. 6. Jensen PA. Coupling fluxes, enzymes, and regulation in genome-scale metabolic models. Metabolic Network Reconstruction and Modeling: Methods and Protocols. 2018; p. 337–351. 7. Shlomi T, Eisenberg Y, Sharan R, Ruppin E. A genome-scale computational study of the interplay between transcriptional regulation and metabolism. Molecular Systems Biology. 2007;3(1):101. 8. Chandrasekaran S, Price ND. Probabilistic integrative modeling of genome-scale metabolic and regulatory networks in Escherichia coli and Mycobacterium tuberculosis. Proceedings of the National Academy of Sciences of the United States of America. 2010;107(41):17845–17850. 9. Niu P, Soto MJ, Yoon BJ, Dougherty ER, Alexander FJ, Blaby I, et al. TRIMER: Transcription regulation integrated with metabolic regulation. iScience. 2021;24(11). 10. Donati S, Sander T, Link H. Crosstalk between transcription and metabolism: how much enzyme is enough for a cell? Wiley Interdisciplinary Reviews: Systems Biology and Medicine. 2018;10(1):e1396. 11. Carthew RW. Gene regulation and cellular metabolism: an essential partnership. Trends in Genetics. 2021;37(4):389–400. 12. Kumar S, Mahajan S, Jain S. Feedbacks from the metabolic network to the genetic network reveal regulatory modules in E. coli and B. subtilis. PLOS ONE. 2018;13(10):e0203311. 13. Baba T, Ara T, Hasegawa M, Takai Y, Okumura Y, Baba M, et al. Construction of Escherichia coli K-12 in-frame, single-gene knockout mutants: the Keio collection. Molecular Systems Biology. 2006;2(1):2006.0008. 14. Kochanowski K, Okano H, Patsalo V, Williamson J, Sauer U, Hwa T. Global coordination of metabolic pathways in Escherichia coli by active and passive regulation. Molecular Systems Biology. 2021;17(4):MSB202010064. 15. Cox RJ, Sherwin WA, Lam LK, Vederas JC. Synthesis and evaluation of novel substrates and inhibitors of N-succinyl-LL-diaminopimelate aminotransferase (DAP-AT) from Escherichia coli. Journal of the American Chemical Society. 1996;118(32):7449–7460. 16. Drewke C, Klein M, Clade D, Arenz A, M¨ uller R, Leistner E. 4-O-phosphoryl-L-threonine, a substrate of the pdxC (serC) gene product involved in vitamin B6 biosynthesis. FEBS letters. 1996;390(2):179–182. 17. Wang X, Zhou YJ, Wang L, Liu W, Liu Y, Peng C, et al. Engineering Escherichia coli nicotinic acid mononucleotide adenylyltransferase for fully active amidated NAD biosynthesis. Applied and Environmental Microbiology. 2017;83(13):e00692–17. 18. Schneider BL, Ruback S, Kiupakis AK, Kasbarian H, Pybus C, Reitzer L. The Escherichia coli gabDTPC operon: specific γ-aminobutyrate catabolism and nonspecific induction. Journal of bacteriology. 2002;184(24):6976–6986. April 7, 2026 28/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+19. Khankal R, Chin JW, Ghosh D, Cirino PC. Transcriptional effects of CRP* expression in Escherichia coli. Journal of Biological Engineering. 2009;3(1):13. 20. Geng H, Jiang R. cAMP receptor protein (CRP)-mediated resistance/tolerance in bacteria: mechanism and utilization in biotechnology. Applied Microbiology and Biotechnology. 2015;99(11):4533–4543. 21. Weeramange C, Menjivar C, O’Neil PT, El Qaidi S, Harrison KS, Meinhardt S, et al. Fructose-1-kinase has pleiotropic roles in Escherichia coli. Journal of Biological Chemistry. 2024;300(6):107352. 22. Cui Y, Midkiff MA, Wang Q, Calvo JM. The Leucine-responsive Regulatory Protein (Lrp) from Escherichia coli: stoichiometry and minimal requirements for binding to DNA. Journal of Biological Chemistry. 1996;271(12):6611–6617. 23. Orth JD, Thiele I, Palsson BØ. What is flux balance analysis? Nature Biotechnology. 2010;28(3):245–248. 24. Mahadevan R, Schilling CH. The effects of alternate optimal solutions in constraint-based genome-scale metabolic models. Metabolic Engineering. 2003;5(4):264–276. 25. Koller D, Friedman N. Probabilistic Graphical Models: Principles and Techniques. Cambridge, MA: MIT Press; 2009. 26. Scutari M. Learning Bayesian networks with the bnlearn R package. Journal of Statistical Software. 2010;35:1–22. 27. Pearl J. Causal inference in statistics: a primer. John Wiley & Sons; 2016. 28. Heirendt L, Arreckx S, Pfau T, Mendoza SN, Richelle A, Heinken A, et al. Creation and analysis of biochemical constraint-based models using the COBRA Toolbox v. 3.0. Nature Protocols. 2019;14(3):639–702. 29. Alon U. An Introduction to Systems Biology: Design Principles of Biological Circuits. Chapman and Hall/CRC; 2019. 30. Johnson KA, Goody RS. The original Michaelis constant: translation of the 1913 Michaelis–Menten paper. Biochemistry. 2011;50(39):8264–8269. 31. Min Lee J, Gianchandani EP, Eddy JA, Papin JA. Dynamic analysis of integrated signaling, metabolic, and regulatory networks. PLOS Computational Biology. 2008;4(5):e1000086. 32. Kraeutler MJ, Soltis AR, Saucerman JJ. Modeling cardiac β-adrenergic signaling with normalized-Hill differential equations: comparison with a biochemical model. BMC Systems Biology. 2010;4:157. 33. M¨ ussel C, Schmid F, Bl¨ atte TJ, Hopfensitz M, Lausser L, Kestler HA. BiTrinA—multiscale binarization and trinarization with quality analysis. Bioinformatics. 2016;32(3):465–468. 34. Santos-Zavaleta A, Salgado H, Gama-Castro S, S´ anchez-P´ erez M, G´ omez-Romero L, Ledezma-Tejeida D, et al. RegulonDB v10.5: tackling challenges to unify classic and high throughput knowledge of gene regulation in E. coli K-12. Nucleic Acids Research. 2019;47(D1):D212–D220. April 7, 2026 29/30 
+
+> .CC-BY 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted April 13, 2026. ;https://doi.org/10.64898/2026.04.10.717623 doi: bioRxiv preprint
+
+35. Carrera J, Estrela R, Luo J, Rai N, Tsoukalas A, Tagkopoulos I. An integrative, multi-scale, genome-wide model reveals the phenotypic landscape of Escherichia coli. Molecular Systems Biology. 2014;10(7):735. 36. Monk JM, Lloyd CJ, Brunk E, Mih N, Sastry A, King Z, et al. i ML1515, a knowledgebase that computes Escherichia coli traits. Nature Biotechnology. 2017;35(10):904–908. 37. Zimmermann J, Kaleta C, Waschina S. Gapseq: informed prediction of bacterial metabolic pathways and reconstruction of accurate metabolic models. Genome Biology. 2021;22:1–35. 38. Karp PD, Paley S, Caspi R, Kothari A, Krummenacker M, Midford PE, et al. The EcoCyc database (2023). EcoSal Plus. 2023;11(1):eESP–0002–2023. April 7, 2026 30/30

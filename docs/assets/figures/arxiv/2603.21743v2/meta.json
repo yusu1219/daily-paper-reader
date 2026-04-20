@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-001.webp",
+      "caption": "Figure 3: CellFluxRL algorithm. RL post-training seeks to increase the likelihood of high-reward samples and decrease the likelihood of low-reward samples. Therefore, the core training loop of CellFluxRL consists of interleaved phases of sampling and training. (a) Sampling: we generate multiple rollouts from a fixed control image and perturbation condition, scoring each with the reward models. (b) Training: because exact likelihoods in flow matching are intractable, we construct positive and negative velocities from the batch of rollouts and optimize them contrastively to achieve this goal, following DiffusionNFT [48].",
+      "page": 6,
+      "index": 1,
+      "width": 931,
+      "height": 280
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-002.webp",
+      "caption": "Figure 2: Motivation. Current generative models for simulating cellular perturbations can fail to produce physically plausible cell images. For example, nuclei may appear outside the cell membrane. We design a suite of biologically meaningful verifiers in three roles: (1) as evaluators to assess the biological correctness of generated images, (2) as reward signals to improve generation via reinforcement learning, and (3) as verification modules to enhance sample quality through test-time scaling.",
+      "page": 2,
+      "index": 2,
+      "width": 931,
+      "height": 317
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-003.webp",
+      "caption": "Figure 6: Sensitivity analysis on KL weight β. Each subplot shows reward sensitivity to β after RL post-training.",
+      "page": 10,
+      "index": 3,
+      "width": 979,
+      "height": 288
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-004.webp",
+      "caption": "Table 2: Single-reward optimization with reinforcement learning. Each column shows a model optimized for one reward only or CellFluxRL (all rewards), evaluated across the metrics in each row. Bold values indicate the best performance; underlined values indicate the second best; dashed-underlined values indicate the third best.",
+      "page": 10,
+      "index": 4,
+      "width": 677,
+      "height": 204
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-005.webp",
+      "caption": "Table 1: Quantitative comparison across biological rewards and generative quality metrics. Each row represents a different evaluation metric, and each column represents a different method. TTS is CellFluxRL with test time scaling by best-of-N with N = 4, where the best sample is selected by the weighted total reward. Bold values indicate the best performance; underlined values indicate the second best.",
+      "page": 8,
+      "index": 5,
+      "width": 710,
+      "height": 297
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-006.webp",
+      "caption": "Table 3: Modes of action (MoA) for compounds in BBBC021.",
+      "page": 17,
+      "index": 6,
+      "width": 410,
+      "height": 847
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-007.webp",
+      "caption": "Figure 4: Qualitative comparisons. CellFluxRL generates more biologically-grounded images, better capturing druginduced morphological changes. In these examples, Etoposide-induced cell rounding, Demecolcine-driven microtubule destabilization, and AZ138-associated cell shrinkage are all more faithfully reproduced, and cell density more closely matches the ground truth for Cisplatin. Test-time scaling (+TTS) further refines these predictions toward the target images.",
+      "page": 9,
+      "index": 7,
+      "width": 960,
+      "height": 494
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-008.webp",
+      "caption": "Figure 5: Test-time scaling by best-of-N further improves generation quality. The sample achieving the highest overall (combined) reward is selected from N rollouts, and each individual reward is plotted. RL (orange) consistently exhibits better scaling than the base model (blue) across all rewards.",
+      "page": 9,
+      "index": 8,
+      "width": 976,
+      "height": 323
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-009.webp",
+      "caption": "Figure 8: Roundness reward failure cases. The pretrained CellFlux baseline (left) produces nuclei with irregular, implausible shapes that deviate from the MoA-conditioned ground-truth distribution. CellFluxRL + TTS (right) generates nuclei with roundness statistics consistent with real cells under the same perturbation condition. Ground-truth target images for the same perturbation conditions are shown in Figure 4 of the main paper.",
+      "page": 16,
+      "index": 9,
+      "width": 976,
+      "height": 447
+    },
+    {
+      "url": "assets/figures/arxiv/2603.21743v2/fig-010.webp",
+      "caption": "Figure 7: MoA reward failure cases. The pretrained CellFlux baseline (left) generates images that do not match the expected morphological profile for the given perturbation, as measured by the MoA reward. CellFluxRL + TTS (right) corrects these failures by explicitly optimizing for MoA consistency during RL post-training. Ground-truth target images for the same perturbation conditions are shown in Figure 4 of the main paper.",
+      "page": 16,
+      "index": 10,
+      "width": 979,
+      "height": 448
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713295-v1/fig-001.webp",
+      "caption": "Figure 1: Overview of PACMON. Multimodal measurements, here RNA, surface proteins and perturbation identities, are decomposed into shared latent factors, modality-specific loadings and perturbation-to-factor coefficients under pathway-informed structured sparsity. This representation enables downstream analyses including variance decomposition, latent clustering, perturbation–pathway association analysis, differential expression and pathway refinement.",
+      "page": 2,
+      "index": 1,
+      "width": 894,
+      "height": 332
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713295-v1/fig-002.webp",
+      "caption": "Figure 2: PACMON accurately recovers pathway and differential-expression signals while scaling to large perturbation datasets. (A) Recovery of underlying pathways and their perturbation-associated structure on synthetic data, measured by area under the precision–recall curve (AUPR), comparing PACMON with PACMONu (uninformed) and GSFA. PACMON achieves the highest recovery of ground-truth pathways, as well as their corresponding perturbation associations. (B) Recovery of differentially expressed genes on synthetic data, again measured by AUPR, showing strong agreement between PACMON and ground-truth perturbation-induced feature responses relative to alternative approaches. (C) Runtime as a function of dataset size, highlighting the scalability of PACMON relative to GSFA and enabling application to atlas-scale perturbation datasets such as Tahoe-100M.",
+      "page": 5,
+      "index": 2,
+      "width": 884,
+      "height": 253
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713295-v1/fig-003.webp",
+      "caption": "Figure 3: PACMON identifies interpretable pathway programs from multimodal perturbation data. (A) UMAP of the inferred joint latent space for the Perturb-CITE-seq melanoma dataset, showing separation of control, T cell co-culture and IFNγ-treated cells. (B) Perturbation effects on the Interferon Signaling (R) factor. Disruption of the IFNγ–JAK/STAT cascade strongly suppresses interferon-associated pathway activity, consistent with canonical immune-evasion mechanisms. (C) Joint distribution of Interferon Signaling (R) and Interferon Gamma Response (H) factor activities across cells, illustrating that IFNγ treatment is primarily associated with the Hallmark interferon-gamma program, i.e. Interferon Gamma Response (H), whereas co-culture shifts cells along a broader interferon-signaling axis. (D) Dotplot summarising perturbation–pathway associations across targeted genetic perturbations. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. The inferred landscape highlights pathway-specific responses across immune and proliferative programs. (E) Top RNA and surface-protein loadings for the Interferon Gamma Response (H) factor. PACMON recovers canonical interferon-stimulated genes together with immune-relevant surface proteins, including PD-L1 (CD274 ), indicating coordinated multimodal interferon responses. (F) Top RNA and surface-protein loadings for the broader Interferon Signaling (R) factor, showing enrichment of antigen-presentation machinery, including MHC class II components at the transcript level and immune-interaction markers at the protein level.",
+      "page": 6,
+      "index": 3,
+      "width": 810,
+      "height": 752
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-713295-v1/fig-004.webp",
+      "caption": "Figure 4: PACMON identifies interpretable drug-induced pathway programs in the Tahoe100M perturbation atlas. (A) Drug–pathway association landscape for the Tahoe-100M atlas. Each row corresponds to one drug and each column to a Hallmark pathway. Dot colour denotes effect direction and magnitude, and dot size denotes absolute effect size. For visualization, only extreme drug-pathway associations are shown after averaging coefficients across the three assayed concentrations, revealing coherent responses across interferon, growth, stress and apoptotic programs. (B) Projection of selected mechanisms of action in pathway space defined by Interferon Gamma Response (H) and mTORC1 Signaling (H). Each point corresponds to one drug, and convex hulls summarise the distribution of drugs within each mechanism of action class. JAK/STAT inhibitors occupy the interferon-suppressed region, whereas mTOR inhibitors cluster along the mTORC1-suppressed axis. (C–F) Top RNA loadings for representative pathway factors recovered from Tahoe-100M: Interferon Gamma Response (H) (C), mTORC1 Signaling (H) (D), UV Response Up (H) (E) and Apoptosis (H) (F). Black points indicate genes present in the original Hallmark annotation, whereas red points denote genes inferred by PACMON outside the prior gene set. These loading profiles recover canonical pathway signatures while extending them with data-supported genes, highlighting the ability of PACMON to refine pathway definitions in atlas-scale perturbation data.",
+      "page": 9,
+      "index": 4,
+      "width": 742,
+      "height": 759
+    }
+  ]
+}

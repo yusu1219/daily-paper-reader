@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-001.webp",
+      "caption": "FIG 4. F1-scores of MMHC, PC, and Copula-PC algorithms on original mixed data (baseline) and de-correlated continuous data (average and consensus) for four smaller networks (Hepar2, Win95pts, Hailfinder, Munin1) with n= 100,200 and four larger networks (Andes, Pigs, Diabetes, Link) with n= 100,500.",
+      "page": 14,
+      "index": 1,
+      "width": 794,
+      "height": 802
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-002.webp",
+      "caption": "FIG 3. F1-scores of MMHC, PC, and Copula-PC algorithms on the original mixed data (baseline) and decorrelated continuous data (average and consensus) for n= 100,500 and p= 100,1000.",
+      "page": 13,
+      "index": 2,
+      "width": 663,
+      "height": 321
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-003.webp",
+      "caption": "TABLE 1 List of predicted edges with high-confidence in the inferred gene regulatory network",
+      "page": 19,
+      "index": 3,
+      "width": 548,
+      "height": 510
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-004.webp",
+      "caption": "FIG 7. Gene regulatory network showing the predicted edges found using the bootstrap resampling analysis. Blue edges correspond to undirected edges and black edges correspond to directed edges.",
+      "page": 19,
+      "index": 4,
+      "width": 651,
+      "height": 514
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-005.webp",
+      "caption": "FIG 1. RMSE of covariance estimate across data size settings of n ∈ {100,500} and p ∈ {100,500} using either estimated parent sets from MMHC on the mixed data or true parent sets.",
+      "page": 12,
+      "index": 5,
+      "width": 414,
+      "height": 344
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-006.webp",
+      "caption": "FIG 2. Histograms of the within block correlations among the continuous variables of the original data Xj , j ∈ C and the corresponding de-correlated X̃j , j ∈ C.",
+      "page": 12,
+      "index": 6,
+      "width": 396,
+      "height": 328
+    },
+    {
+      "url": "assets/figures/arxiv/2603.24783v1/fig-007.webp",
+      "caption": "FIG 5. Hierarchical clustering dendrogram of cells with the approximate cell types corresponding to the clusters.",
+      "page": 16,
+      "index": 7,
+      "width": 506,
+      "height": 291
+    }
+  ]
+}

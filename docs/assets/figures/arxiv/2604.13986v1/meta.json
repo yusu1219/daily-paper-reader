@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-001.webp",
+      "caption": "Table 3: Distributional metric performance of PRiMeFlow on the Norman19 dataset.",
+      "page": 6,
+      "index": 1,
+      "width": 922,
+      "height": 433
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-002.webp",
+      "caption": "Figure 1: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): Ellagic acid perturbation in a549 cell line; B) Pirarubicin perturbation in k562 cell line.",
+      "page": 7,
+      "index": 2,
+      "width": 955,
+      "height": 1019
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-003.webp",
+      "caption": "Table 11: Manually selected hyperparameters for PRiMeFlow in Norman19 dataset.",
+      "page": 22,
+      "index": 3,
+      "width": 860,
+      "height": 471
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-004.webp",
+      "caption": "Table 10: Manually selected hyperparameters for PRiMeFlow in Srivatsan20 dataset.",
+      "page": 22,
+      "index": 4,
+      "width": 860,
+      "height": 471
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-005.webp",
+      "caption": "Figure 3: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): GSK J1 perturbation in k562 cell line; B) Tacedinaline (C1994) perturbation in k562 cell line.",
+      "page": 18,
+      "index": 5,
+      "width": 954,
+      "height": 1023
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-006.webp",
+      "caption": "Table 13: HPO selected hyperparameters for PRiMeFlow MLP in Norman19 dataset.",
+      "page": 23,
+      "index": 6,
+      "width": 844,
+      "height": 410
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-007.webp",
+      "caption": "Table 12: HPO selected hyperparameters for PRiMeFlow MLP in Srivatsan20 dataset.",
+      "page": 23,
+      "index": 7,
+      "width": 802,
+      "height": 411
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-008.webp",
+      "caption": "Table 6: Performance of PRiMeFlow on traditional pseudobulk-based metrics in Jiang24 dataset.",
+      "page": 13,
+      "index": 8,
+      "width": 975,
+      "height": 537
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-009.webp",
+      "caption": "Figure 4: Visualization of cells (ground truth and model predictions) in Jiang24 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): DR1 perturbation in mcf7 cell line and treated with INS; B) ZC3H3 (C1994) perturbation in hap1 cell line and treated with IFNG.",
+      "page": 19,
+      "index": 9,
+      "width": 955,
+      "height": 1079
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-010.webp",
+      "caption": "Figure 2: Visualization of cells (ground truth and model predictions) in Srivatsan20 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): SB431542 perturbation in k562 cell line; B) Obatoclax Mesylate (GX15-070) perturbation in mcf7 cell line.",
+      "page": 17,
+      "index": 10,
+      "width": 956,
+      "height": 1018
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-011.webp",
+      "caption": "Table 15: HPO selected hyperparameters for FM PCA in Norman19 dataset.",
+      "page": 24,
+      "index": 11,
+      "width": 844,
+      "height": 410
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-012.webp",
+      "caption": "Table 14: HPO selected hyperparameters for FM PCA in Srivatsan20 dataset.",
+      "page": 24,
+      "index": 12,
+      "width": 844,
+      "height": 411
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-013.webp",
+      "caption": "Figure 5: Visualization of cells (ground truth and model predictions) in Jiang24 test split. Gray marks all the cells in the test split, used for computing PCA and illustrated as background. Green cells are the ground truth perturbed cells for one condition, repeated in each subplot. From each model, 100 cells are sampled, then projected to the same PCA space. A): SP1 perturbation in ht29 cell line and treated with INS; B) PIK3CA perturbation in k562 cell line and treated with INS.",
+      "page": 20,
+      "index": 13,
+      "width": 955,
+      "height": 1077
+    },
+    {
+      "url": "assets/figures/arxiv/2604.13986v1/fig-014.webp",
+      "caption": "Table 2: Distributional metric performance of PRiMeFlow on the Srivatsan20 dataset.",
+      "page": 5,
+      "index": 14,
+      "width": 914,
+      "height": 433
+    }
+  ]
+}

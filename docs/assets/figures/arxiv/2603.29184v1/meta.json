@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-001.webp",
+      "caption": "Fig. 2: Mapping temporal causal gating to progressive distance gating. Left: a logistic time gate gβ(t) = σ(α(β − t)). Right: the corresponding distance gate gγ(d̃) = σ ( α(γ − d̃) ) , where d̃ denotes the normalized distance to the cell. Bottom: spatial",
+      "page": 6,
+      "index": 1,
+      "width": 777,
+      "height": 440
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-002.webp",
+      "caption": "Fig. 8: Three-cell stress test without second-gradient regularization (ε0 = 0). The Jacobian determinant J = detF (with F = ∇yθ) is compared across methods for a long-distance regime (top row; weak coupling) and a short-distance regime (bottom row; strong coupling). The minimum J indicated by the color scale diagnoses whether the densified phase is reached adjacent to the cell boundaries. Bio-PINN most consistently drives J into the low-J band near each cell while preserving nearincompressibility in the far field.",
+      "page": 15,
+      "index": 2,
+      "width": 769,
+      "height": 401
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-003.webp",
+      "caption": "Fig. 3: UQ-proxy evaluation via local probing. For each representative collocation point x⋆, Gaussian probes are sampled in a neighborhood of x⋆ and used to estimate local deformation variability (for example, Vark ∥∇y θ (k) i (x⋆)∥F ). This yields a normalized score Ũi(x ⋆) ∈ [0, 1] that highlights interface- and tether-forming regions.",
+      "page": 7,
+      "index": 3,
+      "width": 677,
+      "height": 364
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-004.webp",
+      "caption": "Fig. 4: UQ-R3 retain-resample-release update. Step 1 (Resample): propose candidate collocation points within the current active region and, upon gate expansion, within the newly opened shell, using low-discrepancy designs. Step 2 (Evaluate → Retain/Release): evaluate the UQ proxy Ũi and retain high-uncertainty points while releasing low-uncertainty points. Step 3 (Refill and iterate): resample to maintain a fixed collocation budget and repeat, progressively concentrating points near uncertain interfaces and emerging tethers while preserving global coverage.",
+      "page": 8,
+      "index": 4,
+      "width": 750,
+      "height": 340
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-005.webp",
+      "caption": "Fig. 1: Overview of Bio-PINNs with distance-gated curriculum and UQ-R3 sampling. A logistic distance gate gγ(x) progressively activates the training domain from the near field to the far field, while a deformation-uncertainty proxy guides an R3 retainresample-release update under a fixed collocation budget. The resulting closed-loop scheme concentrates samples on sharp layers and tether-forming regions across cell separations and regularization regimes.",
+      "page": 4,
+      "index": 5,
+      "width": 749,
+      "height": 387
+    },
+    {
+      "url": "assets/figures/arxiv/2603.29184v1/fig-006.webp",
+      "caption": "Fig. 7: Two-cell interaction without second-gradient regularization (ε0 = 0). The Jacobian determinant J = detF (with F = ∇yθ) is shown for a long-distance regime (top row; d = 5 rc, weak coupling) and a short-distance regime (bottom row; d = 2.5 rc, strong coupling). Panels (a,e) correspond to PINN, (b,f) to RAR-D, (c,g) to residualdriven R3, and (d,h) to Bio-PINN. Bio-PINN most consistently resolves densification (low J) near cell boundaries and within the intercellular gap while maintaining a cleaner far field.",
+      "page": 12,
+      "index": 6,
+      "width": 770,
+      "height": 309
+    }
+  ]
+}

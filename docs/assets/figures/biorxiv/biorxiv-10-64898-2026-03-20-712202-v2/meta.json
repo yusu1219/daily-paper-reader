@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-001.webp",
+      "caption": "Fig 3. Learning curves for baseline methods and the learning methods. Each panel shows the results for one phenotype. The x-axis shows the fraction of the available training set used and y-axis shows the resulting AUROC values.",
+      "page": 11,
+      "index": 1,
+      "width": 792,
+      "height": 711
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-002.webp",
+      "caption": "Fig 7. ROC curves for random forest models learned on different definitions of negative instances across three phenotypes (panels A to C), and on different target definitions of target nodes for the cholesterol uptake phenotype (panel D).",
+      "page": 15,
+      "index": 2,
+      "width": 792,
+      "height": 618
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-003.webp",
+      "caption": "Table 1. Detailed description of data sets for each phenotype.",
+      "page": 7,
+      "index": 3,
+      "width": 1196,
+      "height": 221
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-004.webp",
+      "caption": "Fig 6. Predictive accuracy of learned models trained and tested on different phenotypes. Each panel shows the results for one learning method. Test-set phenotypes are grouped along the x-axis, training-set phenotypes are indicated by colored bars, and the feature sets used are distinguished by bar fill styles: solid for all features and hatched for ST-relation features",
+      "page": 14,
+      "index": 4,
+      "width": 793,
+      "height": 493
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-005.webp",
+      "caption": "Fig 1. Overview of our graph-based learning approach. We populate a knowledge-graph by extracting information from multiple, public databases. A phenotype of interest P is represented by one or more nodes in the graph (here, u and v). To predict whether a perturbation of gene g will significantly affect P , we consider the relationship of g and P in the knowledge graph. The feature vector x(g,P ) is constructed by concatenating a vector n(g) representing node g, a vector e(g→P ), representing the paths connecting g to one or more nodes in P , and a vector n(P ), representing the node(s) in P to which g is connected by a path (in this example, just node u). A learned model f(·) takes x(g,P ) as input and outputs a binary value as its prediction.",
+      "page": 3,
+      "index": 5,
+      "width": 778,
+      "height": 526
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-006.webp",
+      "caption": "Fig 5. Predictive accuracy of learned models trained on individual evidence-type feature groups versus models trained on all features. Each panel shows the results for a learning algorithm applied to all four phenotypes.",
+      "page": 13,
+      "index": 6,
+      "width": 793,
+      "height": 493
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-007.webp",
+      "caption": "Fig 4. Predictive accuracy of learned models trained on individual subgraph feature groups versus models trained on all features. Each panel shows the results for a learning algorithm applied to all four phenotypes.",
+      "page": 12,
+      "index": 7,
+      "width": 793,
+      "height": 492
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-20-712202-v2/fig-008.webp",
+      "caption": "Fig 2. Predictive accuracy of the four learning algorithms for the four phentoypes. Each panel shows the ROC curves and AUROC values for each learning method on the given phenotype.",
+      "page": 9,
+      "index": 8,
+      "width": 793,
+      "height": 710
+    }
+  ]
+}

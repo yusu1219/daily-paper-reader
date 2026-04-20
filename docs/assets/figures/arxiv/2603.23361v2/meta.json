@@ -1,0 +1,134 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-001.webp",
+      "caption": "Table 2: CTCF enrichment and Hi-C validation. Protein supervision improves DNA-level interpretability.",
+      "page": 6,
+      "index": 1,
+      "width": 821,
+      "height": 244
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-002.webp",
+      "caption": "Figure 2: Prediction performance. (A) Single-stage vs. two-stage VCE comparison (RNA r by architecture). (B) Per-gene RNA correlation: CDT-II vs. CDT-III. (C) Per-gene protein predicted vs. actual (65 expressed proteins, 5 genes).",
+      "page": 6,
+      "index": 2,
+      "width": 826,
+      "height": 232
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-003.webp",
+      "caption": "Table 8: Top 20 proteins predicted to change upon CD52 knockdown (gradient-based analysis).",
+      "page": 15,
+      "index": 3,
+      "width": 575,
+      "height": 463
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-004.webp",
+      "caption": "Table 9: Per-gene Hi-C contact ratios for all 25 genes with sufficient coverage (4DN K562 data, 5 kb resolution). Three genes excluded due to zero Hi-C records: B2M, TFRC, GFI1B. Mean ratio = 1.30×; 16/25 genes show ratio > 1 (P = 0.020, Wilcoxon signed-rank).",
+      "page": 15,
+      "index": 4,
+      "width": 664,
+      "height": 606
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-005.webp",
+      "caption": "Figure 3: Protein supervision improves DNA interpretability. (A) Hi-C contact ratio per gene (top 20 attention bins vs. random 20 bins; mean = 1.30×, P = 0.020). (B) Attention-high vs. random bins scatter plot showing that high-attention genomic regions have stronger physical contact with promoters.",
+      "page": 7,
+      "index": 5,
+      "width": 829,
+      "height": 330
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-006.webp",
+      "caption": "Table 6: CTCF enrichment for all 28 genes with ENCODE K562 ChIP-seq data. 14/27 genes with CTCF sites show perfect 10.0× enrichment (all CTCF sites in top 10% attention bins).",
+      "page": 14,
+      "index": 6,
+      "width": 700,
+      "height": 411
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-007.webp",
+      "caption": "Figure 8: FCGR2A cross-attention genome track. Same format as Figure 7. CTCF site in top 10% attention (1/2) located upstream of TSS, consistent with distal regulatory contact. Hi-C contact ratio: 2.08×.",
+      "page": 18,
+      "index": 7,
+      "width": 748,
+      "height": 292
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-008.webp",
+      "caption": "Figure 7: CD55 cross-attention genome track. DNA→RNA cross-attention profile (top) aligned with CTCF ChIP-seq peaks (bottom) across the ±57 kb Enformer window. Red lines: CTCF sites in top 10% attention (3/4). TSS indicated by dotted line. Hi-C contact ratio: 2.75× (Table 9).",
+      "page": 18,
+      "index": 8,
+      "width": 748,
+      "height": 294
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-009.webp",
+      "caption": "Table 4: Single-stage vs. two-stage VCE. Per-cell correlation (r) on the validation set. All models transfer CDT-II encoder and attention weights; the critical difference is the VCE fusion layer. Singlestage architectures modify fusion dimensions (d×2 → d×3), preventing fusion weight transfer and causing RNA prediction to collapse despite encoder transfer. The two-stage architecture preserves full weight compatibility including fusion. ∗Protein r values for single-stage models are inflated by 124/189 non-expressed proteins predicted as ∼0.",
+      "page": 13,
+      "index": 9,
+      "width": 756,
+      "height": 229
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-010.webp",
+      "caption": "Table 5: Attention map inventory. CDT-III produces six interpretable attention maps, each corresponding to a specific biological process. Four are inherited from CDT-II; two are new.",
+      "page": 13,
+      "index": 10,
+      "width": 752,
+      "height": 185
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-011.webp",
+      "caption": "Table 3: CDT-III predictions vs. known Alemtuzumab side effects. Five of seven known side effects are recapitulated by CDT-III’s protein predictions, without access to any clinical data.",
+      "page": 8,
+      "index": 11,
+      "width": 784,
+      "height": 308
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-012.webp",
+      "caption": "Figure 1: CDT-III two-stage Virtual Cell Embedder architecture. VCE-N (nuclear stage, identical to CDT-II) processes DNA Enformer embeddings and per-cell RNA expression through selfattention and cross-attention, modeling transcription to produce a cell-level RNA embedding. VCEC (cytosolic stage) takes this RNA embedding and protein expression, modeling translation to produce a protein embedding. Each stage has an independent task head.",
+      "page": 4,
+      "index": 12,
+      "width": 622,
+      "height": 794
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-013.webp",
+      "caption": "Figure 6: mRNA vs. surface protein response divergence after CD52 knockdown. Left: Paired bar chart for 12 genes with |mRNA log2FC| > 0.01 (DSB-normalized protein), showing mRNA change (blue) and protein change (red, scaled) for each gene. Dark colors indicate opposite-direction pairs (8/12, 66.7%); light colors indicate same-direction pairs. The dominant pattern—mRNA decreases while surface protein increases—is consistent with post-translational regulation. Right: Sensitivity analysis showing the percentage of gene–protein pairs with opposite directions at increasing mRNA change thresholds. The divergence rate rises from 61.5% to 100% as the threshold increases, indicating that genes with the strongest mRNA responses show the most pronounced protein-level discordance.",
+      "page": 17,
+      "index": 13,
+      "width": 826,
+      "height": 415
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-014.webp",
+      "caption": "Figure 5: CDT-II architecture. The model mirrors the central dogma: DNA self-attention captures genomic relationships within a ±57 kb window, RNA self-attention captures gene co-regulation, and cross-attention models transcriptional control. A Virtual Cell Embedder integrates both modalities to predict perturbation effects. CDT-III’s VCE-N preserves this architecture exactly, enabling 100% weight transfer.",
+      "page": 12,
+      "index": 14,
+      "width": 582,
+      "height": 646
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-015.webp",
+      "caption": "Figure 4: In silico Alemtuzumab side effect prediction. (A) CD52 knockdown RNA prediction vs. actual (per-gene r = 0.748). (B) Protein prediction vs. actual for 65 expressed proteins (r = 0.962). (C) Side effect map: predicted vs. measured protein changes for 29 proteins with detectable effects (29/29 direction agreement, color-coded by clinical relevance).",
+      "page": 9,
+      "index": 15,
+      "width": 829,
+      "height": 470
+    },
+    {
+      "url": "assets/figures/arxiv/2603.23361v2/fig-016.webp",
+      "caption": "Table 1: Per-gene prediction performance. Per-gene mean r (pseudo-bulk) on five held-out validation genes. CDT-II values are from the same checkpoint used for CDT-III weight transfer. RNA per-gene mean r improves from CDT-II (0.804) to CDT-III (0.843) despite adding a second task. Protein per-gene mean r on 65 expressed proteins reaches 0.969.",
+      "page": 5,
+      "index": 16,
+      "width": 744,
+      "height": 194
+    }
+  ]
+}

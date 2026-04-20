@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "extractor": "pdffigures2",
+  "figures": [
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-14-711710-v2/fig-001.webp",
+      "caption": "Fig. 2 | Set transformers as attention-based permutation-invariant encoders for cell sets. a, Induced Set Attention based encoders capture all-to-all cell interactions by leveraging induction point attention, while reducing time complexity from O(n2) to O(nm). b, Equal error rate (lower better) for correct treatment classification based on fixed cell set size (50 cells) for cell sets scRNA-seq inferred by networks trained on groups of 1, 5, 50 and 500 cells, “original” set indicates ground truth cell set. c, Energy distance of genes, mean of 25 cells per cell type, for reconstruction of scRNA-seq of unseen donors (N=3), calculated every 100 steps of the training on sets of 1, 5, 50 and 500 cells, for 90 treatments and 9 donors. In all runs, the network sees exactly 1000 cells in each forward pass, independent of cell set size. Latent shaping was not applied. d, same as c, but the minimal energy distance for each cell set size. e, the network was trained on the task of clustering sets of cells by treatment, trained on sets of 1, 5, 50 and 500 cells, for each run batches have the same amount of states to cluster per forward pass. The cosine similarity was measured for cell samples between treatments (higher better), or f, within treatment (lower better). g, Same as (f) but mean euclidean distance for cell samples between treatments (higher better), or h, within treatment (lower better). All measurements use the PARSE PBMCs dataset.",
+      "page": 6,
+      "index": 1,
+      "width": 504,
+      "height": 627
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-14-711710-v2/fig-002.webp",
+      "caption": "Fig. 5 | TRAILBLAZER stratifies individual patients' response to α-PD-1 treatment. a, Graphical abstract for virtual patient treatment, scRNA-seq data for an unseen group of patients is passed to the perturbation model to generate counterfactual dataset subsequently passed to multicellular classifier to measure efficacy of the treatment, pertinent to figures (b-e) for virtual treatment of breast cancer patients with anti-PD-1. b, ROC curves for predicting the response of naive breast cancer patients to α-PD-1 treatment. c, We trained a multicellular respondent/non-respondent classifier on a single-cell α-PD-1 dataset, labels reflect eventual clinical response to the anti-PD-1 treatment. For each patient, we predicted response probabilities for samples of 100 cells, repeated sampling 100 times, and showing underlying distribution as a violin plot. d, We have used TRAILBLAZER to apply α-PD-1 treatment in silico and repeated classification as in (c). e, As in (d) but after IL-10 treatment. f, Graphical abstract for virtual drug screening, initial and target multicellular states are used to calculate a phenotype vector compared to mechanism vectors with cosine similarity to rank treatments most likely moving in direction of desired health outcome. g, TRAILBLAZER’s top five zero-shot predictions for treatments augmenting ɑ-PD-1 response, derived from scRNA-seq biopsies of breast cancer patients treated with ɑ-PD-1. Success was assessed by literature review corroborating treatment efficacy. Predictions are shown for unseen patients. h, Same ranking task as in (g), performed with the CELLFLOW neural network on the identical data foundation, harmonized with TRAILBLAZER’s harmonizer module.",
+      "page": 10,
+      "index": 2,
+      "width": 982,
+      "height": 733
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-14-711710-v2/fig-003.webp",
+      "caption": "Fig. 3 | Application of latent space shaping using biological priors. a, To improve generalizability of TRAILBLAZER, the latent space of the network is shaped using a “Mechanism segmentation network” trained on a hypersphere manifold, and where healthy, unperturbed states are pushed towards the center and sick and perturbed states are put on the surface of the hypersphere. b, UMAP projection of the latent space for PARSE dataset’s 5 random treatments without latent shaping, and c, with latent shaping. d, same as b but view of 5 random donors without latent shaping, and e, with latent shaping. f, Average k-rank of treatment rediscovery for unseen donors based on cosine similarity of latent embeddings (lower better). g, Minimum energy distance for network without and with latent shaping calculated for each gene, averaged across 25 cells per cell type, for reconstruction of scRNA-seq of unseen donors (N=3), trained on sets of 500 cells. All measurements use the PARSE PBMCs scRNA-seq dataset.",
+      "page": 8,
+      "index": 3,
+      "width": 984,
+      "height": 392
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-14-711710-v2/fig-004.webp",
+      "caption": "Fig. 1 | TRAILBLAZER: Multicellular architecture for foundational models of biology. a, In multicellular organisms, sets of cells are working together to produce phenotypic presentations such as treatment response and disease progression. TRAILBLAZER operates on sets of cells to build uniform and traversable hypersphere latent representation of multicellular disease and treatment processes; it is coupled with multicellular classifiers to help with navigating the phenotypic space. b, Uniform disease-treatment phenotypic perturbation space can be applied to discover treatments by presenting initial and target patient phenotypes, or it can be used to identify patients phenotypes in response to treatments in virtual clinical trials, lastly multicellular architecture offers unbiased view of each cell importance to the process. c, TRAILBLAZER uses Induced Set Attention Blocks (ISAB)25 to efficiently capture relationships of large sets of cells’ biological variables such as scRNA-seq, and utilizes latent shaping with biological priors to improve generalizability by organizing latent space on a plan of hypersphere with healthy states in the center.",
+      "page": 4,
+      "index": 4,
+      "width": 984,
+      "height": 789
+    },
+    {
+      "url": "assets/figures/biorxiv/biorxiv-10-64898-2026-03-14-711710-v2/fig-005.webp",
+      "caption": "Fig. 6 | TRAILBLAZER’s cell attention can be used to aid granular analysis of diseases and treatments. a, The interpretability of the model predictions is afforded by multicellular phenotype classifier, trained to recognize desirable and undesirable cell states (e.g. responsiveness to treatment). It is capable of assessing cells’ state contribution to a disease/phenotype (cell importance), and it measures cells’ similarity to a desired state after treatment (responsiveness). b, The TRAILBLAZER phenotype classifier’s multicellular architecture outperforms the single-cell architectures of state-of-the-art models (Geneformer, scGPT, scVI). Models were trained on multilabel disease classification using patients’ scRNA-seq data, then evaluated on unseen patients. Performance was measured as F1 score of disease classification across training epochs. c, An example of TRAILBLAZER’s inferred importance of each cell type for the naive breast cancer patients, for a patient resistant to anti-PD-1 (left), and responsive (right). d, TRAILBLAZER AI predicted treatments improving anti-PD-1 patient responsiveness clustered by target cell populations. The average treatment responsiveness of each cell type is calculated across all patients (N=9). Treatments are clustered into four groups based on their predicted mechanism of action and are sorted from left to right based on the overall cosine similarity of cell states to positive patient outcomes. e, TRAILBLAZER AI models the contribution of each cell to anti-PD-1 patient responsiveness, an example of anti-PD-1/IL-15 effect on tumor micro-environment. A detailed view with single-cell resolution shows cells present before (1st column, top row) and after treatment (2nd column, top row), the importance of each cell to the state (middle row), and the treatment responsiveness of each cell (bottom row).",
+      "page": 12,
+      "index": 5,
+      "width": 979,
+      "height": 618
+    }
+  ]
+}

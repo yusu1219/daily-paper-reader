@@ -1,0 +1,1005 @@
+Title: Efficient Shapley values computation for Boolean network models of gene regulation
+
+URL Source: https://arxiv.org/pdf/2604.09403v1
+
+Published Time: Mon, 13 Apr 2026 01:15:41 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+> 1
+
+# Efficient Shapley values computation for Boolean network models of gene regulation 
+
+Giang Pham, Silvia Giulia Galfr` e and Paolo Milazzo 
+
+Abstract —Identifying dynamically influential nodes in biological networks is a central problem in systems biology, particularly for prioritizing intervention tar-gets in gene regulatory networks. In this paper, we propose a Shapley-value-based framework for assess-ing the importance of nodes in a Boolean network with respect to a given target node. The framework comprises two complementary measures: the Knock-out and the Knock-in Shapley values . Moreover, we present a propagation-based method that enables their efficient computation. By exploiting the logical structure of the network, the method avoids exhaus-tive simulations. The approach is exact for acyclic networks and provides good approximations for cyclic networks. Evaluation on benchmark models from the Cell Collective database shows that the propagation method accurately recovers node importance rankings while achieving substantial speed-ups. 
+
+Index Terms —Boolean networks, node importance, Knock-out, Shapley value, network propagation. 
+
+I. I NTRODUCTION 
+
+Boolean networks (BNs), introduced by Stu-art Kauffman [1], have become a widely adopted framework for modeling gene regulatory networks (GRNs). Their success is largely due to their con-ceptual simplicity and their ability to qualitatively capture regulatory interactions among genes, while still preserving essential dynamical features. As a result, BNs have been successfully applied to a broad range of biological systems and processes [2], [3], [4]. A central application of BN modeling is the identification of potential intervention targets [5], which naturally leads to the problem of quantifying the importance or influence of individual nodes within the network. Early efforts in this direction focused on char-acterizing node influence at the level of Boolean functions. In particular, Shmulevich and Kauffman introduced the notion of activity [6], which mea-sures the influence of a variable on the output of a Boolean function. For a Boolean function f (x) with 
+
+x = ( x1, x 2, . . . , x k), the activity of a variable xj
+
+is defined as the average of the partial derivative of 
+
+f with respect to xj over all possible configurations 
+
+x ∈ { 0, 1}k. This concept was further analyzed in the context of canalizing functions, and it was shown to have a direct impact on the dynamical behavior of BNs. While foundational, this line of work primarily emphasizes mathematical properties of Boolean functions rather than applications to large-scale biological networks. Ghanbarnejad and Klemm addressed this limita-tion by extending the notion of variable activity to quantify node influence in BN dynamics [7]. They defined the dynamical impact of a node as the fraction of all possible state combinations for which a perturbation of that node propagates through the network within a given time horizon. This dynam-ical impact can be approximated by the principal eigenvector of the activity matrix, where each entry 
+
+αij quantifies the influence of node i on node j
+
+(i.e., the activity of i on the Boolean function fj ,as defined in earlier work by Shmulevich and Kauff-man). Applied to a fibroblast network, the method correctly identified four of the five nodes with the highest dynamical impact over 100 time steps. De-spite its empirical effectiveness, the approach is not genuinely time-resolved, as the eigenvector contains no explicit temporal information [8]. Moreover, it assumes that all state combinations occur with equal probability [8]. Subsequent studies shifted toward information-theoretic perspectives that directly address network-
+
+> arXiv:2604.09403v1 [q-bio.MN] 10 Apr 2026 2
+
+level behavior. In 2013, Heckel et al. introduced the concept of determinative power (DP) [9] of an input node, defined via mutual information between the state of that input and the states of all non-input nodes in the network. Applied to the E. coli regulatory network, DP enabled the identifi-cation of a small subset of input nodes capable of substantially reducing uncertainty in the global network state. However, this framework was limited to networks with tree-like topologies, assumed the absence of input dependencies and feedback loops. It also restricts DP to input nodes only. These constraints were later relaxed by Matache 
+
+et al. , who extended the notion of DP to general nodes while relaxing the assumption of indepen-dence among the inputs of a Boolean function, which allows the method to work with general BNs [10]. In addition, they introduced the concept of 
+
+Strength , which quantifies the causal influence of a node on others under perturbation. Their results highlighted mutual information as a powerful tool for identifying subsets of relevant nodes that max-imize information gain, and they demonstrated the applicability of these ideas in a case study on a fibroblast network. Further analysis by Pentzien et al. showed that DP is weakly correlated with simple topological features such as the number of outgoing edges, but is independent of classical centrality measures including closeness and betweenness centrality [11]. Importantly, DP was shown to recover biologi-cally essential nodes. This notion is a theoreti-cally grounded, information-based measure, but it requires either the assumption on the independence among input nodes of Boolean functions as in the work of Heckel et al. or the extensive information about the probability of each state as in the relaxed version of Matache et al. In addition, it is a generic network measure and is not tailored to specific phenotypic markers. In parallel, other approaches have sought to identify dynamically influential nodes using purely static network properties. In this context, determi-native power has been combined with vertex be-tweenness to identify nodes that are most effective in altering network dynamics [5], [12]. Additional analyses incorporating static features such as con-nectivity and hub structure led to the identification of a class of low-degree nodes, termed gatekeepers ,which constitute promising targets for drug discov-ery and the identification of disease drivers [12]. Despite their differences, the approaches de-scribed above share a common aim: identifying nodes with strong dynamical impact in Boolean networks while avoiding computationally expensive simulations, typically by relying on mathematical abstractions that assume a product distribution or equal probability across all possible states. In con-trast, we recently addressed this problem more directly by introducing the Knock-out Shapley value 
+
+[13], [14], which quantifies node importance based on simulation results from systematic knock-out ex-periments. This approach is conceptually intuitive, as it closely mirrors experimental gene knock-out studies, and its biological relevance was demon-strated on CD4 + T cell models [14]. However, this fidelity comes at a substantial computational cost, as the number of required simulations grows rapidly, with the complexity of each simulation increasing exponentially with the number of input nodes. In this paper we propose a more general Shapley-value-based framework consisting of two measures: the Knock-out Shapley value and the Knock-in Shapley value . Moreover, in order to overcome the limitations related to computational complexity, we introduce a propagation-based method that enables the efficient computation of both measures without performing the knock-out/knock-in simulations. The Knock-out and Knock-in Shapley values enable the systematic analysis of gene influence in GRNs across varying environmental conditions. Within this framework, the marginal contribution of each gene to the presence of a given target node is evaluated across multiple input configurations. Averaging these contributions yields a quantitative measure of the influence of individual genes on the resulting phenotypic outcome. This provides a principled assessment of gene importance with respect to a specific target. Although these notions are conceptually mean-ingful, their standard computation is computa-tionally expensive and does not scale to large 3
+
+Boolean models [14]. The proposed propagation-based method addresses this limitation by enabling efficient and scalable estimation, thereby making large-scale screening analyses feasible. The propa-gation method successfully recovers node rankings in most benchmark models, achieving a normalized discounted cumulative gain (NDCG) of 0.75 or higher. Moreover, the method improves compu-tational efficiency, reducing the time complexity from O(( n + m)2 × 2n) to O(( n + m) × 2n).An implementation of the proposed method, to-gether with scripts to reproduce the experiments, is publicly available at https://github.com/giangpth/ ShapleyValueForBooleanNetwork.git. The remainder of this paper is organized as follows. Section II introduces the necessary back-ground on Boolean networks and the Shapley value. Section III presents the Knock-out, Knock-in Shap-ley value and the proposed propagation-based com-putation method, together with its correctness for acyclic networks and a complexity analysis. Sec-tion IV evaluates the propagation approach by com-paring its results with direct simulation and further contrasts our method with other notions through two case studies. Finally, Section V concludes the paper and outlines future work. II. B ACKGROUND 
+
+A. Boolean Networks with input nodes 
+
+A Boolean network is defined as B = ⟨N, F ⟩,where N = {x1, . . . , x n} is a set of Boolean variables xi taking values in {0, 1}, and F =
+
+{fm+1 , . . . , f n}, n > m ≥ 0, is a set of Boolean update functions. BNs can be depicted as directed graphs, with nodes representing Boolean variables and edges representing regulatory interactions. In this paper, the terms variable and node are used interchangeably. We consider BNs with inputs, de-noted Bn,m , with m > 0, where the first m
+
+variables x1, . . . , x m are input nodes without up-date functions, and the remaining n − m variables are internal nodes updated with the corresponding function at each time step: 
+
+xi(t + 1) = fi
+
+ xj1(i)(t), . . . , x jki (i)(t),i = m + 1 , . . . , n. (1) Input variables remain fixed during simulation, while internal variables evolve based on the set of Boolean functions. Different update schemes can be employed, including synchronous and asynchronous updating [15], [16]. In the synchronous scheme, all Boolean functions are applied simultaneously at each time step to update the variables. In the asynchronous scheme, a single Boolean variable is non-deterministically selected and updated at each time step according to its corresponding function. In this study, we apply the synchronous updating scheme due to its deterministic property [15], [16]. The simulation of a BN produces a state graph, where nodes represent the reachable states of the BN, and edges denote state transitions governed by the update functions. Attractors correspond to loops within the state graph, capturing the net-work’s long-term behavior, and are often associated with a phenotype. Formally, an attractor can be represented as a set of states within the loop, 
+
+A = {aj+1 , a j+2 , . . . , a j+k}, where the special case k = 1 corresponds to a singleton attractor, consisting of a single state aj+1 .An input configuration S ⊆ { x1, . . . , x m} is de-fined by setting variables in S to 1 and all remaining input variables to 0. For each input configuration, the network is initialized with all internal variables set to 0 and simulated synchronously until an attrac-tor is reached. For a given input configuration S,we denote by ABn,m (S) = {aSj+1 , a Sj+2 , . . . a Sj+k}
+
+the corresponding attractor. For periodic attractors, we summarize the attractor by the maximum value attained by each node: aS = W   
+
+> aSi∈ABn,m (S)
+
+aSi .This representation indicates whether a node is present (at some level) within the stable state of the system. 
+
+Example: Figure 1 illustrates a BN comprising 3 input nodes, depicted in yellow, and 6 internal nodes, shown in blue. With three input variables, this Boolean network takes 23 possible input con-figurations. Simulating this network with the input configuration S = {A, B, C }, we obtain a sin-gleton attractor with one state                                         
+
+> a{A,B,C }={⟨ A,1⟩,⟨B,1⟩,⟨C,1⟩,⟨D,1⟩,⟨E,1⟩,⟨F,0⟩⟨G,1⟩,⟨H,0⟩,⟨I,0⟩}
+> (2) 4
+> D=AAND BE=BOR IF=NOT CG=DOR EH=FI=NOT GOR H
+
+Fig. 1: A Boolean network. For the input configuration S = {C}, the obtained attractor contains 5 states with the summarized state is 
+
+a{C} = {⟨ A, 0⟩, ⟨B, 0⟩, ⟨C, 1⟩, ⟨D, 0⟩, ⟨E, 1⟩, ⟨F, 0⟩⟨G, 1⟩, ⟨H, 0⟩, ⟨I, 1⟩} (3) 
+
+B. Shapley Value 
+
+The Shapley value is a concept from cooperative game theory that assigns a fair contribution score to each player based on its marginal effect across all coalitions it might participate in. It has been employed as a tool to analyze a wide range of biological networks [17]. A cooperative game is defined by a pair ⟨N, v ⟩, where N is a set of players and v : 2 N → R is a payoff function 1.For a player i ∈ N , the Shapley value is defined as           
+
+> ϕi(v) = X
+> S⊆N\{ i}
+> |S|! ( |N| − | S| − 1)!
+> |N|![v(S∪ { i})−v(S)] .
+> (4)
+
+Intuitively, ϕi(v) represents the average marginal contribution of player i over all possible ways of forming a coalition from the remaining players. 
+
+Example - The parliament game: A standard example of a cooperative game used to illustrate the Shapley value considers a parliament with 100 seats in which at least 51 votes are required to pass a bill [17]. Suppose four parties, A, B, C,  
+
+> 1The variable Nintroduced in this section is distinct from those defined in Section II-A. We follow the convention of using notation that is standard in the literature on Shapley values.
+
+and D, hold 16, 19, 31, and 34 seats, respectively, and may form coalitions to obtain a majority. The payoff function is defined by v(S) = 1 if coalition 
+
+S controls at least 51 seats and v(S) = 0 otherwise. Among the 15 possible coalitions, the losing ones are v(A) = v(B) = v(C) = v(D) = v(AB ) = 
+
+v(AC ) = v(AD ) = v(BC ) = 0 , whereas the win-ning coalitions are v(BD ) = v(CD ) = v(ABC ) = 
+
+v(ABD ) = v(BCD ) = v(ACD ) = v(ABCD ) = 1. Therefore, the Shapley values for each party are 
+
+ϕA = 112 , ϕB = 14 , ϕC = 14 , and ϕD = 512 .III. M ETHODOLOGY 
+
+A. Shapley Values in Boolean Networks 
+
+In BNs, Shapley values can be used to quantify node importance by interpreting nodes as players in a game whose payoff reflects the activation of a designated target node under different perturba-tions. The payoff function is defined over input configurations and derived from the value of the target node in the corresponding attractor. 
+
+The Knock-out game: A preliminary version of the Knock-out game was introduced by our earlier works [13], [14]. It is a coalition game-theoretic framework for quantifying node importance in BNs with respect to a designated target node. The method evaluates how disabling individual nodes affects the activation of the target under different input configurations. A Knock-out game is defined as a pair ⟨Bn,m , T⟩,where Bn,m is a BN and T is an internal target node. The payoff function v is determined by the value of T in the attractor reached from each input configuration S, and is defined as 
+
+vT 
+
+> Bn,m
+
+(S) = aS (T) = _  
+
+> aSi∈ABn,m (S)
+
+aSi (T) (5) 
+
+The Knock-out Shapley value: For a node X
+
+in Bn,m , let B¯X 
+
+> n,m
+
+denote the modified network in which X is permanently fixed to 0. The Knock-out Shapley value of X is defined as 
+
+ϕko  
+
+> X
+
+(v) = X
+
+> S⊆M
+
+wS
+
+vT 
+
+> Bn,m
+
+(S) − vT
+
+> B¯X
+> n,m
+
+(S), (6) where M = {x1, x 2, . . . , x m} denotes the set of input nodes and wS denotes the weight associated 5
+
+with input configuration S. Following the original Shapley value formulation, we use 
+
+wS = |S|!( |M | − | S|)! 
+
+|M |! . (7) Alternative weighting schemes, such as uniform weights wS = k, or task-specific designs that em-phasize coalitions containing particularly relevant inputs, can also be adopted. This flexibility allows the method to be tailored to different application goals. The Knock-out Shapley value measures how fix-ing a node permanently to 0 affects the activation of a target node across all input configurations. While biologically intuitive and closely aligned with gene knock-out experiments, this approach requires simulating the network for each coalition and per-turbation, leading to prohibitive computational costs for networks with many inputs. Analogous to the Knock-out game, the Knock-in game is defined by a pair ⟨Bn,m , T⟩, where Bn,m 
+
+is a Boolean network and T is an internal target node. The payoff function is defined similarly to that of the Knock-out game and is determined by the value of T in the attractor reached from each input configuration. For a node X ∈ Bn,m , let B˚X 
+
+> n,m
+
+denote the modified network in which X is permanently fixed to 1. The knock-in Shapley value of X is defined as 
+
+ϕki  
+
+> X
+
+(v) = X
+
+> S⊆M
+
+wS
+
+vT 
+
+> Bn,m
+
+(S) − vT
+
+> B˚X
+> n,m
+
+(S) (8) 
+
+B. Propagation method for the Knock-out and Knock-in Shapley values computation 
+
+The propagation method we are going to define assumes to be applied to BNs with a special struc-ture, called Binarized Boolean Networks (BBNs). In a BBN, each node has at most two incoming edges (i.e., each Boolean function is defined on at most two Boolean variables). In this section, we present the theoretical framework for propagation in such networks. The procedure for transforming a general BN into a BBN is described in Section III-E. 
+
+1) Simulation result as a truth table: From Equations 6 and 8, the Knock-out and Knock-in Shapley values can be interpreted as the sum of weighted differences between the value of the target node T under two scenarios: the intact network 
+
+Bn,m and the network in which X is fixed to zero 
+
+B¯X
+
+> n,m
+
+(Knock-out) or one B˚X 
+
+> n,m
+
+(Knock-in), evalu-ated across all input configurations. This difference is nonzero only for those input configurations S in which fixing the value of X alters the value of the target node T relative to the intact network. For all other configurations, the difference is zero and does not contribute to the Shapley value. Consequently, the computation can be restricted to input configu-rations for which fixing X affects the value of the target node of interest. The simulation of a BN can be represented as a truth table, where the number of rows corresponds to the number of input configurations. For instance, for a Boolean network with three input nodes, as illustrated in Figure 2, there are 23 input configura-tions, corresponding to 8 rows in Table I. Each row represents the overall state of the attractor obtained from the corresponding input configuration. If an input configuration leads to a single attractor, the row reflects the state of this single attractor. In the case of periodic attractors, the row reports the maximum value of each node across all states within the periodic attractor. This representation enables direct and convenient computation of the 
+
+payoff function defined in Equation 5.            
+
+> X=I1 AND I2 Y=NOT I3 T=XOR Y
+
+Fig. 2: A Binary Boolean Network with the corre-sponding Boolean functions 6                                                              
+
+> Weight I1 I2 I3 XYT
+> w1= 1 000011
+> w2= 1 /3001000
+> w3= 1 /3010011
+> w4= 1 /3011000
+> w5= 1 /3100011
+> w6= 1 /3101000
+> w7= 1 /3110111
+> w8= 1 111101
+
+TABLE I: Truth table of the network in Figure 2. Each row of the truth table is assigned a weight corresponding to the associated term in the summa-tions of Equations 6 and 8. With this formulation, the computation of the Knock-out and Knock-in Shapley values reduces to identifying the rows for which vT 
+
+> Bn,m
+
+(S) − vT 
+
+> B¯Xn,m
+
+(S)̸ = 0 in the Knock-out, and vT 
+
+> Bn,m
+
+(S) − vT 
+
+> B˚Xn,m
+
+(S)̸ = 0 in the Knock-in. Consider a network Bn,m and an internal node 
+
+X. For rows in which the value of X is equal to 1
+
+in the truth table, fixing X to 1 leaves the network unchanged, and therefore vT 
+
+> Bn,m
+
+(S)−vT
+
+> B˚X
+> n,m
+
+(S) = 0 .
+
+As a result, these rows do not contribute to the Knock-in Shapley value, but they may contribute to the Knock-out Shapley value when X is fixed to 
+
+0. Conversely, for rows in which X is equal to 0,contributions arise for the Knock-in value but not for the Knock-out value. Overall, the computation of the Knock-in and Knock-out Shapley values for an internal node X reduces to identifying the rows of the truth table in which changing the value of 
+
+X leads to a change in the value of the target node 
+
+T. The Shapley values can then be computed by summing the signed weights associated with the corresponding sets of rows. For a node X, if its value in row wi is 1, the corresponding weight contributes to the Knock-out value; if it is 0, it contributes to the Knock-in value. The sign of each weight is determined by the state change of the target node: if the target is originally 1 and the modification of 
+
+X causes it to switch to 0, the weight is assigned a positive sign, and conversely, a negative sign is assigned when the modification induces a transition from 0 to 1.An illustrative example is provided by the net-work in Figure 2, with the corresponding simulation results reported in Table I. For the target node T,the set of rows contributing to the values of I3 
+
+is w1, w 2, w 3, w 4, w 5, w 6 (see the following section for details). Among these, w1, w 3, w 5 contribute to the knock-in value, as I3 takes the value 0 in these rows, whereas w2, w 4, w 6 contribute to the knock-out value, since I3 = 1 .
+
+2) Propagation for Boolean operators: Since the computation of the Knock-in and Knock-out Shapley values can be reformulated as the problem of identifying rows in which flipping the value of a node alters the value of the target node, we begin the procedure at the target node T. For the target node, all rows are relevant, as any change in its value trivially affects its own state. Starting from T, the set of relevant rows is then propagated upward through the network until the input nodes are reached. Because the network under consideration is a BBN, each node depends on at most two other nodes, or equivalently, has at most two incoming edges in the graphical representation. This structural constraint allows the propagation rules to be defined in a simple and systematic manner. 
+
+a) OR operator: A = B OR C : For a binary 
+
+OR operator of the form A = B OR C , changing the value of B affects the value of A only when 
+
+C = 0 , since A = 1 whenever C = 1 , regardless of the value of B. Consequently, among the rows associated with node A, only those rows for which 
+
+C = 0 are propagated to node B, and analogously, rows with B = 0 are propagated to node C.As an illustrative example, consider the net-work shown in Figure 2. For the OR operator 
+
+T = X OR Y , with T as the target node, all rows are initially associated with T, corresponding to the weight set {w1, w 2, w 3, w 4, w 5, w 6, w 7, w 8}. Ac-cording to the propagation rule for the OR oper-ator, the subset of rows propagated to node X is 
+
+{w2, w 4, w 6, w 8}, corresponding to configurations in which Y = 0 . Analogously, the subset of rows propagated to node Y is {w1, w 2, w 3, w 4, w 5, w 6},corresponding to configurations in which X = 0 .
+
+b) AND operator: A = B AND C : For a bi-nary AND operator of the form A = B AND C , the rows propagated from A to node B are those for which C = 1 , since only in this case, changes in 7
+
+B can influence the value of A. An analogous rule applies to the rows propagated from A to node C.Consider the network shown in Figure 2 and the operator X = I1 AND I2 . If the set of rows associated with node X is {w2, w 4, w 6, w 8}, then the subset of rows propagated to node I1 is {w4, w 8},corresponding to configurations in which I2 = 1 ,while the subset of rows propagated to node I2 is 
+
+{w6, w 8}, in which I1 = 1 .
+
+c) Identity operator: A = B; and negation operator: A = NOT B : In the case of an identity operator, the set of rows associated with node A
+
+is identical to that associated with node B. This follows directly from the fact that any change in 
+
+B induces a corresponding change in A, and thus A
+
+propagates the effect of B to the target node T. Simi-larly, for the negation operator, where A = NOT B ,node A also inherits the full set of rows associated with B. The difference lies in the roles of these rows: rows contributing to the knock-out value of 
+
+B instead contribute to the knock-in value of A, and vice versa. Using the example in Figure 2, consider the relation Y = NOT I3 . In this case, node I3 in-herits the full set of rows associated with node 
+
+Y, namely {w1, w 2, w 3, w 4, w 5, w 6}. However, the roles of these rows are interchanged due to the nega-tion. Specifically, rows contributing to the Knock-out value of Y, given by {w1, w 3, w 5} (for which 
+
+Y = 1 ), contribute instead to the Knock-in value of I3 (for which I3 = 0 ). The remaining rows, 
+
+{w2, w 4, w 6}, correspondingly contribute to the Knock-out value of I3 .For the network in Figure 2, the results are as follows: for I1 , KO = 1 .0 and KI = −0.3333 ;for I2 , KO = 1 .0 and KI = −0.3333 ; for I3 ,
+
+KO = −1.0 and KI = 1 .6667 ; for T, KO = 3 .0
+
+and KI = −1.0; for X, KO = 1 .0 and KI = −1.0;and for Y, KO = 1 .6667 and KI = −1.0. These results are consistent with those obtained through direct simulation. 
+
+3) Non-trivial structures: A BBN may contain non-trivial structures that are not captured by the proposed Boolean operator rules. In particular, they are diamond-shaped convergences and cycles, in which cycles require approximations in the prop-agation results. 
+
+a) Diamond structures: Beyond simple unary and binary operator structures, a BBN may also contain diamond-shaped motifs, as illustrated in Figure 3a (with I functions as target node), in which a node B influences a downstream node G
+
+through two distinct incoming paths via nodes D
+
+and E. In such configurations, the propagation rules defined for unary or binary operators are no longer directly applicable because D and E are no longer independent. Indeed, the set of rows associated with node B must first be a subset of the rows associated with node G, since B influences the target node I
+
+through G. However, because the value of G depends on both B (via nodes D and E) and A (via node 
+
+D), not all rows associated with G contribute to the influence of B.To address this case, a straightforward approach is to partially simulate the diamond structure, which in this example involves the four nodes B, D, E,and G. To identify the rows associated with B,we simulate flipping the value of B in each row associated with G and retain only those rows for which this perturbation leads to a change in G.In a general BBN, diamond structures can be non-trivial because nodes involved in cycles may induce self-influencing diamonds, as illustrated in Figure 3b. In this example, in addition to the diamond formed by A, B, C, and D, there is another diamond originating from D, passing through A, B
+
+in one side, and C in the other side, and feeding back into D. Such configurations significantly com-plicate the treatment of diamond motifs. Therefore, we restrict the diamond motifs to acyclic BBNs. More precisely, we identify diamond structures on an acyclic approximation of the original network obtained by removing all cycles. The details of this procedure are discussed in Section III-E. Removing cycles prior to diamond identification may cause some diamond structures to be missed, constituting the first source of approximation in our propagation method. 
+
+b) Cycles: The rules defined for binary op-erators assume independence among the operands and the product node. However, this assumption may be violated in networks containing cycles. For 8       
+
+> (a) An acyclic BBN with diamond structure includ-ing B, D, Eand G
+> (b) A cyclic BBN with dia-mond structures.
+
+instance, in the BBN shown in Figure 4, the cycle involving G, I, and E induces a dependency of G on 
+
+I through E. This dependency can lead to incorrect row propagation. Specifically, when I is selected as the target node, it is initially associated with all eight rows of the truth table in Table II. According to the propagation rules, only rows with G = 0 
+
+should be propagated to node H. However, because 
+
+G and I are part of a cycle together with E, some rows with G = 1 are nevertheless associated with H.In particular, rows w1 and w5 should be accounted for at H despite G = 1 , since in these configurations the value of G is influenced by I, which in turn is influenced by H.To address this limitation, one approach is to explicitly simulate nodes involved in cycles, as done for diamond structures; however, in complex networks this may require simulating the entire net-work, reducing computational gains. Hence, when encountering cycles, we consider two strategies: (i) marking nodes belonging to cycles as visited after the first propagation step, and (ii) allowing propagation to continue until convergence (or until a visitation threshold is reached). For the second strategy, propagated row sets within cycles can either be merged or intersected, resulting in three approaches in total. All approaches were evaluated experimentally (Figures S4 and S5, Supplemen-tary). While differences are minor, the convergence-                                                                                 
+
+> Weight ABCDEFGHI
+> w1000011111
+> w2001000000
+> w3010011111
+> w4011010101
+> w5100011111
+> w6101000000
+> w7110111111
+> w8111110101
+
+TABLE II: Truth table of the network in Figure 4. based approach with merged row sets (Method 2) performs slightly better and is therefore adopted.                      
+
+> D=AAND BE=BOR IF=NOT CG=DOR EH=FI=GOR H
+
+Fig. 4: A BBN network with cycle and correspond-ing Boolean functions 
+
+C. Correctness in acyclic networks 
+
+Since all approximations arise from cycles in the BBN, the propagation method is exact for acyclic networks. This is first validated empirically on synthetic acyclic networks (see Supplementary, Fig-ure S9). We now formally establish the correctness of the propagation method in the acyclic case. The complete proof is provided in the Supplementary; here, we present a sketch of the argument. 
+
+Theorem 1. Let Bn,m be an acyclic binarized Boolean network and let T be a target node. For any node X, the knockout and knockin Shapley values computed by the proposed propagation method are equal to those obtained by explicit simulation of 
+
+Bn,m .9
+
+Proof. Restrict to the backward reachable subgraph 
+
+BT from target node T, since nodes outside it have zero Shapley value. Because the graph is acyclic, 
+
+BT admits a topological order toward T, and T
+
+can be written as a Boolean formula obtained by composing node functions along this order. Each propagated row corresponds to a coalition. At T, propagation enumerates the truth table and counts exactly the coalitions that flip the output under knock-in/knock-out, matching the Shapley definitions. Assume correctness for all nodes closer to T. For a node Y, two cases: (i) If Y starts a diamond, partial simulation en-sures each coalition affecting T is counted for Y, so contributions match explicit simulation. (ii) Otherwise, all paths from Y go through a unique successor X; changing Y affects T iff it af-fects X. Since X is correct and propagation computes Boolean updates correctly, Y is also correct. By induction, propagation matches explicit simu-lation on all nodes in BT , completing the proof. 
+
+D. Complexity analysis 
+
+Consider a Boolean network Bn,m with n nodes, among which m are input nodes. The remaining n−
+
+m nodes are internal nodes associated with Boolean update functions. 
+
+Complexity of the standard simulation: In the worst-case scenario, identifying the attractor land-scape of a Boolean network requires a traversal of the complete state transition graph. While the state space consists of 2n vertices, the cost of computing the successor of any given state is proportional to the number of non-input nodes. Consequently, the algorithmic complexity for a brute-force simulation is O(( n − m)2 n), where n − m represents the set of internal nodes subject to regulatory update rules [18]. In the standard analysis, the impact of each internal node is evaluated through a knock-out/knock-in experiment. This requires performing one simulation for each of the n−m internal nodes. Consequently, the total computational cost becomes 
+
+O(( n − m)22n).
+
+Size of the binarized Boolean network: Let the original network be Bn,m = (V, E ), where 
+
+|V | = n. After binarization, the resulting binarized Boolean network Bbn,m therefore contains |V b| =
+
+|V | + O(|E|) vertices and |Eb| = O(|V | + |E|)
+
+edges. 
+
+Cost of the propagation method: The com-putational cost of the propagation method consists of two components: (i) traversing the BBN, and (ii) simulating diamond structures. Traversing the network requires O(|V | + |E|) time. Two factors influence the computational cost as-sociated with diamond structures are:(i) the fraction of diamonds in the network; (ii) the number of rows associated with the ending node of each diamond. Let ♢ (♢ < 1) denote the fraction of nodes that correspond to the beginning of a diamond structure. In the worst case, the number or rows needed to simulate for a diamond is 2m. It is also important to node that diamond simulation corresponds to updating the values of nodes involved in these struc-tures and is distinct from the simulation required to identify attractors in the state transition graph. Taking into account the number of diamonds and the cost of processing them, the complexity of the propagation is O (|V | + |E|)2♢ 2m.
+
+Overall complexity: Combining the simula-tion of the binary network to build the truth table and the propagation, the overall run-ning time of the method can be expressed as 
+
+O (|V | + |E| − m)2 |V |+|E| + ( |V | + |E|)2♢ 2m.Since the first term grows exponentially with the size of the binarized network, it dominates the total complexity. Therefore, the overall worst-case complexity is O(( |V | + |E| − m)2 |V |+|E|).GRNs are typically sparse, with the number of regulatory interactions growing approximately lin-early with the number of genes. Empirical studies indicate that the number of edges |E| scales with the number of nodes n as |E| = O(n), leading to a small and approximately constant average degree 
+
+⟨k⟩ = |E|/n across networks of different sizes [19], [20], [21]. The overall complexity can be written as 
+
+O(( n − m)2 n). Compared to the standard analysis, the propagation method removes one multiplicative factor of (n − m), yielding a linear reduction in computational cost. This improvement becomes especially relevant for large-scale networks with a substantial number of internal nodes. 10 
+
+E. Implementation details 
+
+Our propagation rules are defined for BBNs. We therefore first transform a general Boolean network into an equivalent BBN in which (i) each node has at most two inputs, and (ii) any node with a neg-atively influential input has exactly one incoming edge. This transformation preserves the simulation behavior of the original network. To identify diamond structures, the network must be acyclic. We therefore remove a feedback arc set (FAS) from the original network, as it is smaller than the binarized one, and then binarize the re-sulting acyclic network to obtain an approximate acyclic BBN. Diamond structures are detected on this acyclic BBN. We detect the FAS in the original network using Algorithm S1 (Supplementary) of Eades, Lin, and Smyth [22]. 
+
+a) “Binarization”: We binarize the network by introducing intermediate nodes so that each node has at most two incoming edges while pre-serving functionality. For a node A with operands 
+
+I1, I2, I3, an intermediate node I23 aggregates I2
+
+and I3. Node A then receives inputs from I1 and 
+
+I23 . Boolean functions are updated accordingly, e.g., I23 = I2 OR I3 and A = I1 OR I 23 .To preserve synchronous dynamics, all intermediate nodes are updated before the original nodes. 
+
+b) Identification of diamond structures: We detect diamond-like convergence structures by traversing the BBN backward from a designated output node. Each node propagates a carry-on map indicating whether upstream nodes are reached via the left or right branch of binary operators. When multiple paths converge, conflicts in the carry-on states indicate potential diamond closures; nodes with multiple outgoing edges are recorded as sinks. Unary operators propagate the carry-on informa-tion unchanged. The full procedure is given in Supplementary Algorithm S2. Among the detected structures, we select the deepest (most downstream) reconvergence node as the “master diamond” and discard nested smaller diamonds, since simulating the master diamonds is sufficient to determine the corresponding set of rows for the initial node. 
+
+c) Propagation in the Binarized Boolean Net-works: The resulted BBN is still acyclic as the FAS had been removed before the binarization. We reintroduce the removed arcs back to the BBN before performing the propagation. During the prop-agation, the rules in Section III-B are applied as presented in Algorithm S3 (see Supplementary). Besides the BBN, master diamonds, target node, and Boolean formulas, the algorithm takes two indices derived from the truth table: an index I,mapping each node to rows where it evaluates to true, and a complementary index ¯I, mapping to rows where it evaluates to false. These inverted indices enable efficient row queries. Starting from the target node T, the algorithm propagates layer by layer, computing for each node 
+
+X the set of truth-table rows R(X) determining its Shapley values. For nodes with two parents, candidate rows are computed using the AND/OR 
+
+rules in Section III-B and the indices I and ¯I.IV. E VALUATION OF THE PROPAGATION METHOD 
+
+We evaluated the proposed propagation method using a benchmark of 20 models (18 cyclic and 2 acyclic) obtained from the Cell Collective database 2. Models were randomly selected under the constraint that they contain between two and fifteen input nodes. Models exceeding this range were excluded due to their higher computational demands for the baseline simulations, as the exper-iments involve numerous repeated runs. For each model, three target nodes were chosen. Whenever possible, these targets were selected according to the model descriptions (e.g., their biological func-tions); otherwise, they were randomly chosen from nodes sufficiently distant from the input nodes. This selection strategy prevents the inclusion of targets too close to the input layer, which could otherwise bias the estimation of propagation time. The prop-agation results are evaluated against a simulation-based baseline. 
+
+A. Accuracy 
+
+We assess propagation performance using relative RMSE (RMSE normalized by the maximum value) and the normalized discounted cumulative gain          
+
+> 2https://cellcollective.org 11
+> RMSE NDCG Ratio KO KI KO KI 0.0195 0.0288 0.865 0.779 11.28
+
+TABLE III: The average values of the main metrics for KO and KI, and the runtime ratio between the simulation-based analysis and the propagation method. (NDCG) over the full ranking length as primary metrics, both ranging from 0 to 1 with 1 is optimal value. The average results of the benchmark is show in Table III. Kendall’s τb and Spearman’s ρ
+
+are additionally reported as auxiliary ranking-based measures. Except for relative RMSE, these metrics evaluate ranking quality rather than exact values, as relative gene importance is more informative than absolute scores. Finally, the fraction of cor-rectly propagated rows (from 0 to 1) is reported in Figure S7 (Supplementary) to directly measure propagation accuracy. Figure 5 presents the NDCG results for the Knock-out (KO) and Knock-in (KI) Shapley val-ues under the Shapley weighting scheme; uniform weighting (Figure S8, Supplementary) shows sim-ilar trends. The average relative RMSE is 0.0194 for KO and 0.0288 for KI. The average NDCG is 0.779 for KO and 0.865 for KI (Table III). Using an NDCG threshold of 0.75, 13 KO and 8 KI samples fall below this value. Most of these correspond to degenerate baseline cases in which all nodes have identical scores, resulting in identical ranks and an NDCG of zero (cases below the red-crossed line). Excluding degenerate cases, most model-target pairs achieve NDCG well above 0.75, often close to 1, indicating good ranking recovery. KI is more stable, with tightly concentrated NDCG values and low relative RMSE, whereas KO shows larger vari-ability and more frequent degeneracy. Performance exhibits a weak dependence on the number of network inputs. 
+
+B. Time performance 
+
+Figure 6 shows the ratio between the runtime of the standard analysis and the propagation-based method with the average of 11.28 (Table III), with values greater than one indicating a speed-up. The plot is split into three panels to highlight the low-ratio range (0–1.3) and the middle range (1.3-15) where many points fall into; the horizontal line at one marks equal runtime. Overall, propagation is faster in most cases, with speed-ups increasing with the number of inputs. Small models show only modest gains, while larger and more complex networks often achieve speed-ups of several tens, and in some cases nearly two orders of magnitude, reflecting the good scalability of the propagation approach. Only a few small models exhibit ratios close to or below one. Specifically, seven (model, target) pairs have ra-tios below one, all in models with four or five inputs; the minimum ratio ( ≈ 0.6) occurs for target 
+
+p70S6K in model 4, which still completes in under one second. In larger models, only targets Meta 
+
+and Meta2 in model 15 show limited gains, due to numerous diamond structures ending at the output that require many diamond simulations. Even in this case, propagation remains faster, with ratios of 1.115 and 1.04, respectively. 
+
+C. Further improvement 
+
+Random simulations can improve accuracy in cyclic networks by explicitly simulating a subset of nodes during propagation instead of applying the rules in Section III-B. Experiments (five runs per model-target pair; Figures S1–S2) show that both runtime and the fraction of correctly propagated rows increase roughly linearly with the proportion of simulated nodes, with runtime growing faster. This reduces efficiency but is beneficial when higher accuracy is required. Figure S3 shows that the fraction of correctly propagated rows at input nodes correlates with that across all nodes. Since exact rows at input nodes can be obtained from intact network simulations, they provide a reference to estimate overall propagation error. 
+
+D. Comparison with other notions 
+
+Here we compare our results with existing meth-ods when available. Methods such as DP [9] and 12 
+
+Fig. 5: NDCG of KO and KI values and relative RMSE under the Shapley weighting scheme. Models are grouped by input size (within each dashed vertical segment, labeled by the number of inputs). The horizontal line indicates the NDCG threshold of 0.75, while degenerate cases, where all nodes share the same ranking, are marked with red crosses. Strength [10]. It is important to note that such notions produce a single generic gene ranking per model, whereas our method yields target-specific rankings that depend on the chosen output node. 
+
+a) Fibroblast signaling pathway [23], [24]: 
+
+Helikar et al. proposed a large-scale Boolean model of signal transduction in a generic cell type with 139 nodes, in which 9 nodes are input nodes 3 [23]. The model integrates a large number of highly connected pathways including receptor tyrosine ki-nase G protein-coupled receptors and the integrin signaling pathways. This model was extensively analyzed by Puniya et al. through 1300 simulations to identify the most influential components based on their impact on the rest of the system [24]. When determinative power (DP) and Strength are applied to this pathway, DP ranks EGFR , ASK1 ,
+
+Src , PIP3_345 , and PKC as the top nodes [10], [11], while Strength identifies Src , PIP3_345 ,
+
+PKC , PIP2_45 , and EGFR [10]. The dynamical impact measure introduced by Ghanbarnejad and Klemm ranks Src ,
+
+> 3https://research.cellcollective.org/dashboard#module/1557:1/ signal-transduction-in-fibroblasts/1
+
+B-Arrestin , GRK , PIP2_45 , and PKC among the top five nodes (in that order), consistent with the findings of Puniya [7], [24]. Its approximation based on the principal eigenvector of the activity matrix [7] also identifies four of these nodes within the top five, with the exception of GRK .Unlike these generic ranking methods, the pro-posed approach captures target-specific influence, enabling a more precise identification of regulatory roles. Considering cellular growth, Akt and Erk 
+
+are used as targets due to their established role as growth markers [24]. The analysis identifies 
+
+PIP3_345 and PIP2_45 as key regulators, to-gether with nodes such as ILK , PI5K , PA , Rho ,
+
+RhoK , ARF , and PLD for Akt , and IL1_TNF ,
+
+Mek , PP2A , Tpl2 , Trafs , IL1_TNFR , and Raf 
+
+for Erk . Several of these components are consistent with previously reported key regulators of growth dynamics [24]. Moreover, this target-oriented anal-ysis provides a more detailed and nuanced profile of node importance compared to the generic score. 
+
+b) T-cell Receptor signaling network [4]: 
+
+This Boolean network describes T cell activation mechanism via the T cell receptor, the CD4/CD8 co-receptors, and the accessory signaling receptor 13 
+
+Fig. 6: Ratio between the runtime of the standard analysis and the propagation method. Models are grouped by input size (within each dashed vertical line, labeled by the number of inputs). CD28 with 94 nodes and 123 interactions 4. For this model, DP ranks pkb , lat , fyn , zap70 ,and lckp1 as the top five influential nodes [11]. These are predefined control nodes and are therefore critical by construction. In contrast, our method cap-tures target-specific dynamical effects. For instance, taking jnk as the target (which was extensively analyzed in [4]), cd28 shows a weak influence on 
+
+jnk (KO: 0.4002 ; KI: −0.5335 ), whereas pi3k 
+
+exhibits no effect (KO = 0; KI = 0). This is consistent with the model prediction and in vitro 
+
+experiments reported in [4], which indicates that 
+
+cd28 stimulation induces activation of jnk , while 
+
+jnk activation does not depend on pi3k within the cd28 -driven signaling context. These target-specific effects are not captured by DP. V. C ONCLUSION AND FUTURE WORK 
+
+This paper proposes an approach for efficiently computing Knock-out and Knock-in Shapley val-
+
+> 4https://research.cellcollective.org/dashboard#module/2171:1/t-cell-receptor-signaling/1
+
+ues in BNs. By exploiting the logical structure of binarized networks, the method avoids exhaustive simulations while preserving target-specific impor-tance semantics. Experiments on benchmark models show that the approach recovers node rankings with good accuracy and achieves substantial speed-ups, particularly in networks with many inputs. Despite limitations in cyclic networks, the method provides a practical and scalable alternative to simulation-based Shapley analysis for BN models. Several directions can be taken to strengthen the proposed framework. First, the handling of diamond structures can be further optimized. Instead of par-tially simulating entire diamond subgraphs, future work will focus on detecting the precise entry and exit points of signal interaction within diamonds and on characterizing their logical influence patterns analytically. By examining the conditions under which signals from multiple paths actually interact at the reconvergence node, it should be possible to reduce or eliminate local simulations, thereby improving runtime. Secondly, we will address cyclic networks by 14 
+
+deriving explicit error bounds for propagation in the presence of feedback. By quantifying how cycles distort independence assumptions and by relating propagation errors to structural properties of the cycles (e.g., length, connectivity, or feedback strength), we aim to provide guarantees on the maximum deviation from exact Shapley values. Such bounds would clarify the trade-off between efficiency and accuracy and guide the use of partial simulation strategies in cyclic networks. REFERENCES [1] S. A. Kauffman, “Metabolic stability and epigenesis in randomly constructed genetic nets,” Journal of theoretical biology , vol. 22, no. 3, pp. 437–467, 1969. [2] “The topology of the regulatory interactions predicts the expression pattern of the segment polarity genes in drosophila melanogaster,” Journal of Theoretical Biology ,vol. 223, no. 1, pp. 1–18, 2003. [3] F. Li, T. Long, Y. Lu, Q. Ouyang, and C. Tang, “The yeast cell-cycle network is robustly designed,” Proceedings of the National Academy of Sciences , vol. 101, no. 14, pp. 4781– 4786, 2004. [4] J. Saez-Rodriguez, L. Simeoni, J. A. Lindquist, R. Hemen-way, U. Bommhardt, B. Arndt, U.-U. Haus, R. Weismantel, E. D. Gilles, S. Klamt, and B. Schraven, “A logical model provides insights into t cell receptor signaling,” PLOS Computational Biology , vol. 3, 08 2007. [5] F. M. Weidner, N. Ikonomi, S. D. Werle, J. D. Schwab, and H. A. Kestler, “Gatekeepr: an r shiny application for the identification of nodes with high dynamic impact in boolean networks,” Bioinformatics , vol. 40, p. btae007, 01 2024. [6] I. Shmulevich and S. A. Kauffman, “Activities and sensitiv-ities in boolean network models,” Physical review letters ,vol. 93, no. 4, p. 048701, 2004. [7] F. Ghanbarnejad and K. Klemm, “Impact of individual nodes in boolean network dynamics,” Europhysics Letters ,vol. 99, no. 5, p. 58006, 2012. [8] L. L¨ u, D. Chen, X.-L. Ren, Q.-M. Zhang, Y.-C. Zhang, and T. Zhou, “Vital nodes identification in complex networks,” 
+
+Physics reports , vol. 650, pp. 1–63, 2016. [9] R. Heckel, S. Schober, and M. Bossert, “Harmonic analysis of boolean networks: determinative power and perturba-tions,” EURASIP Journal on Bioinformatics and Systems Biology , vol. 2013, p. 6, May 2013. [10] M. T. Matache and V. Matache, “Logical reduction of bio-logical networks to their most determinative components,” 
+
+Bulletin of Mathematical Biology , vol. 78, pp. 1520–1545, Jul 2016. [11] B. Pentzien, T. Heckel, et al. , “Identification of biologically essential nodes via determinative power in logical models of cellular processes,” Frontiers in Physiology , vol. 9, p. 1185, 2018. [12] F. M. Weidner, J. D. Schwab, S. D. Werle, N. Ikonomi, L. Lausser, and H. A. Kestler, “Capturing dynamic rele-vance in boolean networks using graph theoretical mea-sures,” Bioinformatics , vol. 37, no. 20, pp. 3530–3537, 2021. [13] G. Pham and P. Milazzo, “Preliminary results on shapley value notions and propagation methods for boolean net-works,” in International Symposium: From Data to Models and Back , pp. 90–112, Springer, 2023. [14] G. Pham and P. Milazzo, “Gene importance assessment based on shapley values for boolean networks: Valida-tion and scalability analysis,” in International Symposium: From Data to Models and Back , pp. 19–33, Springer, 2024. [15] R. Barbuti, R. Gori, P. Milazzo, and L. Nasti, “A survey of gene regulatory networks modelling methods: from dif-ferential equations, to boolean and qualitative bioinspired models,” Journal of Membrane Computing , vol. 2, no. 3, pp. 207–226, 2020. [16] J. D. Schwab, S. D. K¨ uhlwein, N. Ikonomi, M. K¨ uhl, and H. A. Kestler, “Concepts in boolean network modeling: What do they all mean?,” Computational and structural biotechnology journal , vol. 18, pp. 571–582, 2020. [17] G. Pham and P. Milazzo, “A comprehensive review of the use of shapley value to assess node importance in the analysis of biological networks,” Computers in Biology and Medicine , vol. 184, p. 100185, 2025. [18] T. Mori and T. Akutsu, “Attractor detection and enumera-tion algorithms for boolean networks,” Computational and Structural Biotechnology Journal , vol. 20, pp. 2512–2520, 2022. [19] A.-L. Barabasi and Z. N. Oltvai, “Network biology: under-standing the cell’s functional organization,” Nature Reviews Genetics , vol. 5, no. 2, pp. 101–113, 2004. [20] M. M. Babu, N. M. Luscombe, L. Aravind, M. Gerstein, and S. A. Teichmann, “Structure and evolution of transcrip-tional regulatory networks,” Current Opinion in Structural Biology , vol. 14, no. 3, pp. 283–291, 2004. [21] U. Alon, “Network motifs: theory and experimental ap-proaches,” Nature Reviews Genetics , vol. 8, no. 6, pp. 450– 461, 2007. [22] P. Eades, X. Lin, and W. F. Smyth, “A fast and effective heuristic for the feedback arc set problem,” Information processing letters , vol. 47, no. 6, pp. 319–323, 1993. [23] T. Helikar, J. Konvalina, J. Heidel, and J. A. Rogers, “Emergent decision-making in biological signal transduc-tion networks,” Proceedings of the National Academy of Sciences , vol. 105, no. 6, pp. 1913–1918, 2008. [24] B. L. Puniya, L. Allen, C. Hochfelder, M. Majumder, and T. Helikar, “Systems perturbation analysis of a large-scale signal transduction model reveals potentially influential candidates for cancer therapeutics,” Frontiers in Bioengi-neering and Biotechnology , vol. 4, p. 10, 2016. 15 
+
+APPENDIX 
+
+SUPPLEMENTARY MATERIAL 
+
+S1: A DDITIONAL EXPERIMENTS 
+
+Fig. S1: Ratio between the runtime of the propagation-based analysis and the standard analysis as a function of the percentage of nodes simulated. 
+
+Fig. S2: Fraction of correctly propagated rows as a function of the percentage of nodes simulated. 16 
+
+Fig. S3: Relationship between the fraction of correctly propagated rows to input nodes and to all nodes. 
+
+Fig. S4: Accuracy Comparison among Three Methods In Figure S4, Method 1 and Method 2 are comparable in performance and slightly outperform Method 3. 17 
+
+Fig. S5: Comparison of the ratio between the propagation time and the standard analysis time In Figure S5, Method 2 outperforms Method 1 and Method 3, as lower values indicate better performance. 18 
+
+Fig. S6: Auxiliary metrics of KO and KI values under Shapley weighting scheme 
+
+Fig. S7: Fraction of correctly propagated rows. S2: A UXILIARY EVALUATION METRICS 19 
+
+Fig. S8: NDCG of KO and KI values under Uniform weighting scheme and Relative RMSE 20 
+
+S3: I MPLEMENTATION 
+
+Algorithm S1 Linear Arrangement of a Directed Graph 
+
+Require: Directed graph G = ( V, E )
+
+Ensure: Linear arrangement A 
+
+> 1:
+
+l1 ← ∅ , l2 ← ∅  
+
+> 2:
+
+while G̸ = ∅ do  
+
+> 3:
+
+while G contains a sink do  
+
+> 4:
+
+Choose a sink u 
+
+> 5:
+
+l2 ← ul 2, G ← G \ u 
+
+> 6:
+
+end while  
+
+> 7:
+
+while G contains a source do  
+
+> 8:
+
+Choose a source u 
+
+> 9:
+
+l1 ← l1u, G ← G \ u 
+
+> 10:
+
+end while  
+
+> 11:
+
+if G̸ = ∅ then  
+
+> 12:
+
+Choose a vertex u for which δ(u) is maximum  
+
+> 13:
+
+l1 ← l1u, G ← G \ u 
+
+> 14:
+
+end if  
+
+> 15:
+
+end while  
+
+> 16:
+
+return l = l1l2
+
+The algorithm establishes a node ordering by maintaining two lists, l1 and l2. The list l1 is progressively populated with nodes that have no incoming edges, whereas l2 collects nodes with no outgoing edges. In contrast to l1, nodes added to l2 are inserted at the front rather than appended. Whenever a node is placed into either list, it is removed from the graph. After all nodes without incoming or outgoing edges have been assigned, the remaining nodes are incorporated into l1 according to decreasing values of the difference between their outgoing and incoming degrees, denoted δ(u) in Algorithm S1. The final node sequence is then obtained by concatenating l1 and l2. Edges are identified as feedback arcs when their source node appears later than their target node in this ordering. Once these feedback arcs are detected, they are eliminated from both the Boolean network graph and the associated Boolean functions. To retain their regulatory effects, auxiliary nodes are subsequently introduced. 21 
+
+Algorithm S2 DiamondDigger 
+
+Require: Binary network G, output node o, Boolean formulas F
+
+Ensure: Sink map S 
+
+> 1:
+
+C ← { o}, Carry ← ∅ , S ← ∅ ▷ node → carry-on map, node → sink set  
+
+> 2:
+
+while C̸ = ∅ do  
+
+> 3:
+
+C′ ← ∅  
+
+> 4:
+
+for all u ∈ C do  
+
+> 5:
+
+if u / ∈ F then continue  
+
+> 6:
+
+end if  
+
+> 7:
+
+if u / ∈ C arry then Carry [u] ← ∅  
+
+> 8:
+
+end if  
+
+> 9:
+
+if deg −(u) = 2 then ▷ binary operator  
+
+> 10:
+
+(l, r ) ← inputs of u 
+
+> 11:
+
+C′ ← C′ ∪ { l, r } 
+
+> 12:
+
+for all (v, s ) ∈ { (l, L ), (r, R )} do  
+
+> 13:
+
+if v / ∈ C arry then Carry [v] ← C arry [u] 
+
+> 14:
+
+else  
+
+> 15:
+
+K ← keys (Carry [u]) ∩ keys (Carry [v])  
+
+> 16:
+
+for all a ∈ K do  
+
+> 17:
+
+if (Carry [u][ a] = W ∨ C arry [v][ a] = W ∨ (Carry [u][ a], Carry [v][ a]) ∈{(L, R ), (R, L )}) and deg +(v) > 1 then  
+
+> 18:
+
+S[v] ← S [v] ∪ { a} 
+
+> 19:
+
+Carry [v][ a] ← W 
+
+> 20:
+
+end if  
+
+> 21:
+
+end for  
+
+> 22:
+
+end if  
+
+> 23:
+
+if u ∈ C arry [v] and (Carry [v][ u], s ) ∈ { (L, R ), (R, L )} then  
+
+> 24:
+
+S[v] ← S [v] ∪ { u} 
+
+> 25:
+
+else  
+
+> 26:
+
+Carry [v][ u] ← s 
+
+> 27:
+
+end if  
+
+> 28:
+
+end for  
+
+> 29:
+
+else ▷ unary / identity  
+
+> 30:
+
+v ← single input of u 
+
+> 31:
+
+C′ ← C′ ∪ { v} 
+
+> 32:
+
+if v / ∈ C arry then Carry [v] ← C arry [u] 
+
+> 33:
+
+else  
+
+> 34:
+
+K ← keys (Carry [u]) ∩ keys (Carry [v])  
+
+> 35:
+
+for all a ∈ K do  
+
+> 36:
+
+if (Carry [u][ a] = W ∨ C arry [v][ a] = W ∨ (Carry [u][ a], Carry [v][ a]) ∈{(L, R ), (R, L )}) and deg +(v) > 1 then  
+
+> 37:
+
+S[v] ← S [v] ∪ { a} 
+
+> 38:
+
+Carry [v][ a] ← W 
+
+> 39:
+
+end if  
+
+> 40:
+
+end for  
+
+> 41:
+
+end if  
+
+> 42:
+
+end if  
+
+> 43:
+
+end for  
+
+> 44:
+
+C ← C′ 
+
+> 45:
+
+end while  
+
+> 46:
+
+return S
+
+The algorithm detects diamond-shaped convergence patterns in a binary Boolean network by performing a backward traversal starting from a specified output node. During this process, each visited node maintains a carry-on map that tracks whether upstream nodes are reached via the left or right input of binary operators. When different propagation paths converge at the same node, inconsistencies in the carry-on states signal possible diamond closures, which are registered as sink nodes if the node has multiple outgoing edges. For unary operators, the carry-on information is transmitted without modification. 22 
+
+Algorithm S3 Propagate 
+
+Require: BBN G, index I, aindex ¯I, output node vout , formulas F , master diamonds M , simulation percentage ρ, stopping criteria stop 
+
+Ensure: Counted rows R(v) for all nodes v 
+
+> 1:
+
+selected ← random ρ% of S \ Sin excluding vout  
+
+> 2:
+
+current layer ← [vout ] 
+
+> 3:
+
+Initialize R(v) ← ∅ for all v 
+
+> 4:
+
+changed ← true  
+
+> 5:
+
+while current layer not empty and changed do : 
+
+> 6:
+
+changed ← false  
+
+> 7:
+
+next layer ← []  
+
+> 8:
+
+for all node v in current layer do  
+
+> 9:
+
+Initialize R(v) ← all rows if not already counted ▷ case of target node  
+
+> 10:
+
+if formula F (v) exists then  
+
+> 11:
+
+Get incoming edges of v (max 2 for binary network)  
+
+> 12:
+
+if v has two parents u1, u 2 then  
+
+> 13:
+
+Determine operator op (AND / OR)  
+
+> 14:
+
+Compute candidate rows for u1, u 2 based on op and I/ ¯I 
+
+> 15:
+
+for u in {u1, u 2} do  
+
+> 16:
+
+if u ∈ selected then R(u) ← SimulateOneNode (u) 
+
+> 17:
+
+else  
+
+> 18:
+
+if u / ∈ M then  
+
+> 19:
+
+R(u) ← R(u) ∪ (candidate rows ∩ R(v))  
+
+> 20:
+
+else  
+
+> 21:
+
+R(u) ← R(u) ∪ SimulateMasterDiamonds (u) 
+
+> 22:
+
+end if  
+
+> 23:
+
+end if  
+
+> 24:
+
+Add u to next layer if not already processed  
+
+> 25:
+
+end for  
+
+> 26:
+
+else ▷ Unary node, e.g., NOT or identical  
+
+> 27:
+
+u ← parent of node  
+
+> 28:
+
+if u ∈ selected then R(u) ← SimulateOneNode (u) 
+
+> 29:
+
+else  
+
+> 30:
+
+if u / ∈ M then  
+
+> 31:
+
+R(u) ← R(u) ∪ R(v) 
+
+> 32:
+
+else  
+
+> 33:
+
+R(u) ← R(u) ∪ SimulateMasterDiamonds (u) 
+
+> 34:
+
+end if  
+
+> 35:
+
+end if  
+
+> 36:
+
+Add u to next layer if not already processed  
+
+> 37:
+
+end if  
+
+> 38:
+
+end if  
+
+> 39:
+
+end for  
+
+> 40:
+
+current layer ← next layer  
+
+> 41:
+
+if there is changes in R(v) then change ← true  
+
+> 42:
+
+if stop then break  
+
+> 43:
+
+end while  
+
+> 44:
+
+return R(v) for all nodes v
+
+Starting from the target output node vout , the algorithm advances through the network layer by layer, determining for each node v the set of truth-table entries R(v) that define its value. For nodes with two parents, candidate rows for each parent are generated according to the Boolean operator (AND/OR) rules, using the precomputed indices I and ¯I.23 
+
+S4: C ORRECTNESS IN ACYCLIC NETWORKS 
+
+Lemma 1 (Row-coalition correspondence) . For a binarized Boolean network Bn,m with input set M =
+
+{x1, . . . , x m}, each propagated row corresponds bijectively to a coalition S ⊆ M . Moreover, the weight associated to the row by the propagation method is the Shapley weight wS of the corresponding coalition. Proof. Each row represents a unique assignment of the input nodes, which corresponds to a unique coalition S of input variables taking value 1. The propagation method preserves this correspondence and does not alter the associated weight. 
+
+Lemma 2 (Unique-successor property) . Let Bn,m be an acyclic Boolean network and let Y be a node reachable from the target node T. If Y is not the beginning of a diamond structure, then Y has a unique immediate successor X on all directed paths from Y to T. In particular, every directed path from Y to T
+
+passes through the same direct child X of Y.Proof. Assume for contradiction that there exist two directed paths from Y to T whose first edges go to two distinct children X1̸ = X2 of Y. Since the network is acyclic and both paths reach T, the subpaths from X1 and X2 must eventually merge at some node Z (possibly Z=T ) before reaching T. Then Y, X1, X2,
+
+and Z form a diamond structure with Y as the beginning node, contradicting the assumption. Hence, all directed paths from Y to T must pass through a unique child X.
+
+Lemma 3 (Influence preservation of bottleneck node) . Let Bn,m be an acyclic binarized Boolean network with target node T . Let Y be a node such that every directed path from Y to T passes through a unique successor X (bottleneck node). Then, for any coalition S ⊆ M , changing the value of Y in wS (row corresponding to coalition S) changes the value of T if and only if changing the value of X in wS
+
+changes the value of T .Proof. Since all directed paths from Y to T pass through X, the value of T depends on Y only through its effect on X. Therefore, for any coalition S, toggling Y changes T if and only if it causes a change in X that propagates to T. By the induction hypothesis, the propagation to X correctly identifies all such coalitions. Propagation from X to Y preserves this correspondence without duplication, since no alternative path exists. Hence each marginal contribution of Y to T is counted exactly once. 
+
+Lemma 4 (Correctness of partial simulation in diamond structures) . Consider a diamond structure in an acyclic Boolean network, where a node Y influences a downstream node Z through multiple directed paths. The partial simulation performed at Y ensures that each row affecting Z contributes exactly once to the knockout or knockin Shapley value with respect to the target node T.Proof. Partial simulation explicitly evaluates the Boolean function at the convergence node Z when the value of the upstream node Y is perturbed. Since Z is the bottleneck for all paths from Y to the target node T, Lemma 3 and Lemma 1 together imply that this partial simulation yields the correct Shapley values for T.
+
+Lemma 5 (Local correctness of propagation) . Let X be a node which is an operand in a binary Boolean operator AND , OR , or unary Boolean operator NOT or identical. For any propagated row reaching X, the propagation rules compute the same value of X as explicit evaluation of its Boolean function under the corresponding coalition. Proof. Since the network is acyclic, child nodes do not influence their parents. The propagation rules therefore exactly implement the truth tables of the AND , OR , NOT , and identity operators when their operands are independent, yielding results identical to explicit simulation. 24 
+
+If, in a binary operator C = A x B, one operand A depends on the other operand B, there exist at least two reconverging paths from C to B (a direct path and one via A). In this case, B is treated as part of a diamond structure and handled correctly by the dedicated simulation procedure (Lemma 4). The other operand A, under knockout or knockin perturbations, acts independently of B, and the propagation rules applied to A remain correct. Hence, in all cases, the propagation rules for Boolean operators are applied correctly. 
+
+Theorem 2. Let Bn,m be an acyclic binarized Boolean network and let T be a target node. For any node 
+
+X, the knockout and knockin Shapley values computed by the proposed propagation method are equal to those obtained by explicit simulation of Bn,m .Proof. Let BT denote the subgraph induced by all nodes that can reach the target node T via directed paths. Nodes outside BT do not influence T; hence, under both explicit simulation and the propagation method, their knockout and knockin Shapley values are zero. We therefore restrict attention to BT .Since Bn,m is acyclic, BT is also acyclic and admits a topological ordering consistent with the direction of information flow towards T. Moreover, T can be expressed as a Boolean formula obtained by successive substitution of Boolean functions along this ordering. Each propagated row corresponds bijectively to a coalition S ⊆ M , with associated weight wS (Lemma 1, Supplementary). 
+
+Base case. At the target node T, the propagation method enumerates all rows of the truth table. Rows for which T = 0 and switches to 1 under Knock-in contribute to the Knock-in Shapley value, while rows for which T = 1 and switches to 0 under Knock-out contribute to the Knock-out Shapley value. This exactly matches the definitions in Equations 8 and 6. Hence, the propagation method is correct at T.
+
+Induction hypothesis. Assume that for all nodes that are topologically closer to T than a given node 
+
+Y, the propagation method computes knock-out and knock-in Shapley values equal to those obtained by explicit simulation. 
+
+Induction step. Let Y be a node in BT whose immediate successors satisfy the induction hypothesis. We consider two cases. 
+
+(i) Y is the beginning of a diamond structure. In this case, Y influences a downstream node through multiple directed paths that later merge. By Lemma 4 (Supplementary), the partial simulation performed at 
+
+Y ensures that each coalition whose row affects the target node contributes exactly once to the knock-out or knock-in Shapley value of Y with respect to T. Since downstream nodes are handled correctly by the induction hypothesis, the propagated values at Y coincide with those obtained by explicit simulation. 
+
+(ii) Y is not the beginning of a diamond structure. By Lemma 2 (Supplementary), every directed path from Y to T passes through a unique immediate successor X. For any coalition S, changing the value of Y
+
+affects T if and only if it affects X (Lemma 3, Supplementary). By the induction hypothesis, propagation computes the correct effect of X on T. Furthermore, the propagation rules for Boolean operators compute the correct value of Y for each row (Lemma 5, Supplementary). Therefore, the propagated knockout and knockin contributions of Y match those obtained by explicit simulation. In both cases, the propagation method is correct for Y. By induction along the topological order of BT ,the propagation method computes correct knockout and knockin Shapley values for all nodes reachable from T. Combined with the fact that all other nodes have zero contribution, this completes the proof. 
+
+A. Experiments on acyclic networks 
+
+Figure S9 presents the NDCG and relative RMSE results for the synthetic acyclic models. 25 
+
+Fig. S9: Results for the acyclic benchmark. Figure S9 shows that all models in the acyclic benchmark achieve optimal results, confirming the correctness of the propagation method for acyclic networks.
